@@ -1,0 +1,48 @@
+NFL: 1631 games
+NBA: 3671 games
+NHL: 3968 games
+MLB: 7422 games
+CFB: 3049 games
+ESPN nba: saved 3 pregame lines (archive 3)
+ESPN nhl: saved 12 pregame lines (archive 12)
+ESPN mlb: saved 1 pregame lines (archive 1)
+ESPN nfl: saved 1 pregame lines (archive 1)
+ESPN cfb: saved 3 pregame lines (archive 3)
+ESPN ncaab: saved 0 pregame lines (archive 0)
+Kalshi nfl: 15 games matched
+Polymarket nfl: 0 games matched
+Kalshi nhl: 48 games matched
+Polymarket nhl: 62 games matched
+Kalshi nba: 47 games matched
+Polymarket nba: 42 games matched
+Kalshi mlb: 1 games matched
+Polymarket mlb: 2 games matched
+Kalshi cfb: 57 games matched
+Polymarket cfb: 0 games matched
+History: 183 games tracked
+Injuries nfl: 800 players
+Injuries nba: 90 players
+Injuries nhl: 128 players
+Injuries mlb: 280 players
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  503 from https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+Weather: 61 outdoor games
