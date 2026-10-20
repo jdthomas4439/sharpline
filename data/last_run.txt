@@ -13,7 +13,7 @@ Kalshi nfl: 14 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 47 games matched
 Polymarket nhl: 62 games matched
-Kalshi nba: 52 games matched
+Kalshi nba: 51 games matched
 Polymarket nba: 42 games matched
 Kalshi mlb: 4 games matched
 Polymarket mlb: 3 games matched
@@ -21,9 +21,16 @@ Kalshi cfb: 59 games matched
 Polymarket cfb: 0 games matched
 History: 198 games tracked
 Injuries nfl: 800 players
-Injuries nba: 94 players
-Injuries nhl: 127 players
+Injuries nba: 84 players
+Injuries nhl: 128 players
 Injuries mlb: 279 players
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=40) on https://api.open-meteo.com/v1/forecast
