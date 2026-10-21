@@ -282,6 +282,13 @@ table.tt{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
 table.board.mkt{min-width:0}
 .board.mkt td,.board.mkt th{padding:4px 6px}
 .board.mkt td:not(:first-child),.board.mkt th:not(:first-child){text-align:right}
+
+.howto{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:0 0 14px}
+.howto summary{font-weight:600;cursor:pointer}
+.howto p{font-size:14px;line-height:1.5;margin:10px 0 0}
+.board.mkt td.cheap{color:var(--pos);font-weight:700}
+.plan{margin:0;padding:0 14px 10px;font-size:14px;color:var(--muted)}
+.trends li.arb{color:var(--pos);font-weight:600}
 </style>
 </head>
 <body>
@@ -1778,6 +1785,7 @@ function bookFair(sp, a, h, date){
   return null;
 }
 
+function ideas_push(sides, plan){ sides[0].ideas.unshift({ v:1, t:plan.t }); }
 function marketRows(sp){
   const M = window.SLB && SLB.MARKETS && SLB.MARKETS[sp]; if (!M) return [];
   const today = etDate(new Date());
@@ -1793,9 +1801,25 @@ function marketRows(sp){
       if (pm != null && best){ const ev = pm*dec(best.odds) - 1; if (ev >= 0.02) ideas.push({ v:ev, t:`${nm(ab)} ${fmt(best.odds)} at ${BOOK_NAMES[best.book]} is ${pct(ev)} if the prediction markets are right (${Math.round(pm*100)}%).` }); }
       const km = pmMid(k);
       if (f == null && km != null && p != null && Math.abs(km - p) >= 0.05) ideas.push({ v:Math.abs(km - p) / 2, t:`Kalshi and Polymarket disagree on ${nm(ab)}: ${Math.round(km*100)}¢ vs ${Math.round(p*100)}¢. The cheaper side is worth a look.` });
-      return { s, ab, name:nm(ab), k, p, f, ideas };
+      // what it actually costs to buy this side at each venue (Kalshi ask + fee, Polymarket ask when quoted)
+      const pAsk = r.p && r.p.vol > 0 ? (r.p[s + "ask"] ?? null) : null;
+      const venues = [];
+      if (kCost != null) venues.push({ v:"Kalshi", px:k.ask, cost:kCost });
+      if (p != null) venues.push({ v:"Polymarket", px:pAsk ?? p, cost:pAsk ?? p, approx:pAsk == null });
+      const buy = venues.sort((x,y) => x.cost - y.cost)[0] || null;
+      return { s, ab, name:nm(ab), k, p, f, ideas, buy };
     });
-    return { ...r, sides, fair, ideas:sides.flatMap(x => x.ideas).sort((x,y) => y.v - x.v), label:`${nm(r.a)} @ ${nm(r.h)}` };
+    // can you own BOTH sides for under $1? That's a locked profit (arbitrage).
+    const [A, H] = sides, both = A.buy && H.buy ? A.buy.cost + H.buy.cost : null;
+    let plan = null;
+    if (both != null){
+      const c1 = x => (Math.round(x*1000)/10) + "¢";
+      const legs = `${A.name} on ${A.buy.v} at ${c1(A.buy.px)} + ${H.name} on ${H.buy.v} at ${c1(H.buy.px)}`;
+      if (both < 0.995 && A.buy.v !== H.buy.v) plan = { arb:true, t:`Lock-in: buy ${legs}. With fees that’s ${(both*100).toFixed(1)}¢ for a contract that pays $1 whoever wins, about ${((1/both - 1)*100).toFixed(1)}% guaranteed${A.buy.approx || H.buy.approx ? " if the Polymarket price holds when you buy" : ""}.` };
+      else plan = { arb:false, t:`Cheapest way to own both sides: ${legs}, ${(both*100).toFixed(1)}¢ total with fees. ${both >= 1 ? "That’s over $1, so there’s no locked profit here." : both >= 0.995 ? "That’s a hair under $1, too thin to survive fees and price moves." : `The ${A.buy.v} prices add up to under $1, which usually means one of them is out of date. Check the live price before acting.`}` };
+      if (plan.arb) ideas_push(sides, plan);
+    }
+    return { ...r, sides, fair, plan, ideas:sides.flatMap(x => x.ideas).sort((x,y) => y.v - x.v), label:`${nm(r.a)} @ ${nm(r.h)}` };
   });
 }
 
@@ -1810,15 +1834,24 @@ function renderMarkets(){
     <h1>Kalshi & Polymarket</h1>
     <p class="sub">Prediction-market prices are probabilities: 58¢ means 58%. Gaps against the sportsbooks’ fair price are where the value is.</p>
     ${!has ? `<div class="slip"><div class="empty">Kalshi and Polymarket prices load through your backend, which pulls them every hour for free. Once it’s set up (see the README in sharpline-backend.zip), this tab fills in by itself.</div></div>` : `
+    <details class="howto"><summary>How to act on these prices</summary>
+      <p><b>Reading the table.</b> Kalshi shows <i>bid / ask</i>: you buy YES at the ask (right number) and sell at the bid. A contract pays $1 if that team wins, so 37¢ means the market gives them about a 37% chance. Polymarket’s number is its current price. Books is the sportsbooks’ fair win chance with the vig removed. The cheaper place to buy each team is highlighted.</p>
+      <p><b>1. Lock in a profit (arbitrage).</b> If buying one team on Kalshi and the other on Polymarket costs less than $1 together, after fees, one of them must pay $1, so the difference is yours whatever happens. Each card checks this for you. These gaps are rare, small and close fast, so buy both sides at the same time.</p>
+      <p><b>2. Buy the cheap side.</b> If a team costs 37¢ on one app and 40¢ on the other, and you like that team, buy it where it’s cheaper. You get the same $1 payout for 3¢ less, which adds up over many bets.</p>
+      <p><b>3. Use the sportsbooks as the referee.</b> When the books’ fair chance is higher than what Kalshi or Polymarket charges (by 2 points or more after fees), buy on the prediction market. When the prediction markets rate a team higher than the sportsbook’s odds imply, bet that team at the sportsbook instead.</p>
+      <p><b>4. Hedge a ticket you already own.</b> Holding a sportsbook bet on one team? Buying the other team on Kalshi or Polymarket can lock in a profit or cap a loss before the game ends.</p>
+      <p><b>Before you trade:</b> Kalshi charges a fee of up to about 2¢ per contract (included above), and Polymarket may charge on some markets. Prices here can be up to an hour old, so check the live price. Make sure both apps settle the same way (overtime, postponements). Which of these you can use depends on your state. Bet only what you can afford to lose.</p>
+    </details>
     ${top.length ? `<h2>Biggest gaps, all sports</h2><ul class="trends angles">${top.map(x => `<li>${x.t}<small>${SPORT_LABEL[x.sp]}, ${x.label}</small></li>`).join("")}</ul>` : ""}
     <h2>${SPORT_LABEL[sport] || sport.toUpperCase()} games</h2>
     ${rows.length ? rows.map(r => `<section class="game">
       <div class="game-head"><div><div class="teams">${r.label}</div><div class="time">${new Date(r.date+"T12:00:00Z").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",timeZone:"UTC"})}</div></div>
         <div class="spark"><span>${[r.k ? "Kalshi " + (r.k.vol||0).toLocaleString() + " contracts" : "", r.p ? "Poly $" + Math.round(r.p.vol||0).toLocaleString() : ""].filter(Boolean).join(", ")}</span></div></div>
       <div class="board-wrap" style="padding:8px 14px"><table class="board mkt"><thead><tr><th></th><th>Kalshi</th><th>Poly</th><th>Books</th></tr></thead><tbody>
-        ${r.sides.map(x => `<tr><td>${x.name}</td><td class="num" style="font-size:14px">${x.k ? cents(x.k.bid) + " / " + cents(x.k.ask) : "—"}</td><td class="num" style="font-size:14px">${cents(x.p)}</td><td class="num" style="font-size:14px">${x.f != null ? Math.round(x.f*100) + "%" : "—"}</td></tr>`).join("")}
+        ${r.sides.map(x => `<tr><td>${x.name}</td><td class="num ${x.buy && x.buy.v === "Kalshi" && x.p != null ? "cheap" : ""}" style="font-size:14px">${x.k ? cents(x.k.bid) + " / " + cents(x.k.ask) : "—"}</td><td class="num ${x.buy && x.buy.v === "Polymarket" && x.k ? "cheap" : ""}" style="font-size:14px">${cents(x.p)}</td><td class="num" style="font-size:14px">${x.f != null ? Math.round(x.f*100) + "%" : "—"}</td></tr>`).join("")}
       </tbody></table></div>
-      ${r.ideas.length ? `<ul class="trends">${r.ideas.slice(0,3).map(i => `<li>${i.t}</li>`).join("")}</ul>` : `<p class="note" style="padding:0 14px 10px">${r.fair ? "No gap of 2 points or more after fees." : "No sportsbook line to compare yet."}</p>`}
+      ${r.plan && !r.plan.arb ? `<p class="plan">${r.plan.t}</p>` : ""}
+      ${r.ideas.length ? `<ul class="trends">${r.ideas.slice(0,3).map(i => `<li class="${i.v === 1 ? "arb" : ""}">${i.t}</li>`).join("")}</ul>` : `<p class="note" style="padding:0 14px 10px">${r.fair ? "No gap of 2 points or more against the sportsbooks after fees." : "No sportsbook line to compare yet. Kalshi vs Polymarket is still useful: buy each side wherever it’s cheaper (highlighted)."}</p>`}
     </section>`).join("") : `<p class="note">No ${SPORT_LABEL[sport] || ""} games on Kalshi or Polymarket right now.${sports.length ? ` Markets are open for ${sports.map(x => `<button class="linkbtn" data-goto="${x}">${SPORT_LABEL[x] || x.toUpperCase()}</button>`).join(", ")}.` : ""}</p>`}
     <p class="note">Prices as of ${new Date(SLB.MARKETS_TIME).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"})}. Kalshi costs include its trading fee. Which of these you can trade depends on your state.</p>`}`;
   view.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => setSport(b.dataset.goto));
