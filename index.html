@@ -1836,6 +1836,56 @@ function updateMoveBadge(){
   const n = newMoves(); b.hidden = !n; b.textContent = n;
 }
 
+
+/* ---------- System test: paper-traded picks made by the backend, graded after each game ---------- */
+const STRAT_LABEL = { gap:"Market gap", steam:"Steam follow" };
+function pickCLV(p){
+  if (p.close == null) return null;
+  if (p.mkt === "ml") return { pct:imp(p.close)/imp(p.odds) - 1 };
+  if (p.mkt === "spread") return { pts:+(p.line - p.close).toFixed(1) };
+  return { pts:+(p.side === "over" ? p.close - p.line : p.line - p.close).toFixed(1) };
+}
+function pickText(p){
+  const [sp, , a, h] = p.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
+  if (p.mkt === "ml") return `${nm(p.side === "home" ? h : a)} ML ${fmt(p.odds)}`;
+  if (p.mkt === "spread") return `${nm(p.side === "home" ? h : a)} ${p.line === 0 ? "PK" : fmtPt(p.line)}`;
+  return `${p.side === "over" ? "Over" : "Under"} ${p.line}`;
+}
+function tallyOf(list){
+  const g = list.filter(p => p.result);
+  const w = g.filter(p => p.result === "win").length, l = g.filter(p => p.result === "loss").length, ps = g.filter(p => p.result === "push").length;
+  const u = g.reduce((a,p) => a + (p.units || 0), 0);
+  const c = list.map(pickCLV).filter(x => x && x.pts != null);
+  return { n:list.length, open:list.length - g.length, w, l, ps, u, roi:g.length ? u / g.length : null, clv:c.length ? c.reduce((a,x) => a + x.pts, 0)/c.length : null, beat:c.filter(x => x.pts > 0).length, nc:c.length };
+}
+let sysOpen = false;
+function systemTestHTML(){
+  const P = window.SLB && SLB.PICKS;
+  if (!P) return `<h2>System test</h2><p class="note">Your backend paper-trades the system’s picks every hour, grades them after each game and keeps the tally here. It starts on the first run after the update.</p>`;
+  const inWin = P.picks.filter(p => p.at <= P.end), T = tallyOf(inWin);
+  const by = (f) => { const m = {}; inWin.forEach(p => (m[f(p)] = m[f(p)] || []).push(p)); return Object.entries(m).map(([k,v]) => [k, tallyOf(v)]); };
+  const u = x => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(2) + "u";
+  const end = new Date(P.end), done = Date.now() > end.getTime();
+  const row = ([k, t]) => `<tr><td>${k}</td><td>${t.w}–${t.l}${t.ps ? "–" + t.ps : ""}</td><td style="color:${t.u >= 0 ? "var(--pos)" : "var(--neg)"}">${t.w + t.l + t.ps ? u(t.u) : "—"}</td><td>${t.open}</td></tr>`;
+  const list = [...P.picks].reverse().slice(0, sysOpen ? 200 : 8);
+  return `<h2>System test</h2>
+    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final.</p>
+    <div class="me">
+      <div><b>${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}</b><small>Record</small></div>
+      <div><b style="color:${T.u >= 0 ? "var(--pos)" : "var(--neg)"}">${T.w + T.l + T.ps ? u(T.u) : "—"}</b><small>Units</small></div>
+      <div><b>${T.roi != null ? pct(T.roi) : "—"}</b><small>ROI</small></div>
+      <div><b>${T.clv != null ? (T.clv > 0 ? "+" : "") + T.clv.toFixed(1) : "—"}</b><small>CLV pts</small></div>
+    </div>
+    <div class="board-wrap" style="margin-bottom:10px"><table class="tt"><thead><tr><th></th><th>W–L</th><th>Units</th><th>Open</th></tr></thead><tbody>
+      ${by(p => STRAT_LABEL[p.strat] || p.strat).map(row).join("")}
+      ${by(p => SPORT_LABEL[p.sport] || p.sport.toUpperCase()).map(row).join("")}
+    </tbody></table></div>
+    ${T.n ? `<div class="bets">${list.map(p => { const c = pickCLV(p), [sp, d, a, h] = p.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
+      return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : "Push") : "Open"}</span><b>${pickText(p)}</b><span class="o">${p.result ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
+      <small>${nm(a)} @ ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ")" : ""}${p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")}</div>
+      ${P.picks.length > 8 ? `<p><button class="chip" id="sysMore">${sysOpen ? "Show fewer" : "Show all " + P.picks.length + " picks"}</button></p>` : ""}` : `<p class="note">No picks yet. The system waits for a real edge or a big line move, so quiet days can have none.</p>`}`;
+}
+
 /* ---------- Views ---------- */
 const view = document.getElementById("view");
 const SPORT_LABEL = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"College football" };
@@ -2090,6 +2140,8 @@ function renderSocial(){
   view.innerHTML = `
     <h1>My bets</h1>
     <p class="sub">Saved on this device. Bets on games in the app’s data settle automatically, and spread and total bets show how your number compares with the closing line.</p>
+    ${systemTestHTML()}
+    <h2>Your bets</h2>
     ${trackerHTML()}
     <h2>Community preview</h2>
     <p class="note">The leaderboard and feed below use sample picks to show the layout.</p>
@@ -2109,6 +2161,7 @@ function renderSocial(){
     }).join("")}
     <p class="rg">Bet with limits you set ahead of time. Need a break? Call 1-800-GAMBLER.</p>`;
   wireTracker();
+  const sm = document.getElementById("sysMore"); if (sm) sm.onclick = () => { sysOpen = !sysOpen; renderSocial(); };
   view.querySelectorAll("[data-tail]").forEach(b => b.onclick = () => {
     const p = POSTS[+b.dataset.tail];
     addLeg(p.game, p.type, p.side, p.book, p.odds, sideProb(p.game, p.side) ?? imp(p.odds));
