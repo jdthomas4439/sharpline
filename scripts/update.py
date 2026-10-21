@@ -224,12 +224,27 @@ ESPN_PATH = {"nba": "basketball/nba", "nhl": "hockey/nhl", "mlb": "baseball/mlb"
              "nfl": "football/nfl", "cfb": "football/college-football"}
 ESPN_GROUPS = {"ncaab": 50, "cfb": 80}
 
+SAMPLES = {}
 def parse_odds(sport, comp, home_raw, away_raw):
     odds = (comp.get("odds") or [None])[0]
     if not odds: return None
     out = {"prov": (odds.get("provider") or {}).get("name"), "tot": nz(odds.get("overUnder"))}
     hml = (odds.get("homeTeamOdds") or {}).get("moneyLine"); aml = (odds.get("awayTeamOdds") or {}).get("moneyLine")
+    if hml is None or aml is None:                       # newer ESPN format: odds.moneyline.home.close.odds = "-148"
+        ml = odds.get("moneyline") or {}
+        def pick(side):
+            d = ml.get(side) or {}
+            for stage in ("close", "current", "open"):
+                v = (d.get(stage) or {}).get("odds")
+                if v not in (None, ""):
+                    v = str(v).strip().upper()
+                    if v in ("EVEN", "EV"): return 100
+                    try: return int(float(v.replace("+", "")))
+                    except Exception: pass
+            return None
+        hml, aml = hml if hml is not None else pick("home"), aml if aml is not None else pick("away")
     out["hml"], out["aml"] = hml, aml
+    if not SAMPLES.get(sport): SAMPLES[sport] = odds      # one raw example per sport, saved for checking
     if sport in ("nba", "ncaab", "nfl", "cfb"):
         det = (odds.get("details") or "").strip()
         try:
@@ -469,9 +484,13 @@ def polymarket(sport, cands):
                     if not g: continue
                     rec = {"vol": int(float(m.get("volume") or 0)), "slug": ev.get("slug")}
                     if rec["vol"] <= 0: continue   # placeholder market with no trading yet
-                    for o, p in zip(outs, prices):
-                        if same_team(o, g["ta"]): rec["a"] = p
-                        elif same_team(o, g["th"]): rec["h"] = p
+                    ba, bb = m.get("bestAsk"), m.get("bestBid")          # quoted for the first outcome
+                    asks = [float(ba) if ba not in (None, "") else None, (1 - float(bb)) if bb not in (None, "") else None]
+                    for i, (o, p) in enumerate(zip(outs, prices)):
+                        side = "a" if same_team(o, g["ta"]) else "h" if same_team(o, g["th"]) else None
+                        if not side: continue
+                        rec[side] = p
+                        if asks[i] is not None and 0 < asks[i] < 1: rec[side + "ask"] = round(asks[i], 3)
                     if "a" in rec and "h" in rec: out[f"{g['date']}|{g['a']}|{g['h']}"] = rec
                 except Exception as e:
                     log(f"  poly skip: {e}")
@@ -668,6 +687,7 @@ def main():
             s["k"] = mid((r.get("k") or {}).get("h")); s["p"] = (r.get("p") or {}).get("h")
     B["HISTORY"] = step("history", lambda: update_history(snaps)) or load("history.json", {})
     B["PICKS"] = step("picks", lambda: make_and_grade_picks(all_lines, MK, B["HISTORY"])) or load("picks.json", None)
+    if SAMPLES: save("espn_odds_sample.json", SAMPLES)
     cut = (TODAY_ET - dt.timedelta(days=14)).isoformat()
     save("finals.json", {k: v for k, v in FINALS.items() if k.split("|")[1] >= cut})
 
