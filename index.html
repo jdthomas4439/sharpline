@@ -3,14 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Sharpline — betting edge finder</title>
+<title>HedgehogBets</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 240 160%22%3E%3Crect width=%22240%22 height=%22160%22 rx=%2224%22 fill=%22%230E1014%22/%3E%3Cpath d=%22M42 78h10v32H42zM58 68h10v42H58zM74 56h10v54H74zM90 46h10v64H90zM106 34h10v76h-10zM122 24h10v86h-10zM138 12h10v98h-10z%22 fill=%22%2333D17A%22/%3E%3Cpath d=%22M30 114h146l46 14-46 14H44q-16 0-16-14z%22 fill=%22%23E9ECEF%22/%3E%3C/svg%3E">
+<meta name="theme-color" content="#0E1014">
+<meta name="apple-mobile-web-app-title" content="HedgehogBets">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#EEF1F5; --surface:#FFFFFF; --surface2:#F6F8FB; --ink:#142033; --muted:#5B6779; --line:#D9DEE6;
-  --pos:#157A4C; --pos-bg:#E3F4EA; --neg:#C23B3B; --gold:#8A5C00; --gold-bg:#FFE9A8; --brand:#1B3A6B; --brand-ink:#FFFFFF;
+  --bg:#F3F5F7; --surface:#FFFFFF; --surface2:#EDF0F3; --ink:#0E1014; --muted:#5A6472; --line:#DCE1E7; --pos:#138A4B; --pos-bg:#DDF3E6; --neg:#C23B3B; --gold:#8F6200; --gold-bg:#FCEFCB; --brand:#138A4B; --brand-ink:#FFFFFF; --best-bg:#DDF3E6; --best-line:#138A4B;
   color-scheme:light;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
@@ -18,48 +20,47 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#0E1726; --surface:#16223A; --surface2:#1C2A45; --ink:#E8EDF5; --muted:#94A0B4; --line:#26344F;
-    --pos:#3CCB86; --pos-bg:#173A2C; --neg:#F07070; --gold:#F7C04A; --gold-bg:#4A3810; --brand:#9DB8E8; --brand-ink:#0E1726;
+    --bg:#0E1014; --surface:#161A21; --surface2:#1C212A; --ink:#E9ECEF; --muted:#A3ACB8; --line:#262B34; --pos:#33D17A; --pos-bg:#12301F; --neg:#FF7A7A; --gold:#F4B740; --gold-bg:#3A2D0E; --brand:#33D17A; --brand-ink:#0E1014; --best-bg:#12301F; --best-line:#33D17A;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0E1726; --surface:#16223A; --surface2:#1C2A45; --ink:#E8EDF5; --muted:#94A0B4; --line:#26344F;
-  --pos:#3CCB86; --pos-bg:#173A2C; --neg:#F07070; --gold:#F7C04A; --gold-bg:#4A3810; --brand:#9DB8E8; --brand-ink:#0E1726;
+  --bg:#0E1014; --surface:#161A21; --surface2:#1C212A; --ink:#E9ECEF; --muted:#A3ACB8; --line:#262B34; --pos:#33D17A; --pos-bg:#12301F; --neg:#FF7A7A; --gold:#F4B740; --gold-bg:#3A2D0E; --brand:#33D17A; --brand-ink:#0E1014; --best-bg:#12301F; --best-line:#33D17A;
   color-scheme:dark;
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.45}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Inter Tight","Helvetica Neue",Arial,system-ui,sans-serif;font-size:16px;line-height:1.45}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
-.num,.cond{font-family:"Barlow Condensed","Arial Narrow",sans-serif}
+.num,.cond{font-family:"JetBrains Mono",ui-monospace,Menlo,monospace;letter-spacing:-.02em}
 button{font:inherit;color:inherit;cursor:pointer}
 button:focus-visible,input:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 
 header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
 .top-inner{max-width:720px;margin:0 auto;padding:12px 16px 10px;display:flex;align-items:center;gap:12px}
-.logo{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:26px;letter-spacing:.5px;line-height:1}
-.logo span{display:inline-block;transform:skewX(-8deg);border-bottom:3px solid var(--gold)}
-.sport-row{display:flex;gap:6px;margin-left:auto}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:20px;letter-spacing:-.02em;line-height:1}
+.logo b{color:var(--pos);font-weight:700}.emblem{width:38px;height:26px;display:block}
+.sport-bar{border-top:1px solid var(--line)}
+.sport-row{max-width:720px;margin:0 auto;padding:8px 16px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
 .chip{border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:4px 12px;font-size:14px;font-weight:600}
 .chip.on{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
 .chip[disabled]{opacity:.45;cursor:not-allowed}
 
 main{max-width:720px;margin:0 auto;padding:16px 16px 110px}
-h1{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:32px;line-height:1.05;margin:4px 0 4px}
+h1{font-weight:700;font-size:26px;letter-spacing:-.02em;line-height:1.15;margin:4px 0 4px}
 .sub{color:var(--muted);margin:0 0 16px;font-size:15px}
 .note{font-size:13px;color:var(--muted)}
 
 .summary{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:10px;background:var(--surface);margin-bottom:18px;overflow:hidden}
 .summary div{padding:10px 12px;border-right:1px solid var(--line)}
 .summary div:last-child{border-right:0}
-.summary b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:28px;line-height:1}
+.summary b{display:block;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:22px;line-height:1}
 .summary small{color:var(--muted);font-size:13px}
 
 .edge{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--pos);border-radius:8px;margin-bottom:10px}
 .edge .what{font-weight:600}
 .edge .meta{color:var(--muted);font-size:14px}
-.edge .ev{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:26px;color:var(--pos);text-align:right;line-height:1}
+.edge .ev{font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:700;font-size:21px;color:var(--pos);text-align:right;line-height:1}
 .edge .right{text-align:right}
 .edge .row2{grid-column:1/-1;display:flex;gap:14px;flex-wrap:wrap;font-size:14px;color:var(--muted);align-items:center}
 .edge .row2 strong{color:var(--ink);font-weight:600}
@@ -79,22 +80,22 @@ table.board{border-collapse:collapse;width:100%;min-width:440px}
 .board th:first-child{text-align:left}
 .board td{padding:3px 2px;text-align:center}
 .board td:first-child{text-align:left;font-weight:600;white-space:nowrap;padding-right:8px}
-.cell{width:100%;min-width:54px;border:1px solid var(--line);background:var(--surface2);border-radius:6px;padding:5px 0;font-family:"Barlow Condensed",sans-serif;font-size:19px;font-weight:600}
-.cell.best{background:var(--gold-bg);border-color:var(--gold);color:var(--ink)}
+.cell{width:100%;min-width:54px;border:1px solid var(--line);background:var(--surface2);border-radius:6px;padding:5px 0;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:15px;font-weight:600}
+.cell.best{background:var(--best-bg);border-color:var(--best-line);color:var(--ink)}
 .cell.picked{outline:2px solid var(--brand)}
-.fair{font-family:"Barlow Condensed",sans-serif;font-size:19px;color:var(--muted);font-style:italic}
+.fair{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:15px;color:var(--muted);font-style:italic}
 
 .prop{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
 .prop-top{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
 .prop-top .who{font-weight:600}
-.prop-top .line{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:700;margin-left:auto}
+.prop-top .line{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:18px;font-weight:700;margin-left:auto}
 .bars{display:flex;align-items:flex-end;gap:4px;height:64px;margin:10px 0 4px;position:relative}
 .bar{flex:1;border-radius:3px 3px 0 0;background:var(--line);position:relative}
 .bar.hit{background:var(--pos)}
-.bar span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted);font-family:"Barlow Condensed",sans-serif}
+.bar span{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted);font-family:"JetBrains Mono",ui-monospace,monospace}
 .lineMark{position:absolute;left:0;right:0;border-top:2px dashed var(--gold)}
 .prop-stats{display:flex;gap:16px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin-top:8px;align-items:center}
-.prop-stats b{color:var(--ink);font-family:"Barlow Condensed",sans-serif;font-size:18px}
+.prop-stats b{color:var(--ink);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:14px}
 .tag{font-size:13px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--pos-bg);color:var(--pos)}
 .tag.neutral{background:var(--surface2);color:var(--muted)}
 
@@ -102,7 +103,7 @@ table.board{border-collapse:collapse;width:100%;min-width:440px}
 .leg{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
 .leg .txt{flex:1}
 .leg .txt small{display:block;color:var(--muted);font-size:13px}
-.leg .o{font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:600}
+.leg .o{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:16px;font-weight:600}
 .x{border:0;background:transparent;color:var(--muted);font-size:20px;padding:0 4px}
 .empty{padding:28px 16px;text-align:center;color:var(--muted)}
 .empty button{margin-top:10px}
@@ -110,7 +111,7 @@ table.board{border-collapse:collapse;width:100%;min-width:440px}
 .calc div{padding:10px 14px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
 .calc div:nth-child(2n){border-right:0}
 .calc small{display:block;color:var(--muted);font-size:13px}
-.calc b{font-family:"Barlow Condensed",sans-serif;font-size:24px}
+.calc b{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:19px}
 .stake{display:flex;align-items:center;gap:10px;padding:12px 14px}
 .stake input{width:110px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:var(--surface2);color:var(--ink);font:inherit;font-size:16px}
 .warn{margin:12px 0 0;padding:10px 12px;border-radius:8px;background:var(--gold-bg);color:var(--ink);font-size:14px}
@@ -119,16 +120,16 @@ table.board{border-collapse:collapse;width:100%;min-width:440px}
 .me{display:grid;grid-template-columns:repeat(4,1fr);background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:18px}
 .me div{padding:10px 8px;text-align:center;border-right:1px solid var(--line)}
 .me div:last-child{border-right:0}
-.me b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:24px;line-height:1.1}
+.me b{display:block;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:19px;line-height:1.1}
 .me small{color:var(--muted);font-size:12px}
-h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;margin:20px 0 8px}
+h2{font-weight:600;font-size:18px;letter-spacing:-.01em;margin:22px 0 8px}
 .lb{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:6px}
 .lb-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line)}
 .lb-row:last-child{border-bottom:0}
-.rank{font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:20px;width:22px;color:var(--muted)}
+.rank{font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:700;font-size:16px;width:22px;color:var(--muted)}
 .lb-row .n{flex:1;font-weight:600}
 .lb-row .n small{display:block;font-weight:400;color:var(--muted);font-size:13px}
-.lb-row .roi{font-family:"Barlow Condensed",sans-serif;font-size:20px;color:var(--pos)}
+.lb-row .roi{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:16px;color:var(--pos)}
 .post{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:12px}
 .post-head{display:flex;align-items:center;gap:10px}
 .av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;font-size:15px;flex-shrink:0}
@@ -137,7 +138,7 @@ h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;margin:20px 0 8px}
 .ver{font-size:12px;font-weight:600;color:var(--pos);border:1px solid var(--pos);border-radius:4px;padding:0 5px;margin-left:4px}
 .pick{margin:10px 0 6px;padding:10px 12px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .pick b{font-weight:600}
-.pick .o{font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:600;margin-left:auto}
+.pick .o{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:16px;font-weight:600;margin-left:auto}
 .post p{margin:6px 0 10px;font-size:15px}
 .post-actions{display:flex;gap:8px}
 .post-actions button{border:1px solid var(--line);background:transparent;border-radius:6px;padding:5px 12px;font-size:14px;font-weight:600}
@@ -145,7 +146,7 @@ h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;margin:20px 0 8px}
 .rg{margin-top:24px;font-size:13px;color:var(--muted);text-align:center}
 
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-.tabs-inner{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
+.tabs-inner{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
 .tab{border:0;background:transparent;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:12px;font-weight:600;position:relative}
 .tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
 .tab.on{color:var(--ink)}
@@ -165,13 +166,13 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
 .hist{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
 .hist div{background:var(--surface2);border-radius:6px;padding:6px 8px;position:relative;overflow:hidden}
 .hist small{display:block;color:var(--muted);font-size:12px;line-height:1.2}
-.hist b{font-family:"Barlow Condensed",sans-serif;font-size:20px}
+.hist b{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:16px}
 .hist em{font-style:normal;font-size:12px;color:var(--muted);margin-left:4px}
 .hist i{position:absolute;left:0;bottom:0;height:3px;background:var(--pos)}
 .hist i.low{background:var(--neg)}
 .hist div.na{opacity:.5}
 .model{display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:14px;color:var(--muted)}
-.model b{color:var(--ink);font-family:"Barlow Condensed",sans-serif;font-size:18px}
+.model b{color:var(--ink);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:14px}
 .tag.under{background:var(--gold-bg);color:var(--gold)}
 
 .listbar{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--muted);margin:0 0 8px}
@@ -205,7 +206,7 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
 .inplay{color:var(--neg);font-weight:600}
 .phead.lp,.prow.lp{grid-template-columns:minmax(0,1fr) 36px 56px 56px 70px}
 .pn small b{font-weight:600}.pn small b.good{color:var(--pos)}.pn small b.bad{color:var(--neg)}
-.bk{display:block;font-size:11px;color:var(--muted);font-family:"Barlow",sans-serif;line-height:1}
+.bk{display:block;font-size:11px;color:var(--muted);font-family:"Inter Tight",sans-serif;line-height:1}
 .pdetail .board .cell{min-width:46px;font-size:17px}
 
 .ttbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--line)}
@@ -215,8 +216,8 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
 .mut{color:var(--muted);font-weight:400}
 table.tt{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
 .tt th{font-weight:500;font-size:12px;color:var(--muted);text-align:center;padding:4px;border-bottom:1px solid var(--line)}
-.tt td{text-align:center;padding:6px 4px;border-bottom:1px solid var(--line);font-family:"Barlow Condensed",sans-serif;font-size:17px}
-.tt td:first-child{text-align:left;font-family:"Barlow",sans-serif;font-size:14px}
+.tt td{text-align:center;padding:6px 4px;border-bottom:1px solid var(--line);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:14px}
+.tt td:first-child{text-align:left;font-family:"Inter Tight",sans-serif;font-size:14px}
 .tt td small{display:block;color:var(--muted);font-size:11px}
 .tt b{font-weight:600}.tt b.good{color:var(--pos)}.tt b.bad{color:var(--neg)}
 .h2h{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:8px}
@@ -231,14 +232,13 @@ table.tt{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
 .cons div{padding:8px 14px;border-right:1px solid var(--line)}
 .cons div:last-child{border-right:0}
 .cons small{display:block;color:var(--muted);font-size:12px}
-.cons b{font-family:"Barlow Condensed",sans-serif;font-size:19px;font-weight:600}
+.cons b{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:15px;font-weight:600}
 .h2h small{font-size:12px}
 
 .tester{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
 .tester label{display:flex;gap:6px;align-items:center;font-size:14px}
 .tester input{width:82px;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface2);color:var(--ink);font:inherit;font-size:16px}
 
-.sport-row{overflow-x:auto;max-width:calc(100vw - 150px);scrollbar-width:none}
 .sport-row::-webkit-scrollbar{display:none}
 .sport-row .chip{white-space:nowrap;flex-shrink:0}
 
@@ -247,7 +247,7 @@ table.tt{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
 .bet.win{border-left-color:var(--pos)}.bet.loss{border-left-color:var(--neg)}.bet.push{border-left-color:var(--muted)}
 .btop{display:flex;gap:8px;align-items:baseline}
 .btop b{flex:1;font-weight:600}
-.btop .o{font-family:"Barlow Condensed",sans-serif;font-size:19px;font-weight:600}
+.btop .o{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:15px;font-weight:600}
 .bst{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .bet small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
 .bet small .good{color:var(--pos)}.bet small .bad{color:var(--neg)}
@@ -263,13 +263,33 @@ table.tt{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
 
 .trends.moves li.new{font-weight:600}
 .newtag{display:inline-block;font-size:11px;font-weight:700;color:var(--brand-ink);background:var(--brand);border-radius:4px;padding:0 5px;margin-right:2px}
-.tab{font-size:11px}
+.tab{font-size:12px}
+
+.slippill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;align-items:center;gap:10px;background:var(--brand);color:var(--brand-ink);border:0;border-radius:999px;padding:10px 18px;font-weight:600;font-size:15px;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.slippill[hidden]{display:none}
+.sp-count{background:var(--brand-ink);color:var(--brand);border-radius:999px;min-width:22px;height:22px;line-height:22px;text-align:center;font-size:13px;font-weight:700}
+.sp-odds{opacity:.85;font-size:14px}
+.toast{bottom:calc(128px + env(safe-area-inset-bottom,0px))}
+.injsum{cursor:pointer}
+.injsum small{color:var(--muted)}
+.moremoves{margin-top:6px}
+.linkbtn{border:0;background:none;padding:0;color:var(--pos);font-weight:600;text-decoration:underline;cursor:pointer}
+
+.trends.angles li,.trends.extras li{display:block;position:relative;padding-left:15px}
+.trends.angles li::before,.trends.extras li::before{position:absolute;left:0;top:.55em}
+.trends.angles li small{display:block;margin-top:2px}
+.trends.extras small{color:var(--muted);font-size:13px}
+table.board.mkt{min-width:0}
+.board.mkt td,.board.mkt th{padding:4px 6px}
+.board.mkt td:not(:first-child),.board.mkt th:not(:first-child){text-align:right}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="top-inner">
-    <div class="logo"><span>Sharpline</span></div>
+    <div class="logo"><svg class="emblem" viewBox="0 0 240 160" aria-hidden="true"><rect x="42" y="78" width="10" height="32" fill="var(--pos)"/><rect x="58" y="68" width="10" height="42" fill="var(--pos)"/><rect x="74" y="56" width="10" height="54" fill="var(--pos)"/><rect x="90" y="46" width="10" height="64" fill="var(--pos)"/><rect x="106" y="34" width="10" height="76" fill="var(--pos)"/><rect x="122" y="24" width="10" height="86" fill="var(--pos)"/><rect x="138" y="12" width="10" height="98" fill="var(--pos)"/><path d="M30 114 L176 114 L222 128 L176 142 L44 142 Q28 142 28 128 Z" fill="var(--ink)"/><circle cx="184" cy="124" r="3.2" fill="var(--bg)"/></svg><span>Hedgehog<b>Bets</b></span></div>
+  </div>
+  <div class="sport-bar">
     <div class="sport-row" role="group" aria-label="Sport">
       <button class="chip" data-sport="nba">NBA</button>
       <button class="chip on" data-sport="nhl">NHL</button>
@@ -285,13 +305,13 @@ table.tt{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
 <nav class="tabs" aria-label="Sections">
   <div class="tabs-inner">
     <button class="tab on" data-tab="edge"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Edges<span class="badge" id="moveBadge" hidden>0</span></button>
-    <button class="tab" data-tab="odds"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16M15 4v16"/></svg>Odds</button>
+    <button class="tab" data-tab="odds"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16M15 4v16"/></svg>Games</button>
     <button class="tab" data-tab="props"><svg viewBox="0 0 24 24"><path d="M5 20V10M10 20V4M15 20v-7M20 20V8"/></svg>Props</button>
     <button class="tab" data-tab="markets"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2 3-2s3 .7 3 2-1.3 1.8-3 2.2-3 .9-3 2.3 1.3 2 3 2 3-.6 3-2"/></svg>Markets</button>
-    <button class="tab" data-tab="parlay"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg>Slip<span class="badge" id="slipBadge" hidden>0</span></button>
     <button class="tab" data-tab="social"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-6M22 19H2"/></svg>Bets</button>
   </div>
 </nav>
+<button class="slippill" id="slipPill" hidden><span class="sp-count" id="slipCount">0</span><span>Bet slip</span><span class="sp-odds num" id="slipOdds"></span></button>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script src="data/bundle.js"></script>
@@ -600,7 +620,13 @@ function addLeg(gid, type, side, book, odds, prob){
   if (current === "odds") render();
 }
 function updateBadge(){
-  const b = document.getElementById("slipBadge");
+  const p = document.getElementById("slipPill");
+  if (p){
+    p.hidden = slip.length === 0 || current === "parlay";
+    document.getElementById("slipCount").textContent = slip.length;
+    document.getElementById("slipOdds").textContent = slip.length ? fmt(toAm(slip.reduce((a,l) => a*dec(l.odds), 1))) : "";
+  }
+  const b = document.getElementById("slipBadge"); if (!b) return;
   b.hidden = slip.length === 0; b.textContent = slip.length;
 }
 function sideProb(gid, sideName){
@@ -1707,17 +1733,26 @@ function wireTracker(){
 }
 
 /* ---------- Injuries and weather from the backend data file (when hosted) ---------- */
+const injOpen = new Set();
 function extrasBlock(g){
   if (!window.SLB) return "";
   const out = [];
   const W = SLB.WEATHER && SLB.WEATHER[g.sport + "|" + etDate(g.start) + "|" + g.awayAbbr + "|" + g.homeAbbr];
   if (W) out.push(`<li class="${W.wind >= 15 ? "wx" : ""}">Weather at kickoff: ${Math.round(W.temp)}°F, wind ${Math.round(W.wind)} mph${W.rain != null ? ", " + W.rain + "% chance of rain" : ""}${W.wind >= 15 ? ". Strong wind usually pushes totals down." : ""}</li>`);
   const I = SLB.INJURIES && SLB.INJURIES[g.sport];
-  if (I) [[g.awayAbbr, g.away], [g.homeAbbr, g.home]].forEach(([ab, nm]) => {
-    const list = (I[ab] || []).filter(x => /out|doubtful|injured|ir/i.test(x.s)).slice(0, 6);
-    const q = (I[ab] || []).filter(x => /questionable|day-to-day/i.test(x.s)).slice(0, 4);
-    if (list.length || q.length) out.push(`<li class="inj">${nm}: ${list.map(x => `${x.n} (${x.p}) ${x.s.toLowerCase()}`).join(", ")}${list.length && q.length ? "; " : ""}${q.length ? "questionable: " + q.map(x => `${x.n} (${x.p})`).join(", ") : ""}</li>`);
-  });
+  if (I){
+    const open = injOpen.has(g.id), parts = [];
+    [[g.awayAbbr, g.away], [g.homeAbbr, g.home]].forEach(([ab, nm]) => {
+      const L = I[ab] || [];
+      const out_ = L.filter(x => /out|doubtful|injured|reserve/i.test(x.s)), q = L.filter(x => /questionable|day-to-day/i.test(x.s));
+      if (!out_.length && !q.length) return;
+      const names = (arr, n) => arr.slice(0, n).map(x => `${x.n}${x.p ? " (" + x.p + ")" : ""}`).join(", ") + (arr.length > n ? ` +${arr.length - n} more` : "");
+      parts.push(open
+        ? `<b>${nm}</b>: ${out_.length ? "out or doubtful: " + names(out_, 99) : ""}${out_.length && q.length ? "; " : ""}${q.length ? "questionable: " + names(q, 99) : ""}`
+        : `<b>${nm}</b> ${out_.length} out${q.length ? ", " + q.length + " questionable" : ""}${out_.length ? ` <small>(${names(out_, 2)})</small>` : ""}`);
+    });
+    if (parts.length) out.push(`<li class="inj injsum" data-inj="${g.id}" role="button" tabindex="0">Injuries: ${parts.join(open ? "<br>" : " · ")}${open ? "" : ` <small>Tap for all</small>`}</li>`);
+  }
   return out.length ? `<ul class="trends extras">${out.join("")}</ul>` : "";
 }
 
@@ -1749,13 +1784,15 @@ function marketRows(sp){
   return M.filter(r => r.date >= today).map(r => {
     const R = RES[sp], nm = ab => R ? R.name(ab) : ab, fair = bookFair(sp, r.a, r.h, r.date);
     const sides = ["a","h"].map(s => {
-      const k = r.k && r.k[s], p = r.p && r.p[s], f = fair ? fair[s] : null, ab = r[s];
+      const k = r.k && r.k[s], p = r.p && r.p.vol > 0 ? r.p[s] : null, f = fair ? fair[s] : null, ab = r[s];
       const kCost = k && k.ask ? k.ask + kalshiFee(k.ask) : null;
       const ideas = [];
       if (f != null && kCost != null && f - kCost >= 0.02) ideas.push({ v:f - kCost, t:`Buy ${nm(ab)} YES on Kalshi at ${Math.round(k.ask*100)}¢ (about ${Math.round(kCost*100)}¢ with fees). Books make it ${Math.round(f*100)}%.` });
       if (f != null && p != null && f - p >= 0.02) ideas.push({ v:f - p, t:`Buy ${nm(ab)} on Polymarket at ${Math.round(p*100)}¢. Books make it ${Math.round(f*100)}%.` });
       const pm = pmMid(k) ?? p, best = fair && (s === "a" ? fair.bestA : fair.bestH);
       if (pm != null && best){ const ev = pm*dec(best.odds) - 1; if (ev >= 0.02) ideas.push({ v:ev, t:`${nm(ab)} ${fmt(best.odds)} at ${BOOK_NAMES[best.book]} is ${pct(ev)} if the prediction markets are right (${Math.round(pm*100)}%).` }); }
+      const km = pmMid(k);
+      if (f == null && km != null && p != null && Math.abs(km - p) >= 0.05) ideas.push({ v:Math.abs(km - p) / 2, t:`Kalshi and Polymarket disagree on ${nm(ab)}: ${Math.round(km*100)}¢ vs ${Math.round(p*100)}¢. The cheaper side is worth a look.` });
       return { s, ab, name:nm(ab), k, p, f, ideas };
     });
     return { ...r, sides, fair, ideas:sides.flatMap(x => x.ideas).sort((x,y) => y.v - x.v), label:`${nm(r.a)} @ ${nm(r.h)}` };
@@ -1765,26 +1802,26 @@ function marketRows(sp){
 function renderMarkets(){
   const has = window.SLB && SLB.MARKETS;
   const sports = has ? Object.keys(SLB.MARKETS).filter(s => SLB.MARKETS[s].length) : [];
-  if (!mktSport || !sports.includes(mktSport)) mktSport = sports.includes(sport) ? sport : sports[0];
-  const rows = mktSport ? marketRows(mktSport) : [];
+  mktSport = sport;
+  const rows = sports.includes(sport) ? marketRows(sport) : [];
   const top = sports.flatMap(sp => marketRows(sp).flatMap(r => r.ideas.slice(0,1).map(i => ({ ...i, sp, label:r.label })))).sort((a,b) => b.v - a.v).slice(0, 5);
   const cents = x => x == null ? "—" : Math.round(x*100) + "¢";
   view.innerHTML = `
     <h1>Kalshi & Polymarket</h1>
     <p class="sub">Prediction-market prices are probabilities: 58¢ means 58%. Gaps against the sportsbooks’ fair price are where the value is.</p>
     ${!has ? `<div class="slip"><div class="empty">Kalshi and Polymarket prices load through your backend, which pulls them every hour for free. Once it’s set up (see the README in sharpline-backend.zip), this tab fills in by itself.</div></div>` : `
-    ${top.length ? `<h2>Biggest gaps right now</h2><ul class="trends angles">${top.map(x => `<li>${x.t}<small>${SPORT_LABEL[x.sp]}, ${x.label}</small></li>`).join("")}</ul>` : ""}
-    <div class="filters" role="group" aria-label="Sport">${sports.map(s => `<button class="chip ${s===mktSport?"on":""}" data-ms="${s}">${SPORT_LABEL[s] || s.toUpperCase()}</button>`).join("")}</div>
+    ${top.length ? `<h2>Biggest gaps, all sports</h2><ul class="trends angles">${top.map(x => `<li>${x.t}<small>${SPORT_LABEL[x.sp]}, ${x.label}</small></li>`).join("")}</ul>` : ""}
+    <h2>${SPORT_LABEL[sport] || sport.toUpperCase()} games</h2>
     ${rows.length ? rows.map(r => `<section class="game">
       <div class="game-head"><div><div class="teams">${r.label}</div><div class="time">${new Date(r.date+"T12:00:00Z").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",timeZone:"UTC"})}</div></div>
         <div class="spark"><span>${[r.k ? "Kalshi " + (r.k.vol||0).toLocaleString() + " contracts" : "", r.p ? "Poly $" + Math.round(r.p.vol||0).toLocaleString() : ""].filter(Boolean).join(", ")}</span></div></div>
-      <div class="board-wrap" style="padding:8px 14px"><table class="board"><thead><tr><th></th><th>Kalshi bid/ask</th><th>Polymarket</th><th>Books fair</th></tr></thead><tbody>
-        ${r.sides.map(x => `<tr><td>${x.name}</td><td class="num" style="font-size:18px">${x.k ? cents(x.k.bid) + " / " + cents(x.k.ask) : "—"}</td><td class="num" style="font-size:18px">${cents(x.p)}</td><td class="num" style="font-size:18px">${x.f != null ? Math.round(x.f*100) + "%" : "—"}</td></tr>`).join("")}
+      <div class="board-wrap" style="padding:8px 14px"><table class="board mkt"><thead><tr><th></th><th>Kalshi</th><th>Poly</th><th>Books</th></tr></thead><tbody>
+        ${r.sides.map(x => `<tr><td>${x.name}</td><td class="num" style="font-size:14px">${x.k ? cents(x.k.bid) + " / " + cents(x.k.ask) : "—"}</td><td class="num" style="font-size:14px">${cents(x.p)}</td><td class="num" style="font-size:14px">${x.f != null ? Math.round(x.f*100) + "%" : "—"}</td></tr>`).join("")}
       </tbody></table></div>
       ${r.ideas.length ? `<ul class="trends">${r.ideas.slice(0,3).map(i => `<li>${i.t}</li>`).join("")}</ul>` : `<p class="note" style="padding:0 14px 10px">${r.fair ? "No gap of 2 points or more after fees." : "No sportsbook line to compare yet."}</p>`}
-    </section>`).join("") : `<p class="note">No ${SPORT_LABEL[mktSport] || ""} markets matched to upcoming games right now.</p>`}
+    </section>`).join("") : `<p class="note">No ${SPORT_LABEL[sport] || ""} games on Kalshi or Polymarket right now.${sports.length ? ` Markets are open for ${sports.map(x => `<button class="linkbtn" data-goto="${x}">${SPORT_LABEL[x] || x.toUpperCase()}</button>`).join(", ")}.` : ""}</p>`}
     <p class="note">Prices as of ${new Date(SLB.MARKETS_TIME).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit"})}. Kalshi costs include its trading fee. Which of these you can trade depends on your state.</p>`}`;
-  view.querySelectorAll("[data-ms]").forEach(b => b.onclick = () => { mktSport = b.dataset.ms; renderMarkets(); });
+  view.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => setSport(b.dataset.goto));
 }
 
 /* ---------- Line-move alerts from the backend's hourly snapshots ---------- */
@@ -1827,10 +1864,11 @@ function movesSeen(){ return store.get("sl_moves_seen") || 0; }
 function newMoves(){ const s = movesSeen(); return lineMoves().filter(m => m.ts > s).length; }
 function movesHTML(){
   if (!(window.SLB && SLB.HISTORY)) return `<h2>Line moves</h2><p class="note">Line-move alerts come from your backend, which saves every line and Kalshi/Polymarket price each hour and flags big moves, key-number crosses and late steam.</p>`;
-  const seen = movesSeen(), M = lineMoves().filter(m => !RES[m.sp] || true).slice(0, 25);
+  const seen = movesSeen(), all = lineMoves().filter(m => m.sp === sport), M = all.slice(0, movesAll ? 40 : 6);
   const ago = t => { const m = Math.round(Date.now()/60000 - t); return m < 60 ? m + "m ago" : m < 1440 ? Math.round(m/60) + "h ago" : Math.round(m/1440) + "d ago"; };
-  return `<h2>Line moves</h2>${M.length ? `<ul class="trends angles moves">${M.map(m => `<li class="${m.ts > seen ? "new" : ""}">${m.ts > seen ? `<span class="newtag">New</span> ` : ""}${m.steam ? "Steam: " : ""}${m.text}<small>${SPORT_LABEL[m.sp] || m.sp.toUpperCase()}, ${ago(m.ts)}</small></li>`).join("")}</ul>` : `<p class="note">No significant moves since the lines opened.</p>`}`;
+  return `<h2>${SPORT_LABEL[sport] || ""} line moves</h2>${M.length ? `<ul class="trends angles moves">${M.map(m => `<li class="${m.ts > seen ? "new" : ""}">${m.ts > seen ? `<span class="newtag">New</span> ` : ""}${m.steam ? "Steam: " : ""}${m.text}<small>${SPORT_LABEL[m.sp] || m.sp.toUpperCase()}, ${ago(m.ts)}</small></li>`).join("")}</ul>` : `<p class="note">No significant ${SPORT_LABEL[sport] || ""} moves since the lines opened.</p>`}${all.length > 6 ? `<p class="moremoves"><button class="chip" id="movesMore">${movesAll ? "Show fewer" : "Show all " + all.length}</button></p>` : ""}`;
 }
+let movesAll = false;
 function updateMoveBadge(){
   const b = document.getElementById("moveBadge"); if (!b) return;
   const n = newMoves(); b.hidden = !n; b.textContent = n;
@@ -1914,12 +1952,12 @@ function renderEdge(){
       <div><b class="num" style="color:var(--pos)">${best ? pct(best.ev) : "—"}</b><small>Best price edge</small></div>
       <div><b class="num">${games.length}</b><small>Games not started</small></div>
     </div>
-    ${movesHTML()}
     <h2>Game lines</h2>
-    ${e.length ? e.map((x,i) => `
+    ${!live ? `<p class="note">${CFG[sport] ? "Price edges need live sportsbook odds from several books. Add your Odds API key to the backend to turn them on." : "Live sportsbook odds aren’t connected for the " + (SPORT_LABEL[sport] || sport) + " yet, so this section is empty for now."}</p>` : ""}
+    ${!live ? "" : e.length ? e.map((x,i) => `
       <div class="edge">
         <div>
-          <div class="what">${x.s.name} <span class="num" style="font-size:19px">${fmt(x.odds)}</span></div>
+          <div class="what">${x.s.name} <span class="num" style="font-size:15px">${fmt(x.odds)}</span></div>
           <div class="meta">${x.m.type} at ${BOOK_NAMES[x.book]} in ${matchup(x.g)}, ${x.g.time}${live?"":" ET"}</div>
         </div>
         <div class="right"><div class="ev">${pct(x.ev)}</div><div class="meta">edge</div></div>
@@ -1934,7 +1972,7 @@ function renderEdge(){
     ${leans.length ? leans.map((x,i) => x.live ? `
       <div class="edge" style="border-left-color:${x.lean.side==="Over"?"var(--pos)":"var(--gold)"}">
         <div>
-          <div class="what">${livePropLabel(x.r, x.lean.side)} <span class="num" style="font-size:19px">${fmt(x.lean.odds)}</span></div>
+          <div class="what">${livePropLabel(x.r, x.lean.side)} <span class="num" style="font-size:15px">${fmt(x.lean.odds)}</span></div>
           <div class="meta">${BOOK_NAMES[x.lean.book]}, ${matchup(gameById(x.r.g))}</div>
         </div>
         <div class="right"><div class="ev">${pct(x.lean.ev)}</div><div class="meta">edge</div></div>
@@ -1946,7 +1984,7 @@ function renderEdge(){
       </div>` : `
       <div class="edge" style="border-left-color:${x.lean.side==="Over"?"var(--pos)":"var(--gold)"}">
         <div>
-          <div class="what">${propLabel(x.p, x.lean.side)} <span class="num" style="font-size:19px">${fmt(x.lean.odds)}</span></div>
+          <div class="what">${propLabel(x.p, x.lean.side)} <span class="num" style="font-size:15px">${fmt(x.lean.odds)}</span></div>
           <div class="meta">${BOOK_NAMES[x.lean.book]}, ${matchup(gameById(x.p.g))}</div>
         </div>
         <div class="right"><div class="ev">${pct(x.lean.ev)}</div><div class="meta">edge</div></div>
@@ -1956,10 +1994,12 @@ function renderEdge(){
           <span>Last 10 <strong>${x.p.hit10}/10</strong></span>
           <button class="add" data-lean="${i}">Add to slip</button>
         </div>
-      </div>`).join("") : `<p class="note">${live ? "Load player props for a game on the Props tab to see prop edges here." : "No prop leans right now."}</p>`}
+      </div>`).join("") : `<p class="note">${live ? "Load player props for a game on the Props tab to see prop edges here." : (RES[sport] ? "Player prop leans appear once live prop odds are connected." : "No prop leans right now.")}</p>`}
+    ${movesHTML()}
     ${live || RES[sport] ? (() => { const ang = games.flatMap(g => trendHighlights(g).map(h => ({ g, t:h.t }))); return `<h2>Situational angles</h2>${ang.length ? `<ul class="trends angles">${ang.map(x => `<li>${x.t}<small>${matchup(x.g)}</small></li>`).join("")}</ul>` : `<p class="note">${RES[sport] ? "No strong trends in the upcoming games." : "Load team history on a game in the Odds tab to see its strongest trends here."}</p>`}`; })() : ""}
     <p class="note">${live ? "Live " + SPORT_LABEL[sport] + " odds from The Odds API through your Zapier connection." : RES[sport] ? "Free mode: schedule and team records from " + RES[sport].source + ", through " + RES[sport].updated + ". Connect live odds to compare books and find price edges." : "Sample data for layout."}</p>`;
   wireLiveBar();
+  const mm = document.getElementById("movesMore"); if (mm) mm.onclick = () => { movesAll = !movesAll; renderEdge(); };
   view.querySelectorAll("[data-edge]").forEach(btn => btn.onclick = () => {
     const x = e[+btn.dataset.edge]; addLeg(x.g.id, x.m.type, x.s.name, x.book, x.odds, x.prob);
   });
@@ -2006,6 +2046,7 @@ function renderOdds(){
   view.querySelectorAll(".cell").forEach(c => c.onclick = () =>
     addLeg(c.dataset.g, c.dataset.t, c.dataset.s, c.dataset.b, +c.dataset.o, +c.dataset.p));
   view.querySelectorAll("[data-tt]").forEach(b => b.onclick = () => { const g = gameById(b.dataset.tt); openTrends.add(g.id); loadTrends(g); render(); });
+  view.querySelectorAll("[data-inj]").forEach(b => b.onclick = () => { const id = b.dataset.inj; injOpen.has(id) ? injOpen.delete(id) : injOpen.add(id); render(); });
   view.querySelectorAll("[data-rs]").forEach(b => b.onclick = () => { const id = b.dataset.rs; resOpen.has(id) ? resOpen.delete(id) : resOpen.add(id); render(); });
   view.querySelectorAll("[data-tl-go]").forEach(b => b.onclick = () => {
     const id = b.dataset.tlGo, h = view.querySelector(`[data-tl-home="${id}"]`).value, t = view.querySelector(`[data-tl-tot="${id}"]`).value;
@@ -2156,7 +2197,7 @@ function renderSocial(){
           <div class="n">${p.user}${p.ver ? '<span class="ver">Verified</span>' : ""}<small>${p.rec}, ${p.ago} ago</small></div></div>
         <div class="pick"><b>${p.side}</b><span class="note">${p.type}, ${matchup(g)}, ${BOOK_NAMES[p.book]}</span><span class="o">${fmt(p.odds)}</span></div>
         <p>${p.text}</p>
-        <div class="post-actions"><button class="tail" data-tail="${i}">Tail</button><button data-fade="${i}">Fade</button><button data-c="${i}">Comment</button></div>
+
       </article>`;
     }).join("")}
     <p class="rg">Bet with limits you set ahead of time. Need a break? Call 1-800-GAMBLER.</p>`;
@@ -2174,21 +2215,27 @@ const RENDER = { edge:renderEdge, odds:renderOdds, props:renderProps, markets:re
 function render(){
   RENDER[current]();
   if (current === "edge" && window.SLB && SLB.HISTORY){ const M = lineMoves(); if (M.length) store.set("sl_moves_seen", Math.max(movesSeen(), M[0].ts)); }
-  updateMoveBadge();
+  updateMoveBadge(); updateBadge();
 }
 function go(t){
   current = t;
-  document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
+  document.querySelectorAll(".tab").forEach(b => { b.classList.toggle("on", b.dataset.tab === t); b.setAttribute("aria-current", b.dataset.tab === t ? "page" : "false"); });
   render(); window.scrollTo(0,0);
 }
 document.querySelectorAll(".tab").forEach(b => b.onclick = () => go(b.dataset.tab));
-document.querySelectorAll("[data-sport]").forEach(b => b.onclick = () => {
-  sport = b.dataset.sport; gameFilter = "all"; teamFilter = "both"; openKey = null;
+function setSport(sp){
+  sport = sp; gameFilter = "all"; teamFilter = "both"; openKey = null; movesAll = false;
   if (DATA[sport]) statFilter = DATA[sport].stats[sport === "nhl" ? 3 : 0];
-  if (CFG[sport]){ LIVE = LIVE_BY[sport]; liveGame = "all"; liveOpen = null; liveStat = Object.values(CFG[sport].markets)[0]; if (apiKey && mcpNs && !LIVE.games && !LIVE.loading) loadLines(); }
-  document.querySelectorAll("[data-sport]").forEach(x => x.classList.toggle("on", x === b));
+  if (CFG[sport]){
+    LIVE = LIVE_BY[sport]; liveGame = "all"; liveOpen = null; liveStat = Object.values(CFG[sport].markets)[0];
+    const hosted = window.SLB && SLB.ODDS && SLB.ODDS[sport];
+    if (((apiKey && mcpNs) || hosted) && !LIVE.games && !LIVE.loading) loadLines();
+  }
+  document.querySelectorAll("[data-sport]").forEach(x => { x.classList.toggle("on", x.dataset.sport === sp); if (x.dataset.sport === sp) x.scrollIntoView({ inline:"nearest", block:"nearest" }); });
   render(); window.scrollTo(0,0);
-});
+}
+document.querySelectorAll("[data-sport]").forEach(b => b.onclick = () => setSport(b.dataset.sport));
+document.getElementById("slipPill").onclick = () => go("parlay");
 
 let tt;
 function toast(msg){
