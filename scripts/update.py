@@ -265,7 +265,10 @@ def espn_archive(sport):
                 if state == "pre":
                     o = parse_odds(sport, comp, hr_, ar_)
                     if o and (o.get("tot") is not None or o.get("sl") is not None or o.get("hml") is not None):
-                        o["ts"] = NOW.isoformat(timespec="minutes"); lines[key] = o; n += 1
+                        o["ts"] = NOW.isoformat(timespec="minutes"); o["start"] = ev["date"]; lines[key] = o; n += 1
+                if state == "post":
+                    try: FINALS[f"{sport}|{key}"] = [int(away.get("score") or 0), int(home.get("score") or 0)]
+                    except Exception: pass
                 if sport == "ncaab":
                     names[a] = away["team"].get("shortDisplayName") or away["team"].get("displayName") or a
                     names[h] = home["team"].get("shortDisplayName") or home["team"].get("displayName") or h
@@ -335,7 +338,7 @@ def weather(nfl_rows):
         H = js["hourly"]
         out[key] = {"temp": H["temperature_2m"][i], "wind": H["wind_speed_10m"][i],
                     "rain": (H.get("precipitation_probability") or [None])[i]}
-        time.sleep(0.2)
+        time.sleep(0.6)
     log(f"Weather: {len(out)} outdoor games")
     return out
 
@@ -367,7 +370,7 @@ TWO = ("Maple Leafs","Red Wings","Blue Jackets","Golden Knights","Red Sox","Whit
 KALSHI = "https://api.elections.kalshi.com/trade-api/v2"
 KALSHI_SERIES = {"nfl":"KXNFLGAME","nhl":"KXNHLGAME","nba":"KXNBAGAME","mlb":"KXMLBGAME","cfb":"KXNCAAFGAME","ncaab":"KXNCAAMBGAME"}
 POLY = "https://gamma-api.polymarket.com"
-POLY_TAGS = {"nfl":["nfl"],"nhl":["nhl"],"nba":["nba"],"mlb":["mlb"],"cfb":["cfb","ncaaf","college-football"],"ncaab":["ncaab","cbb","college-basketball"]}
+POLY_TAGS = {"nfl":["nfl"],"nhl":["nhl"],"nba":["nba"],"mlb":["mlb"],"cfb":["college-football","ncaaf","cfb","ncaa-football"],"ncaab":["ncaab","cbb","college-basketball"]}
 MONTHS = {m:i for i,m in enumerate(["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"],1)}
 
 def team_tokens(ab, full):
@@ -444,8 +447,12 @@ def polymarket(sport, cands):
     out = {}
     if not cands: return out
     for tag in POLY_TAGS.get(sport, []):
-        js = get_json(f"{POLY}/events", {"tag_slug": tag, "active": "true", "closed": "false", "limit": 300})
-        if not isinstance(js, list): continue
+        js = []
+        for off in (0, 300, 600, 900):
+            page = get_json(f"{POLY}/events", {"tag_slug": tag, "active": "true", "closed": "false", "limit": 300, "offset": off,
+                                               "end_date_min": (TODAY_ET - dt.timedelta(days=1)).isoformat()})
+            if not isinstance(page, list) or not page: break
+            js += page
         for ev in js:
             for m in ev.get("markets") or []:
                 try:
@@ -461,6 +468,7 @@ def polymarket(sport, cands):
                     g = pick_game(cands, date, outs)
                     if not g: continue
                     rec = {"vol": int(float(m.get("volume") or 0)), "slug": ev.get("slug")}
+                    if rec["vol"] <= 0: continue   # placeholder market with no trading yet
                     for o, p in zip(outs, prices):
                         if same_team(o, g["ta"]): rec["a"] = p
                         elif same_team(o, g["th"]): rec["h"] = p
@@ -489,9 +497,99 @@ def update_history(snaps):
     log(f"History: {len(hist)} games tracked")
     return hist
 
+
+# ---------------------------------------------------------------- paper-trading test: system picks, graded after the game
+FINALS = {}
+STRAT_NAMES = {"gap": "Market gap", "steam": "Steam follow"}
+SPREAD_TH = {"nfl": 1.5, "cfb": 2.0, "nba": 2.0, "ncaab": 2.5}
+TOTAL_TH = {"nfl": 2.0, "cfb": 3.0, "nba": 3.0, "ncaab": 3.0, "nhl": 0.5, "mlb": 0.5}
+
+def _dec(a): return 1 + a / 100 if a > 0 else 1 + 100 / -a
+def _imp(a): return 1 / _dec(a)
+
+def make_and_grade_picks(all_lines, MK, hist):
+    P = load("picks.json", None)
+    if not P:
+        P = {"start": NOW.isoformat(timespec="minutes"), "end": (NOW + dt.timedelta(days=7)).isoformat(timespec="minutes"), "picks": []}
+    have = {(p["strat"], p["key"], p["mkt"]) for p in P["picks"]}
+    picked_games = {p["key"] for p in P["picks"]}
+    mk = {f"{sp}|{r['date']}|{r['a']}|{r['h']}": r for sp, recs in MK.items() for r in recs}
+    new = []
+    now_h = NOW.isoformat(timespec="minutes")[:13]
+    for sp, lines in all_lines.items():
+        for k, o in (lines or {}).items():
+            key = f"{sp}|{k}"
+            if o.get("ts", "")[:13] != now_h or not o.get("start"): continue          # only lines seen pregame this hour
+            mins = (dt.datetime.fromisoformat(o["start"].replace("Z", "+00:00")) - NOW).total_seconds() / 60
+            if mins < 20: continue
+            # Strategy 1, market gap: prediction market vs the sportsbook moneyline (12 hours or less to start)
+            r = mk.get(key)
+            if mins <= 720 and r and o.get("hml") is not None and o.get("aml") is not None and ("gap", key, "ml") not in have:
+                k_ = r.get("k") or {}
+                kh = k_.get("h") or {}
+                pm = ((kh.get("bid", 0) + kh.get("ask", 0)) / 2) if kh.get("bid") and kh.get("ask") else ((r.get("p") or {}).get("h"))
+                if pm:
+                    ph, pa = _imp(o["hml"]), _imp(o["aml"]); fh = ph / (ph + pa)
+                    for side, prob, odds in (("home", pm, o["hml"]), ("away", 1 - pm, o["aml"])):
+                        book_fair = fh if side == "home" else 1 - fh
+                        ev = prob * _dec(odds) - 1
+                        if prob - book_fair >= 0.03 and ev >= 0.02:
+                            new.append({"strat": "gap", "key": key, "sport": sp, "mkt": "ml", "side": side, "odds": odds, "line": None,
+                                        "fair": round(prob, 3), "edge": round(ev, 3), "start": o["start"], "at": NOW.isoformat(timespec="minutes")})
+                            break
+            # Strategy 2, steam follow: a big line move, taken within 3 hours of start
+            H = hist.get(key) or []
+            if mins <= 180 and len(H) >= 2:
+                fs = next((h for h in H if h[1] is not None), None); ls = next((h for h in reversed(H) if h[1] is not None), None)
+                th = SPREAD_TH.get(sp)
+                if th and fs and ls and abs(ls[1] - fs[1]) >= th and ("steam", key, "spread") not in have:
+                    side = "home" if ls[1] > fs[1] else "away"            # sl rising = money on home
+                    line = -ls[1] if side == "home" else ls[1]
+                    new.append({"strat": "steam", "key": key, "sport": sp, "mkt": "spread", "side": side, "odds": -110, "line": line,
+                                "move": round(ls[1] - fs[1], 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")})
+                ft = next((h for h in H if h[2] is not None), None); lt = next((h for h in reversed(H) if h[2] is not None), None)
+                tt = TOTAL_TH.get(sp)
+                if tt and ft and lt and abs(lt[2] - ft[2]) >= tt and ("steam", key, "total") not in have:
+                    side = "over" if lt[2] > ft[2] else "under"
+                    new.append({"strat": "steam", "key": key, "sport": sp, "mkt": "total", "side": side, "odds": -110, "line": lt[2],
+                                "move": round(lt[2] - ft[2], 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")})
+    # cap: best 8 new market-gap picks per run so one noisy run can't flood the test
+    gaps = sorted([p for p in new if p["strat"] == "gap"], key=lambda p: -p["edge"])[:8]
+    new = gaps + [p for p in new if p["strat"] != "gap"]
+    P["picks"].extend(new)
+    # grade anything finished
+    graded = 0
+    for p in P["picks"]:
+        sp, k = p["sport"], p["key"].split("|", 1)[1]
+        o = (all_lines.get(sp) or {}).get(k) or {}
+        if p.get("result") is None and o:                              # last pregame number we saw = closing line
+            if p["mkt"] == "ml": p["close"] = o.get("hml") if p["side"] == "home" else o.get("aml")
+            elif p["mkt"] == "spread" and o.get("sl") is not None: p["close"] = -o["sl"] if p["side"] == "home" else o["sl"]
+            elif p["mkt"] == "total": p["close"] = o.get("tot")
+        f = FINALS.get(p["key"])
+        if p.get("result") is not None or not f: continue
+        a, h = f
+        if p["mkt"] == "ml":
+            m = h - a if p["side"] == "home" else a - h
+            res = "push" if m == 0 else "win" if m > 0 else "loss"
+        elif p["mkt"] == "spread":
+            m = (h - a if p["side"] == "home" else a - h) + p["line"]
+            res = "push" if m == 0 else "win" if m > 0 else "loss"
+        else:
+            s = a + h
+            res = "push" if s == p["line"] else "win" if (s > p["line"]) == (p["side"] == "over") else "loss"
+        p["result"], p["score"] = res, f"{a}-{h}"
+        p["units"] = round(_dec(p["odds"]) - 1, 3) if res == "win" else -1.0 if res == "loss" else 0.0
+        graded += 1
+    save("picks.json", P)
+    log(f"Test picks: {len(new)} new, {graded} graded, {len(P['picks'])} total")
+    return P
+
+
 # ---------------------------------------------------------------- main
 def main():
     os.makedirs(DATA, exist_ok=True)
+    FINALS.update(load("finals.json", {}))
     old = {}
     try:
         with open(os.path.join(DATA, "bundle.js")) as f:
@@ -569,6 +667,9 @@ def main():
             s = snaps.setdefault(f"{sp}|{r['date']}|{r['a']}|{r['h']}", {})
             s["k"] = mid((r.get("k") or {}).get("h")); s["p"] = (r.get("p") or {}).get("h")
     B["HISTORY"] = step("history", lambda: update_history(snaps)) or load("history.json", {})
+    B["PICKS"] = step("picks", lambda: make_and_grade_picks(all_lines, MK, B["HISTORY"])) or load("picks.json", None)
+    cut = (TODAY_ET - dt.timedelta(days=14)).isoformat()
+    save("finals.json", {k: v for k, v in FINALS.items() if k.split("|")[1] >= cut})
 
     nfl_names = {}
     B["INJURIES"] = {sp: step(f"injuries {sp}", lambda sp=sp: injuries(sp, nfl_names)) or (old.get("INJURIES") or {}).get(sp, {})
