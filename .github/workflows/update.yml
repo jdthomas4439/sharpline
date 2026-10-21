@@ -11,7 +11,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,4 +30,4 @@ jobs:
           git config user.email "sharpline-bot@users.noreply.github.com"
           git add data
           git diff --cached --quiet || git commit -m "Update data $(date -u +%Y-%m-%dT%H:%MZ)"
-          git push
+          for i in 1 2 3; do git pull --rebase --autostash origin main && git push && break; sleep 5; done
