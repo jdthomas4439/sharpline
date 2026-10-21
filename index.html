@@ -1919,7 +1919,7 @@ function updateMoveBadge(){
 
 
 /* ---------- System test: paper-traded picks made by the backend, graded after each game ---------- */
-const STRAT_LABEL = { gap:"Market gap", steam:"Steam follow" };
+const STRAT_LABEL = { gap:"Market gap", steam:"Steam follow", angle:"Situational angle" };
 function pickCLV(p){
   if (p.close == null) return null;
   if (p.mkt === "ml") return { pct:imp(p.close)/imp(p.odds) - 1 };
@@ -1950,7 +1950,7 @@ function systemTestHTML(){
   const row = ([k, t]) => `<tr><td>${k}</td><td>${t.w}–${t.l}${t.ps ? "–" + t.ps : ""}</td><td style="color:${t.u >= 0 ? "var(--pos)" : "var(--neg)"}">${t.w + t.l + t.ps ? u(t.u) : "—"}</td><td>${t.open}</td></tr>`;
   const list = [...P.picks].reverse().slice(0, sysOpen ? 200 : 8);
   return `<h2>System test</h2>
-    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final.</p>
+    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Three strategies run side by side: market gaps, steam moves, and the 5 strongest situational angles each night.</p>
     <div class="me">
       <div><b>${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}</b><small>Record</small></div>
       <div><b style="color:${T.u >= 0 ? "var(--pos)" : "var(--neg)"}">${T.w + T.l + T.ps ? u(T.u) : "—"}</b><small>Units</small></div>
@@ -1963,7 +1963,7 @@ function systemTestHTML(){
     </tbody></table></div>
     ${T.n ? `<div class="bets">${list.map(p => { const c = pickCLV(p), [sp, d, a, h] = p.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
       return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : "Push") : "Open"}</span><b>${pickText(p)}</b><span class="o">${p.result ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
-      <small>${nm(a)} @ ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ")" : ""}${p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")}</div>
+      <small>${nm(a)} @ ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ")" : p.why ? ": " + p.why : ""}${p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")}</div>
       ${P.picks.length > 8 ? `<p><button class="chip" id="sysMore">${sysOpen ? "Show fewer" : "Show all " + P.picks.length + " picks"}</button></p>` : ""}` : `<p class="note">No picks yet. The system waits for a real edge or a big line move, so quiet days can have none.</p>`}`;
 }
 
