@@ -342,18 +342,25 @@ def weather(nfl_rows):
         if not (TODAY_ET <= d <= lim) or r[5] not in NFL_OUTDOOR: continue
         lat, lon = NFL_OUTDOOR[r[5]]; spots[f"nfl|{r[2]}|{r[4]}|{r[5]}"] = (lat, lon, r[2], r[3])
     out = {}
+    started, fails = time.time(), 0
     for key, (lat, lon, date, time_) in spots.items():
         if not (TODAY_ET <= dt.date.fromisoformat(date) <= lim): continue
-        js = get_json("https://api.open-meteo.com/v1/forecast", {"latitude": lat, "longitude": lon,
+        if fails >= 3 or time.time() - started > 120:        # weather is optional: never let it stall the run
+            log(f"Weather: stopped early ({fails} failures)"); break
+        r = get("https://api.open-meteo.com/v1/forecast", {"latitude": lat, "longitude": lon,
               "hourly": "temperature_2m,wind_speed_10m,precipitation_probability", "temperature_unit": "fahrenheit",
-              "wind_speed_unit": "mph", "timezone": "America/New_York", "start_date": date, "end_date": date})
-        if not js or "hourly" not in js: continue
+              "wind_speed_unit": "mph", "timezone": "America/New_York", "start_date": date, "end_date": date}, tries=1, timeout=8)
+        try: js = r.json() if r is not None else None
+        except Exception: js = None
+        if not js or "hourly" not in js:
+            fails += 1; continue
+        fails = 0
         hrs = js["hourly"].get("time", []); want = f"{date}T{time_[:2]}:00"
         i = hrs.index(want) if want in hrs else 0
         H = js["hourly"]
         out[key] = {"temp": H["temperature_2m"][i], "wind": H["wind_speed_10m"][i],
                     "rain": (H.get("precipitation_probability") or [None])[i]}
-        time.sleep(0.6)
+        time.sleep(0.3)
     log(f"Weather: {len(out)} outdoor games")
     return out
 
