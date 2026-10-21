@@ -526,14 +526,14 @@ def update_history(snaps):
 
 # ---------------------------------------------------------------- paper-trading test: system picks, graded after the game
 FINALS = {}
-STRAT_NAMES = {"gap": "Market gap", "steam": "Steam follow"}
+STRAT_NAMES = {"gap": "Market gap", "steam": "Steam follow", "angle": "Situational angles"}
 SPREAD_TH = {"nfl": 1.5, "cfb": 2.0, "nba": 2.0, "ncaab": 2.5}
 TOTAL_TH = {"nfl": 2.0, "cfb": 3.0, "nba": 3.0, "ncaab": 3.0, "nhl": 0.5, "mlb": 0.5}
 
 def _dec(a): return 1 + a / 100 if a > 0 else 1 + 100 / -a
 def _imp(a): return 1 / _dec(a)
 
-def make_and_grade_picks(all_lines, MK, hist):
+def make_and_grade_picks(all_lines, MK, hist, B=None):
     P = load("picks.json", None)
     if not P:
         P = {"start": NOW.isoformat(timespec="minutes"), "end": (NOW + dt.timedelta(days=7)).isoformat(timespec="minutes"), "picks": []}
@@ -582,6 +582,9 @@ def make_and_grade_picks(all_lines, MK, hist):
     # cap: best 8 new market-gap picks per run so one noisy run can't flood the test
     gaps = sorted([p for p in new if p["strat"] == "gap"], key=lambda p: -p["edge"])[:8]
     new = gaps + [p for p in new if p["strat"] != "gap"]
+    if B is not None:
+        try: new += angle_picks(P, B, have)
+        except Exception: log(f"angle picks failed:\n{traceback.format_exc()}")
     P["picks"].extend(new)
     # grade anything finished
     graded = 0
@@ -592,7 +595,7 @@ def make_and_grade_picks(all_lines, MK, hist):
             if p["mkt"] == "ml": p["close"] = o.get("hml") if p["side"] == "home" else o.get("aml")
             elif p["mkt"] == "spread" and o.get("sl") is not None: p["close"] = -o["sl"] if p["side"] == "home" else o["sl"]
             elif p["mkt"] == "total": p["close"] = o.get("tot")
-        f = FINALS.get(p["key"])
+        f = FINALS.get(p["key"]) or (rows_final(B, p["key"]) if B is not None else None)
         if p.get("result") is not None or not f: continue
         a, h = f
         if p["mkt"] == "ml":
@@ -611,6 +614,118 @@ def make_and_grade_picks(all_lines, MK, hist):
     log(f"Test picks: {len(new)} new, {graded} graded, {len(P['picks'])} total")
     return P
 
+
+
+# ---------------------------------------------------------------- strategy 3: nightly top-5 situational angles
+def _rows_as_dicts(sp, rows):
+    out = []
+    for r in rows or []:
+        if sp == "nfl":
+            season, _wk, date, time_, a, h, as_, hs, sl, tot, aml, hml, div, indoor, ar, hr, neu = r[:17]
+        else:
+            season, date, time_, a, h, as_, hs, sl, tot, aml, hml, div, indoor, ar, hr, neu = r[:16]
+        out.append(dict(season=season, date=date, time=time_ or "19:00", a=a, h=h, as_=as_, hs=hs, sl=sl, tot=tot,
+                        aml=aml, hml=hml, div=div, played=as_ is not None and hs is not None))
+    return out
+
+def _team_log(games, ab):
+    asc = []
+    for x in sorted((g for g in games if g["played"] and ab in (g["a"], g["h"])), key=lambda g: g["date"]):
+        home = x["h"] == ab
+        asc.append(dict(season=x["season"], date=x["date"], home=home, opp=x["a"] if home else x["h"],
+                        pf=x["hs"] if home else x["as_"], pa=x["as_"] if home else x["hs"],
+                        line=None if x["sl"] is None else (-x["sl"] if home else x["sl"]), tot=x["tot"], div=x["div"]))
+    for i, x in enumerate(asc):
+        p = asc[i - 1] if i else None
+        x["prev"] = ("W" if p["pf"] > p["pa"] else "L" if p["pf"] < p["pa"] else "T") if p and p["season"] == x["season"] else None
+    return list(reversed(asc))
+
+ANGLE_SPORTS = {"nfl": "NFLV_ROWS", "cfb": "CFB_ROWS", "nba": "NBA_ROWS", "nhl": "NHL_ROWS", "mlb": "MLB_ROWS"}
+REAL_LINES = {"nfl", "cfb"}
+
+def angle_candidates(sp, games, g):
+    real, cur = sp in REAL_LINES, max(x["season"] for x in games)
+    minn = 6 if real else 10
+    out = []
+    for ab, is_home in ((g["a"], False), (g["h"], True)):
+        log_ = _team_log(games, ab)
+        if not log_: continue
+        opp = g["h"] if ab == g["a"] else g["a"]
+        recent = [x for x in log_ if x["season"] >= cur - 2]
+        last = log_[0]
+        prev = ("W" if last["pf"] > last["pa"] else "L" if last["pf"] < last["pa"] else "T") if last["season"] == cur else None
+        line_now = None if g["sl"] is None else (-g["sl"] if is_home else g["sl"])
+        splits = [("last 10", log_[:10]), ("this season", [x for x in log_ if x["season"] == cur]),
+                  ("at home" if is_home else "on the road", [x for x in recent if x["home"] == is_home]),
+                  (f"vs {opp}", [x for x in log_ if x["opp"] == opp])]
+        if g["div"]: splits.append(("conference games" if sp == "cfb" else "division games", [x for x in recent if x["div"]]))
+        if prev in ("W", "L"): splits.append(("after a win" if prev == "W" else "after a loss", [x for x in recent if x["prev"] == prev]))
+        if real and line_now not in (None, 0):
+            fav = line_now < 0
+            splits.append(("as a favorite" if fav else "as an underdog", [x for x in recent if x["line"] is not None and ((x["line"] < 0) if fav else (x["line"] > 0))]))
+        for label, arr in splits:
+            if real:
+                ats = [x for x in arr if x["line"] is not None and x["pf"] - x["pa"] + x["line"] != 0]
+                if len(ats) >= minn and line_now is not None:
+                    w = sum(1 for x in ats if x["pf"] - x["pa"] + x["line"] > 0); p = w / len(ats)
+                    if p >= .7 or p <= .3:
+                        side = ("home" if is_home else "away") if p >= .5 else ("away" if is_home else "home")
+                        out.append(dict(score=abs(p - .5) * len(ats) ** .5, mkt="spread", side=side,
+                                        line=(-g["sl"] if side == "home" else g["sl"]), odds=-110,
+                                        why=f"{ab} {w}–{len(ats)-w} against the spread, {label}" + ("" if p >= .5 else " (fading them)")))
+                ous = [x for x in arr if x["tot"] is not None and x["pf"] + x["pa"] != x["tot"]]
+                if len(ous) >= minn and g["tot"] is not None:
+                    o = sum(1 for x in ous if x["pf"] + x["pa"] > x["tot"]); p = o / len(ous)
+                    if p >= .7 or p <= .3:
+                        out.append(dict(score=abs(p - .5) * len(ous) ** .5, mkt="total", side="over" if p >= .5 else "under",
+                                        line=g["tot"], odds=-110,
+                                        why=f"{ab} games {'over' if p >= .5 else 'under'} the closing total {o if p >= .5 else len(ous)-o} of {len(ous)}, {label}"))
+            su = [x for x in arr if x["pf"] != x["pa"]]
+            if len(su) >= minn and g["hml"] is not None and g["aml"] is not None:
+                w = sum(1 for x in su if x["pf"] > x["pa"]); p = w / len(su)
+                if p >= .75 or p <= .25:
+                    side = ("home" if is_home else "away") if p >= .5 else ("away" if is_home else "home")
+                    odds = g["hml"] if side == "home" else g["aml"]
+                    if -200 <= odds <= 200:                       # skip heavy chalk, where a great record is already priced in
+                        out.append(dict(score=abs(p - .5) * len(su) ** .5 * 0.7, mkt="ml", side=side, line=None, odds=odds,
+                                        why=f"{ab} {w}–{len(su)-w} straight up, {label}" + ("" if p >= .5 else " (fading them)")))
+    return out
+
+def angle_picks(P, B, have):
+    today = TODAY_ET.isoformat()
+    already = [p for p in P["picks"] if p["strat"] == "angle" and p["key"].split("|")[1] == today]
+    need = 5 - len(already)
+    if need <= 0: return []
+    taken = {p["key"] for p in already}
+    pool = []
+    for sp, rk in ANGLE_SPORTS.items():
+        games = _rows_as_dicts(sp, B.get(rk))
+        if not games: continue
+        for g in games:
+            if g["played"] or g["date"] != today: continue
+            start = dt.datetime.fromisoformat(f"{g['date']}T{g['time']}:00").replace(tzinfo=ET)
+            mins = (start - NOW).total_seconds() / 60
+            if mins < 20: continue
+            key = f"{sp}|{g['date']}|{g['a']}|{g['h']}"
+            if key in taken: continue
+            for c in angle_candidates(sp, games, g):
+                pool.append((c["score"], key, sp, start, c))
+    pool.sort(key=lambda t: -t[0])
+    new, used = [], set()
+    for score, key, sp, start, c in pool:
+        if key in used or ("angle", key, c["mkt"]) in have: continue
+        used.add(key)
+        new.append({"strat": "angle", "key": key, "sport": sp, "mkt": c["mkt"], "side": c["side"], "odds": c["odds"], "line": c["line"],
+                    "why": c["why"], "score": round(score, 2), "start": start.astimezone(dt.timezone.utc).isoformat(timespec="minutes"),
+                    "at": NOW.isoformat(timespec="minutes")})
+        if len(new) >= need: break
+    return new
+
+def rows_final(B, key):
+    sp, date, a, h = key.split("|")
+    for g in _rows_as_dicts(sp, B.get(ANGLE_SPORTS.get(sp, ""), [])):
+        if g["played"] and g["a"] == a and g["h"] == h and g["date"] == date: return [g["as_"], g["hs"]]
+    return None
 
 # ---------------------------------------------------------------- main
 def main():
@@ -693,7 +808,7 @@ def main():
             s = snaps.setdefault(f"{sp}|{r['date']}|{r['a']}|{r['h']}", {})
             s["k"] = mid((r.get("k") or {}).get("h")); s["p"] = (r.get("p") or {}).get("h")
     B["HISTORY"] = step("history", lambda: update_history(snaps)) or load("history.json", {})
-    B["PICKS"] = step("picks", lambda: make_and_grade_picks(all_lines, MK, B["HISTORY"])) or load("picks.json", None)
+    B["PICKS"] = step("picks", lambda: make_and_grade_picks(all_lines, MK, B["HISTORY"], B)) or load("picks.json", None)
     if SAMPLES: save("espn_odds_sample.json", SAMPLES)
     cut = (TODAY_ET - dt.timedelta(days=14)).isoformat()
     save("finals.json", {k: v for k, v in FINALS.items() if k.split("|")[1] >= cut})
