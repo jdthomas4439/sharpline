@@ -146,7 +146,7 @@ h2{font-weight:600;font-size:18px;letter-spacing:-.01em;margin:22px 0 8px}
 .rg{margin-top:24px;font-size:13px;color:var(--muted);text-align:center}
 
 nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-.tabs-inner{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr)}
+.tabs-inner{max-width:720px;margin:0 auto;display:grid;grid-template-columns:repeat(6,1fr)}
 .tab{border:0;background:transparent;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:12px;font-weight:600;position:relative}
 .tab svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8}
 .tab.on{color:var(--ink)}
@@ -289,6 +289,15 @@ table.board.mkt{min-width:0}
 .board.mkt td.cheap{color:var(--pos);font-weight:700}
 .plan{margin:0;padding:0 14px 10px;font-size:14px;color:var(--muted)}
 .trends li.arb{color:var(--pos);font-weight:600}
+
+.sport-bar[hidden]{display:none}
+.toplist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;counter-reset:top}
+.toplist li{counter-increment:top}
+.topitem{width:100%;display:grid;grid-template-columns:28px 54px 1fr;gap:8px;align-items:start;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:15px;line-height:1.4}
+.topitem::before{content:counter(top);font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:600;color:var(--muted)}
+.topitem .sp{font-size:12px;font-weight:700;color:var(--pos);background:var(--pos-bg);border-radius:4px;padding:2px 0;text-align:center}
+.topitem .tx small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.tab{font-size:11px}
 </style>
 </head>
 <body>
@@ -311,7 +320,8 @@ table.board.mkt{min-width:0}
 
 <nav class="tabs" aria-label="Sections">
   <div class="tabs-inner">
-    <button class="tab on" data-tab="edge"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Edges<span class="badge" id="moveBadge" hidden>0</span></button>
+    <button class="tab on" data-tab="top" aria-current="page"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>Top</button>
+    <button class="tab" data-tab="edge"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Edges<span class="badge" id="moveBadge" hidden>0</span></button>
     <button class="tab" data-tab="odds"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16M15 4v16"/></svg>Games</button>
     <button class="tab" data-tab="props"><svg viewBox="0 0 24 24"><path d="M5 20V10M10 20V4M15 20v-7M20 20V8"/></svg>Props</button>
     <button class="tab" data-tab="markets"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2 3-2s3 .7 3 2-1.3 1.8-3 2.2-3 .9-3 2.3 1.3 2 3 2 3-.6 3-2"/></svg>Markets</button>
@@ -617,7 +627,7 @@ function buildProps(sport){
 const PROPS_ALL = { nba: buildProps("nba"), nhl: buildProps("nhl") };
 
 /* ---------- State ---------- */
-let sport = "nhl", current = "edge", statFilter = "Shots on goal";
+let sport = "nhl", current = "top", statFilter = "Shots on goal";
 let slip = [], stake = 10;
 
 function addLeg(gid, type, side, book, odds, prob){
@@ -1528,8 +1538,8 @@ function resHighlights(g){
     S.rows.forEach(r => {
       const a = r.a, lbl = r.label.charAt(0).toLowerCase() + r.label.slice(1);
       const an = a.ats[0] + a.ats[1], on = a.ou[0] + a.ou[1];
-      if (an >= min && (S.real || !["nhl","mlb"].includes(g.sport))){ const p = a.ats[0]/an; if (p >= .7 || p <= .3) out.push({ s:Math.abs(p-.5)*Math.sqrt(an), t: S.real ? `${name} are ${a.ats[0]}–${a.ats[1]}${a.ats[2]?"–"+a.ats[2]:""} against the spread, ${lbl}` : `${name} would have covered ${fmtPt(S.line)} in ${a.ats[0]} of ${an}, ${lbl}` }); }
-      if (on >= min){ const p = a.ou[0]/on; if (p >= .7 || p <= .3) out.push({ s:Math.abs(p-.5)*Math.sqrt(on), t:`${name} games went ${p >= .5 ? "over" : "under"} ${S.real ? "the closing total" : S.tot} in ${p >= .5 ? a.ou[0] : a.ou[1]} of ${on}, ${lbl}` }); }
+      if (an >= min && (S.real || (S.tested && !["nhl","mlb"].includes(g.sport)))){ const p = a.ats[0]/an; if (p >= .7 || p <= .3) out.push({ s:Math.abs(p-.5)*Math.sqrt(an), real:S.real, t: S.real ? `${name} are ${a.ats[0]}–${a.ats[1]}${a.ats[2]?"–"+a.ats[2]:""} against the spread, ${lbl}` : `${name} would have covered ${fmtPt(S.line)} in ${a.ats[0]} of ${an}, ${lbl}` }); }
+      if (on >= min && (S.real || S.tested)){ const p = a.ou[0]/on; if (p >= .7 || p <= .3) out.push({ s:Math.abs(p-.5)*Math.sqrt(on), real:S.real, t:`${name} games went ${p >= .5 ? "over" : "under"} ${S.real ? "the closing total" : S.tot} in ${p >= .5 ? a.ou[0] : a.ou[1]} of ${on}, ${lbl}` }); }
       if (a.n >= min){ const p = a.w/a.n; if (p >= .75 || p <= .25) out.push({ s:Math.abs(p-.5)*Math.sqrt(a.n)*0.7, t:`${name} are ${a.w}–${a.l}${a.t?"–"+a.t:""} straight up, ${lbl}` }); }
     });
   });
@@ -1885,7 +1895,7 @@ function lineMoves(){
     if (fm && lm){ const d = imp(lm[3]) - imp(fm[3]); if (Math.abs(d) >= MOVE_TH.prob) push("ml", `${game}: ${nm(h)} moneyline ${fmt(fm[3])} → ${fmt(lm[3])} (${d > 0 ? "+" : ""}${Math.round(d*100)} pts)`, Math.abs(d) * 25, lm); }
     [[4,"Kalshi"],[5,"Polymarket"]].forEach(([i, src]) => {
       const f = first(i), l = last(i);
-      if (f && l && Math.abs(l[i] - f[i]) >= MOVE_TH.pm) push("pm", `${game}: ${src} has ${nm(h)} ${Math.round(f[i]*100)}% → ${Math.round(l[i]*100)}%`, Math.abs(l[i] - f[i]) * 20, l);
+      if (f && l && f[i] !== 0.5 && l[i] !== 0.5 && Math.abs(l[i] - f[i]) >= MOVE_TH.pm) push("pm", `${game}: ${src} has ${nm(h)} ${Math.round(f[i]*100)}% → ${Math.round(l[i]*100)}%`, Math.abs(l[i] - f[i]) * 20, l);
     });
     // steam: a big chunk of the move in the last ~2 hours
     const rb = recentBase(1), lsr = last(1);
@@ -1955,6 +1965,46 @@ function systemTestHTML(){
       return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : "Push") : "Open"}</span><b>${pickText(p)}</b><span class="o">${p.result ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
       <small>${nm(a)} @ ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ")" : ""}${p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")}</div>
       ${P.picks.length > 8 ? `<p><button class="chip" id="sysMore">${sysOpen ? "Show fewer" : "Show all " + P.picks.length + " picks"}</button></p>` : ""}` : `<p class="note">No picks yet. The system waits for a real edge or a big line move, so quiet days can have none.</p>`}`;
+}
+
+
+/* ---------- Top: the best of all sports on one page ---------- */
+const SPORT_SHORT = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"NCAAF", ncaab:"NCAAB" };
+function topMoves(){
+  if (!(window.SLB && SLB.HISTORY)) return null;
+  const now = Date.now() / 60000;
+  const rank = m => (m.steam ? 2 : 0) + (m.type === "pm" ? 0 : 1);   // sportsbook moves before prediction-market swings, which can be thin early
+  return lineMoves().filter(m => now - m.ts < 1440).sort((a,b) => rank(b) - rank(a) || b.size - a.size).slice(0, 5);
+}
+function topAngles(){
+  const out = [];
+  Object.keys(RES).forEach(sp => freeGames(sp).forEach(g => {
+    resHighlights(g).filter(h => h.real).slice(0, 2).forEach(h => out.push({ ...h, sp, g }));     // real closing-line angles only, max 2 per game
+  }));
+  return out.sort((a,b) => b.s - a.s).slice(0, 10);
+}
+function renderTop(){
+  const moves = topMoves(), angles = topAngles();
+  const ago = t => { const m = Math.round(Date.now()/60000 - t); return m < 60 ? m + "m ago" : Math.round(m/60) + "h ago"; };
+  const when = g => g.start.toLocaleString("en-US", { weekday:"short", hour:"numeric", minute:"2-digit", timeZone:"America/New_York" }) + " ET";
+  view.innerHTML = `
+    <h1>Top across all sports</h1>
+    <p class="sub">The five biggest line moves and the ten strongest situational angles from every sport, in one place. Tap any item to open that game.</p>
+    <h2>Top 5 line moves</h2>
+    ${moves === null ? `<p class="note">Line moves come from your backend’s hourly snapshots.</p>`
+      : moves.length ? `<ol class="toplist">${moves.map(m => { const [sp, d, a, h] = m.key.split("|");
+        return `<li><button class="topitem" data-open="${sp}|fr_${sp}_${d}_${a}_${h}"><span class="sp">${SPORT_SHORT[sp] || sp.toUpperCase()}</span><span class="tx">${m.steam ? "<b>Steam:</b> " : ""}${m.text}<small>${ago(m.ts)}</small></span></button></li>`; }).join("")}</ol>`
+      : `<p class="note">No big moves in the last 24 hours.</p>`}
+    <h2>Top 10 situational angles</h2>
+    ${angles.length ? `<ol class="toplist">${angles.map(x => `<li><button class="topitem" data-open="${x.sp}|${x.g.id}"><span class="sp">${SPORT_SHORT[x.sp] || x.sp.toUpperCase()}</span><span class="tx">${x.t}<small>${matchup(x.g)}, ${when(x.g)}</small></span></button></li>`).join("")}</ol>`
+      : `<p class="note">No strong angles in the upcoming games.</p>`}
+    <p class="note">Angles are against-the-spread and over–under records using each game’s real closing line, ranked by how far from 50/50 they are and how many games back them up. That’s NFL and college football today; NBA, NHL and MLB join as the backend’s line archive fills. Trends describe the past and are often already in the price.</p>`;
+  view.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
+    const [sp, id] = b.dataset.open.split("|");
+    setSport(sp); resOpen.add(id); go("odds");
+    const el = document.querySelector(`[data-rs="${CSS.escape(id)}"]`);
+    if (el) el.closest(".game").scrollIntoView({ block:"start" });
+  });
 }
 
 /* ---------- Views ---------- */
@@ -2244,14 +2294,16 @@ function renderSocial(){
   view.querySelectorAll("[data-c]").forEach(b => b.onclick = () => toast("Comments open in the live version"));
 }
 
-const RENDER = { edge:renderEdge, odds:renderOdds, props:renderProps, markets:renderMarkets, parlay:renderParlay, social:renderSocial };
+const RENDER = { top:renderTop, edge:renderEdge, odds:renderOdds, props:renderProps, markets:renderMarkets, parlay:renderParlay, social:renderSocial };
 function render(){
+  const bar = document.querySelector(".sport-bar"); if (bar) bar.hidden = current === "top";
   RENDER[current]();
   if (current === "edge" && window.SLB && SLB.HISTORY){ const M = lineMoves(); if (M.length) store.set("sl_moves_seen", Math.max(movesSeen(), M[0].ts)); }
   updateMoveBadge(); updateBadge();
 }
 function go(t){
   current = t;
+  const bar = document.querySelector(".sport-bar"); if (bar) bar.hidden = t === "top";
   document.querySelectorAll(".tab").forEach(b => { b.classList.toggle("on", b.dataset.tab === t); b.setAttribute("aria-current", b.dataset.tab === t ? "page" : "false"); });
   render(); window.scrollTo(0,0);
 }
