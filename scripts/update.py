@@ -40,7 +40,7 @@ def get(url, params=None, tries=3, timeout=40):
             r = requests.get(url, params=params, headers=UA, timeout=timeout)
             if r.status_code == 200: return r
             log(f"  {r.status_code} from {url}")
-            if r.status_code in (401, 403, 404, 422): return None
+            if r.status_code in (400, 401, 403, 404, 422): return None
         except Exception as e:
             log(f"  error {e} on {url}")
         time.sleep(2 * (i + 1))
@@ -866,8 +866,11 @@ def soccer_upcoming_espn(games):
     have = {(g["date"], g["a"], g["h"]) for g in games}
     for div, code in ESPN_SOCCER.items():
         known = {g["h"] for g in games if g.get("lg") == div} | {g["a"] for g in games if g.get("lg") == div}
-        js = get_json(f"{ESPN}/soccer/{code}/scoreboard", {"dates": rng, "limit": 100})
-        for ev in (js or {}).get("events", []) or []:
+        evs = []
+        for k in range(0, 8):                            # one request per day; ESPN rejects date ranges here
+            js = get_json(f"{ESPN}/soccer/{code}/scoreboard", {"dates": (TODAY_ET + dt.timedelta(days=k)).strftime("%Y%m%d")})
+            evs += (js or {}).get("events", []) or []
+        for ev in evs:
             try:
                 comp = ev["competitions"][0]
                 if ((comp.get("status") or {}).get("type") or {}).get("state") != "pre": continue
