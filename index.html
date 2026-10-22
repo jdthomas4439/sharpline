@@ -2011,11 +2011,13 @@ function topMoves(){
   if (!(window.SLB && SLB.HISTORY)) return null;
   const now = Date.now() / 60000;
   const rank = m => (m.steam ? 2 : 0) + (m.type === "pm" ? 0 : 1);   // sportsbook moves before prediction-market swings, which can be thin early
-  return lineMoves().filter(m => now - m.ts < 1440).sort((a,b) => rank(b) - rank(a) || b.size - a.size).slice(0, 5);
+  const today = etDate(new Date());
+  return lineMoves().filter(m => now - m.ts < 1440 && m.key.split("|")[1] === today).sort((a,b) => rank(b) - rank(a) || b.size - a.size).slice(0, 5);
 }
 function topAngles(){
   const out = [];
-  Object.keys(RES).forEach(sp => freeGames(sp).forEach(g => {
+  const today = etDate(new Date());
+  Object.keys(RES).forEach(sp => freeGames(sp).filter(g => etDate(g.start) === today && !g.started).forEach(g => {
     resHighlights(g).filter(h => h.real).slice(0, 2).forEach(h => out.push({ ...h, sp, g }));     // real closing-line angles only, max 2 per game
   }));
   return out.sort((a,b) => b.s - a.s).slice(0, 10);
@@ -2044,17 +2046,17 @@ function renderTop(){
   const ago = t => { const m = Math.round(Date.now()/60000 - t); return m < 60 ? m + "m ago" : Math.round(m/60) + "h ago"; };
   const when = g => g.start.toLocaleString("en-US", { weekday:"short", hour:"numeric", minute:"2-digit", timeZone:"America/New_York" }) + " ET";
   view.innerHTML = `
-    <h1>Top across all sports</h1>
-    <p class="sub">The five biggest line moves and the ten strongest situational angles from every sport, in one place. Tap any item to open that game.</p>
+    <h1>Today across all sports</h1>
+    <p class="sub">The biggest line moves and strongest situational angles for today’s games in every sport. Tap any item to open that game.</p>
     ${dogHTML()}
     <h2>Top 5 line moves</h2>
     ${moves === null ? `<p class="note">Line moves come from your backend’s hourly snapshots.</p>`
       : moves.length ? `<ol class="toplist">${moves.map(m => { const [sp, d, a, h] = m.key.split("|");
         return `<li><button class="topitem" data-open="${sp}|fr_${sp}_${d}_${a}_${h}"><span class="sp">${SPORT_SHORT[sp] || sp.toUpperCase()}</span><span class="tx">${m.steam ? "<b>Steam:</b> " : ""}${m.text}<small>${ago(m.ts)}</small></span></button></li>`; }).join("")}</ol>`
-      : `<p class="note">No big moves in the last 24 hours.</p>`}
+      : `<p class="note">No big line moves on today’s games yet.</p>`}
     <h2>Top 10 situational angles</h2>
     ${angles.length ? `<ol class="toplist">${angles.map(x => `<li><button class="topitem" data-open="${x.sp}|${x.g.id}"><span class="sp">${SPORT_SHORT[x.sp] || x.sp.toUpperCase()}</span><span class="tx">${x.t}<small>${matchup(x.g)}, ${when(x.g)}</small></span></button></li>`).join("")}</ol>`
-      : `<p class="note">No strong angles in the upcoming games.</p>`}
+      : `<p class="note">No strong angles in today’s games.</p>`}
     <p class="note">Angles are against-the-spread and over–under records using each game’s real closing line, ranked by how far from 50/50 they are and how many games back them up. That’s NFL and college football today; NBA, NHL and MLB join as the backend’s line archive fills. Trends describe the past and are often already in the price.</p>`;
   view.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
     const [sp, id] = b.dataset.open.split("|");
