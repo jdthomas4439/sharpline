@@ -834,6 +834,11 @@ def build_soccer():
     return add_rest(out)
 
 # ---------------------------------------------------------------- golf (ESPN PGA Tour + Kalshi/Polymarket winner prices)
+def norm(name):
+    import unicodedata
+    n = unicodedata.normalize("NFD", str(name or "")).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z ]", "", n)).strip()
+
 def _golf_events(js):
     return (js or {}).get("events") or []
 
