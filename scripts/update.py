@@ -825,6 +825,8 @@ def build_soccer():
                 g = _soccer_row(rec, y, True)
                 if g: games.append(g); n_up += 1
         except Exception as e: log(f"  soccer fixtures: {e}")
+    try: n_up += soccer_upcoming_espn(games)
+    except Exception as e: log(f"  soccer ESPN fixtures: {e}")
     seen, out = set(), []
     for g in games:
         k = (g["date"], g["a"], g["h"])
@@ -832,6 +834,64 @@ def build_soccer():
         seen.add(k); out.append(g)
     log(f"Soccer: {len(out)} matches ({n_up} upcoming)")
     return add_rest(out)
+
+
+ESPN_SOCCER = {"E0": "eng.1", "SP1": "esp.1", "I1": "ita.1", "D1": "ger.1", "F1": "fra.1"}
+SOCCER_ALIAS = {"manchester united": "Man United", "manchester city": "Man City", "nottingham forest": "Nott'm Forest",
+    "wolverhampton wanderers": "Wolves", "tottenham hotspur": "Tottenham", "brighton and hove albion": "Brighton", "brighton hove albion": "Brighton",
+    "west ham united": "West Ham", "newcastle united": "Newcastle", "leeds united": "Leeds", "afc bournemouth": "Bournemouth",
+    "atletico madrid": "Ath Madrid", "athletic club": "Ath Bilbao", "real sociedad": "Sociedad", "celta vigo": "Celta",
+    "rayo vallecano": "Vallecano", "real betis": "Betis", "deportivo alaves": "Alaves", "espanyol": "Espanol",
+    "borussia dortmund": "Dortmund", "bayer leverkusen": "Leverkusen", "borussia monchengladbach": "M'gladbach",
+    "eintracht frankfurt": "Ein Frankfurt", "fc cologne": "FC Koln", "1 fc koln": "FC Koln", "vfb stuttgart": "Stuttgart",
+    "tsg hoffenheim": "Hoffenheim", "sc freiburg": "Freiburg", "fsv mainz 05": "Mainz", "mainz": "Mainz", "werder bremen": "Werder Bremen",
+    "paris saintgermain": "Paris SG", "paris saint germain": "Paris SG", "olympique marseille": "Marseille", "olympique lyonnais": "Lyon",
+    "as monaco": "Monaco", "stade rennais": "Rennes", "internazionale": "Inter", "inter milan": "Inter", "ac milan": "Milan",
+    "as roma": "Roma", "hellas verona": "Verona"}
+
+def _team_match(name, known):
+    import difflib
+    n = norm(name)
+    if n in SOCCER_ALIAS and SOCCER_ALIAS[n] in known: return SOCCER_ALIAS[n]
+    by_norm = {norm(k): k for k in known}
+    if n in by_norm: return by_norm[n]
+    strip = lambda x: " ".join(w for w in x.split() if w not in ("fc", "cf", "afc", "ac", "as", "sc", "club", "de", "the", "calcio"))
+    cand = {strip(k): v for k, v in by_norm.items()}
+    m = difflib.get_close_matches(strip(n), list(cand), n=1, cutoff=0.72)
+    return cand[m[0]] if m else None
+
+def soccer_upcoming_espn(games):
+    added = 0
+    rng = f"{TODAY_ET.strftime('%Y%m%d')}-{(TODAY_ET + dt.timedelta(days=8)).strftime('%Y%m%d')}"
+    have = {(g["date"], g["a"], g["h"]) for g in games}
+    for div, code in ESPN_SOCCER.items():
+        known = {g["h"] for g in games if g.get("lg") == div} | {g["a"] for g in games if g.get("lg") == div}
+        js = get_json(f"{ESPN}/soccer/{code}/scoreboard", {"dates": rng, "limit": 100})
+        for ev in (js or {}).get("events", []) or []:
+            try:
+                comp = ev["competitions"][0]
+                if ((comp.get("status") or {}).get("type") or {}).get("state") != "pre": continue
+                home = next(c for c in comp["competitors"] if c["homeAway"] == "home")
+                away = next(c for c in comp["competitors"] if c["homeAway"] == "away")
+                h = _team_match(home["team"].get("displayName") or home["team"].get("name"), known)
+                a = _team_match(away["team"].get("displayName") or away["team"].get("name"), known)
+                if not h or not a: continue
+                date, time_ = et(ev["date"])
+                if (date, a, h) in have: continue
+                o = (comp.get("odds") or [{}])[0] or {}
+                ml = o.get("moneyline") or {}
+                pick = lambda side: next((v for v in [((ml.get(side) or {}).get(st) or {}).get("odds") for st in ("close", "current", "open")] if v not in (None, "")), None)
+                toint = lambda v: (100 if str(v).upper() in ("EVEN", "EV") else int(float(str(v).replace("+", "")))) if v not in (None, "") else None
+                hml = (o.get("homeTeamOdds") or {}).get("moneyLine") or toint(pick("home"))
+                aml = (o.get("awayTeamOdds") or {}).get("moneyLine") or toint(pick("away"))
+                dml = (o.get("drawOdds") or {}).get("moneyLine") or toint(pick("draw"))
+                games.append(dict(season=season_year(7), date=date, time=time_, a=a, h=h, **{"as": None}, hs=None, sl=None,
+                                  tot=float(o["overUnder"]) if o.get("overUnder") is not None else None, aml=aml, hml=hml, dml=dml, div=0, lg=div))
+                have.add((date, a, h)); added += 1
+            except Exception as e:
+                log(f"  soccer espn skip: {e}")
+    log(f"Soccer ESPN fixtures: {added} added")
+    return added
 
 # ---------------------------------------------------------------- golf (ESPN PGA Tour + Kalshi/Polymarket winner prices)
 def norm(name):
@@ -889,7 +949,9 @@ def build_golf():
             break
     # last year at this event (same week a year earlier)
     last = {}
+    key_words = {w for w in norm(G["event"]["name"] or "").split() if len(w) > 3 and w not in ("championship", "open", "classic", "invitational", "tournament")}
     for pe in _golf_events(get_json(base, {"dates": (d0 - dt.timedelta(days=364)).strftime("%Y%m%d")})):
+        if not key_words & set(norm(pe.get("name") or "").split()): break
         for p in _golf_field(pe):
             if norm(p["n"]) in names: last[norm(p["n"])] = _finish(p["pos"])
         G["event"]["lastYearName"] = pe.get("name"); break
