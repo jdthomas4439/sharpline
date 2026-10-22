@@ -311,6 +311,17 @@ table.board.mkt{min-width:0}
 .dodds{font-size:20px;font-weight:700;color:var(--gold)}
 .dmeta{color:var(--muted);font-size:14px}.dwhy{font-size:14px}
 .dstat{font-size:13px;color:var(--muted)}.dstat.win{color:var(--pos)}.dstat.loss{color:var(--neg)}
+
+.topbet{display:flex;flex-direction:column;gap:2px;margin:10px 14px;padding:10px 12px;border-radius:8px;background:var(--best-bg);border-left:4px solid var(--best-line)}
+.topbet small{font-size:12px;font-weight:600;color:var(--pos);text-transform:uppercase;letter-spacing:.04em}
+.topbet b{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:17px}
+.topbet span{font-size:13px;color:var(--muted);line-height:1.4}
+.topbet.pass{background:var(--surface2);border-left-color:var(--muted)}.topbet.pass small{color:var(--muted)}
+.ggroup{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.ghead{display:flex;justify-content:space-between;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:15px}
+.ghead span{color:var(--muted);font-size:13px;white-space:nowrap}
+.ggroup .trends{background:transparent;padding:8px 12px 10px}
+.ggroup .trends li small{display:inline;margin-left:6px;color:var(--muted);font-size:12px}
 </style>
 </head>
 <body>
@@ -1569,9 +1580,9 @@ function resHighlights(g){
     S.rows.forEach(r => {
       const a = r.a, lbl = r.label.charAt(0).toLowerCase() + r.label.slice(1);
       const an = a.ats[0] + a.ats[1], on = a.ou[0] + a.ou[1];
-      if (an >= min && (S.real || (S.tested && !["nhl","mlb"].includes(g.sport)))){ const p = a.ats[0]/an; if (p >= .7 || p <= .3) out.push({ s:Math.abs(p-.5)*Math.sqrt(an), real:S.real, t: S.real ? `${name} are ${a.ats[0]}–${a.ats[1]}${a.ats[2]?"–"+a.ats[2]:""} against the spread, ${lbl}` : `${name} would have covered ${fmtPt(S.line)} in ${a.ats[0]} of ${an}, ${lbl}` }); }
-      if (on >= min && (S.real || S.tested)){ const p = a.ou[0]/on; if (p >= .7 || p <= .3) out.push({ s:Math.abs(p-.5)*Math.sqrt(on), real:S.real, t:`${name} games went ${p >= .5 ? "over" : "under"} ${S.real ? "the closing total" : S.tot} in ${p >= .5 ? a.ou[0] : a.ou[1]} of ${on}, ${lbl}` }); }
-      if (a.n >= min){ const p = a.w/a.n; if (p >= .75 || p <= .25) out.push({ s:Math.abs(p-.5)*Math.sqrt(a.n)*0.7, t:`${name} are ${a.w}–${a.l}${a.t?"–"+a.t:""} straight up, ${lbl}` }); }
+      if (an >= min && (S.real || (S.tested && !["nhl","mlb"].includes(g.sport)))){ const p = a.ats[0]/an; if (p >= .7 || p <= .3) out.push({ s:Math.abs(p-.5)*Math.sqrt(an), real:S.real, mkt:"spread", side:(p >= .5) === isHome ? "home" : "away", t: S.real ? `${name} are ${a.ats[0]}–${a.ats[1]}${a.ats[2]?"–"+a.ats[2]:""} against the spread, ${lbl}` : `${name} would have covered ${fmtPt(S.line)} in ${a.ats[0]} of ${an}, ${lbl}` }); }
+      if (on >= min && (S.real || S.tested)){ const p = a.ou[0]/on; if (p >= .7 || p <= .3) out.push({ s:Math.abs(p-.5)*Math.sqrt(on), real:S.real, mkt:"total", side:p >= .5 ? "over" : "under", t:`${name} games went ${p >= .5 ? "over" : "under"} ${S.real ? "the closing total" : S.tot} in ${p >= .5 ? a.ou[0] : a.ou[1]} of ${on}, ${lbl}` }); }
+      if (a.n >= min){ const p = a.w/a.n; if (p >= .75 || p <= .25) out.push({ s:Math.abs(p-.5)*Math.sqrt(a.n)*0.7, mkt:"ml", side:(p >= .5) === isHome ? "home" : "away", t:`${name} are ${a.w}–${a.l}${a.t?"–"+a.t:""} straight up, ${lbl}` }); }
     });
   });
   return out.sort((a,b) => b.s - a.s).slice(0,5);
@@ -1946,7 +1957,8 @@ function movesHTML(){
   if (!(window.SLB && SLB.HISTORY)) return `<h2>Line moves</h2><p class="note">Line-move alerts come from your backend, which saves every line and Kalshi/Polymarket price each hour and flags big moves, key-number crosses and late steam.</p>`;
   const seen = movesSeen(), all = lineMoves().filter(m => m.sp === sport), M = all.slice(0, movesAll ? 40 : 6);
   const ago = t => { const m = Math.round(Date.now()/60000 - t); return m < 60 ? m + "m ago" : m < 1440 ? Math.round(m/60) + "h ago" : Math.round(m/1440) + "d ago"; };
-  return `<h2>${SPORT_LABEL[sport] || ""} line moves</h2>${M.length ? `<ul class="trends angles moves">${M.map(m => `<li class="${m.ts > seen ? "new" : ""}">${m.ts > seen ? `<span class="newtag">New</span> ` : ""}${m.steam ? "Steam: " : ""}${m.text}<small>${SPORT_LABEL[m.sp] || m.sp.toUpperCase()}, ${ago(m.ts)}</small></li>`).join("")}</ul>` : `<p class="note">No significant ${SPORT_LABEL[sport] || ""} moves since the lines opened.</p>`}${all.length > 6 ? `<p class="moremoves"><button class="chip" id="movesMore">${movesAll ? "Show fewer" : "Show all " + all.length}</button></p>` : ""}`;
+  const byGame = []; M.forEach(m => { let gp = byGame.find(x => x.game === m.game); if (!gp) byGame.push(gp = { game:m.game, list:[] }); gp.list.push(m); });
+  return `<h2>${SPORT_LABEL[sport] || ""} line moves</h2>${M.length ? byGame.map(gp => `<div class="ggroup"><div class="ghead"><b>${gp.game}</b></div><ul class="trends moves">${gp.list.map(m => `<li class="${m.ts > seen ? "new" : ""}">${m.ts > seen ? `<span class="newtag">New</span> ` : ""}${m.steam ? "Steam: " : ""}${m.text.replace(gp.game + ": ", "")}<small>${ago(m.ts)}</small></li>`).join("")}</ul></div>`).join("") : `<p class="note">No significant ${SPORT_LABEL[sport] || ""} moves since the lines opened.</p>`}${all.length > 6 ? `<p class="moremoves"><button class="chip" id="movesMore">${movesAll ? "Show fewer" : "Show all " + all.length}</button></p>` : ""}`;
 }
 let movesAll = false;
 function updateMoveBadge(){
@@ -2119,6 +2131,43 @@ function renderGolfMarkets(){
     <p class="note">Outright winner prices include each app’s margin and can be thin on long shots, so small gaps may not be fillable. Which of these you can use depends on your state.</p>`;
 }
 
+
+/* ---------- Top suggested bet for one game ---------- */
+function topBet(g){
+  const R = RES[g.sport], date = etDate(g.start);
+  const nm = ab => R ? R.name(ab) : ab;
+  // 1. A system pick already logged for this game
+  const P = window.SLB && SLB.PICKS;
+  const order = { gap:0, dog:1, steam:2, angle:3 };
+  const sys = P ? P.picks.filter(p => p.key === `${g.sport}|${date}|${g.awayAbbr}|${g.homeAbbr}`).sort((a,b) => (order[a.strat] ?? 9) - (order[b.strat] ?? 9))[0] : null;
+  if (sys) return { bet:pickText(sys) + (sys.mkt === "ml" ? "" : ` (${fmt(sys.odds)})`), why:`${STRAT_LABEL[sys.strat]} pick${sys.why ? ": " + sys.why : sys.edge != null ? ": " + pct(sys.edge) + " edge" : sys.move != null ? ": line moved " + fmtPt(sys.move) : ""}`, src:"system" };
+  // 2. A live price edge
+  if (g.live){
+    const e = allEdges(g.sport).filter(x => x.g.id === g.id)[0];
+    if (e) return { bet:`${e.s.name} ${fmt(e.odds)} at ${BOOK_NAMES[e.book]}`, why:`${pct(e.ev)} better than the fair price of ${fmt(e.fair)}`, src:"edge" };
+  }
+  // 3. The strongest trend, turned into a bet at today's number
+  if (!R) return null;
+  const C = resCtx(g), row = C.row || {};
+  for (const h of resHighlights(g)){
+    if (!h.mkt) continue;
+    if (h.mkt === "spread" && C.homeLine != null){
+      const line = h.side === "home" ? C.homeLine : -C.homeLine;
+      return { bet:`${nm(h.side === "home" ? g.homeAbbr : g.awayAbbr)} ${line === 0 ? "PK" : fmtPt(line)} (−110)`, why:h.t, src:"trend" };
+    }
+    if (h.mkt === "total" && C.tot != null) return { bet:`${h.side === "over" ? "Over" : "Under"} ${C.tot} (−110)`, why:h.t, src:"trend" };
+    if (h.mkt === "ml"){
+      const odds = h.side === "home" ? (row.hml ?? null) : (row.aml ?? null);
+      if (odds != null && odds >= -200 && odds <= 200) return { bet:`${nm(h.side === "home" ? g.homeAbbr : g.awayAbbr)} ML ${fmt(odds)}`, why:h.t, src:"trend" };
+    }
+  }
+  return { bet:"No position", why:"No price edge or strong trend for this game. Sitting it out is a position too.", src:"pass" };
+}
+function topBetHTML(g){
+  const t = topBet(g); if (!t) return "";
+  return `<div class="topbet ${t.src}"><small>Top suggested bet</small><b>${t.bet}</b><span>${t.why}</span></div>`;
+}
+
 /* ---------- Views ---------- */
 const view = document.getElementById("view");
 const SPORT_LABEL = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"College football", ncaab:"College basketball", soccer:"Soccer", golf:"Golf" };
@@ -2192,7 +2241,7 @@ function renderEdge(){
         </div>
       </div>`).join("") : `<p class="note">${live ? "Load player props for a game on the Props tab to see prop edges here." : (RES[sport] ? "Player prop leans appear once live prop odds are connected." : "No prop leans right now.")}</p>`}
     ${movesHTML()}
-    ${live || RES[sport] ? (() => { const ang = games.flatMap(g => trendHighlights(g).map(h => ({ g, t:h.t }))); return `<h2>Situational angles</h2>${ang.length ? `<ul class="trends angles">${ang.map(x => `<li>${x.t}<small>${matchup(x.g)}</small></li>`).join("")}</ul>` : `<p class="note">${RES[sport] ? "No strong trends in the upcoming games." : "Load team history on a game in the Odds tab to see its strongest trends here."}</p>`}`; })() : ""}
+    ${live || RES[sport] ? (() => { const grp = games.map(g => ({ g, hs:trendHighlights(g) })).filter(x => x.hs.length).sort((a,b) => b.hs[0].s - a.hs[0].s); const ang = grp; return `<h2>Situational angles</h2>${ang.length ? ang.map(x => `<div class="ggroup"><div class="ghead"><b>${matchup(x.g)}</b><span>${x.g.time}${/TBD/.test(x.g.time) ? "" : " ET"}</span></div><ul class="trends">${x.hs.slice(0,4).map(h => `<li>${h.t}</li>`).join("")}</ul></div>`).join("") : `<p class="note">${RES[sport] ? "No strong trends in the upcoming games." : "Load team history on a game in the Odds tab to see its strongest trends here."}</p>`}`; })() : ""}
     <p class="note">${live ? "Live " + SPORT_LABEL[sport] + " odds from The Odds API through your Zapier connection." : RES[sport] ? "Free mode: schedule and team records from " + RES[sport].source + ", through " + RES[sport].updated + ". Connect live odds to compare books and find price edges." : "Sample data for layout."}</p>`;
   wireLiveBar();
   const mm = document.getElementById("movesMore"); if (mm) mm.onclick = () => { movesAll = !movesAll; renderEdge(); };
@@ -2220,6 +2269,7 @@ function renderOdds(){
           <div class="spark">${g.move && g.move.length > 1 ? sparkSVG(g.move) + `<span>${fmtPt(g.move[0])} → ${fmtPt(g.move[g.move.length-1])}</span>` : live ? "<span>Tracking line move</span>" : ""}</div>
         </div>
         ${g.free && RES[g.sport].lines ? nflvConsensus(g) : ""}
+        ${!g.started ? topBetHTML(g) : ""}
         ${extrasBlock(g)}
         ${RES[g.sport] ? resBlock(g) : g.live ? trendBlock(g) : g.trends && g.trends.length ? `<ul class="trends">${g.trends.map(t => `<li class="${t.div?"div":""}">${t.t}</li>`).join("")}</ul>` : ""}
         ${g.markets.map(m => {
