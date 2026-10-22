@@ -304,6 +304,13 @@ table.board.mkt{min-width:0}
 .gform{display:inline-flex;gap:3px;flex-wrap:wrap;justify-content:center}
 .gf{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;min-width:18px;padding:1px 3px;border-radius:3px;background:var(--surface2);color:var(--ink)}
 .gf.good{background:var(--pos-bg);color:var(--pos)}.gf.cut{color:var(--muted)}
+
+.dogcard{width:100%;text-align:left;display:flex;flex-direction:column;gap:6px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:14px 14px;font-size:15px;line-height:1.4}
+.dtop{display:flex;align-items:center;gap:10px}.dtop b{font-size:20px;flex:1}
+.dtop .sp{font-size:12px;font-weight:700;color:var(--pos);background:var(--pos-bg);border-radius:4px;padding:2px 8px}
+.dodds{font-size:20px;font-weight:700;color:var(--gold)}
+.dmeta{color:var(--muted);font-size:14px}.dwhy{font-size:14px}
+.dstat{font-size:13px;color:var(--muted)}.dstat.win{color:var(--pos)}.dstat.loss{color:var(--neg)}
 </style>
 </head>
 <body>
@@ -1949,7 +1956,7 @@ function updateMoveBadge(){
 
 
 /* ---------- System test: paper-traded picks made by the backend, graded after each game ---------- */
-const STRAT_LABEL = { gap:"Market gap", steam:"Steam follow", angle:"Situational angle" };
+const STRAT_LABEL = { gap:"Market gap", steam:"Steam follow", angle:"Situational angle", dog:"Underdog of the day" };
 function pickCLV(p){
   if (p.close == null) return null;
   if (p.mkt === "ml") return { pct:imp(p.close)/imp(p.odds) - 1 };
@@ -2013,6 +2020,25 @@ function topAngles(){
   }));
   return out.sort((a,b) => b.s - a.s).slice(0, 10);
 }
+function dogHTML(){
+  const P = window.SLB && SLB.PICKS;
+  if (!P) return `<h2>Underdog of the day</h2><p class="note">Your backend picks one underdog each day after 10 AM ET and tracks how it does.</p>`;
+  const today = etDate(new Date());
+  const dogs = P.picks.filter(p => p.strat === "dog"), pick = dogs.find(p => p.key.split("|")[1] === today);
+  const T = tallyOf(dogs), u = x => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(2) + "u";
+  const rec = T.w + T.l + T.ps ? ` · Record ${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}, ${u(T.u)}` : "";
+  if (!pick) return `<h2>Underdog of the day</h2><p class="note">Today’s underdog is chosen after 10 AM ET from the games with posted odds.${rec}</p>`;
+  const [sp, d, a, h] = pick.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
+  const team = nm(pick.side === "home" ? h : a), opp = nm(pick.side === "home" ? a : h);
+  const st = pick.result ? (pick.result === "win" ? "Won" : pick.result === "loss" ? "Lost" : "Push") + ` ${pick.units >= 0 ? "+" : ""}${pick.units.toFixed(2)}u, final ${pick.score}` : "Pending";
+  return `<h2>Underdog of the day</h2>
+    <button class="dogcard" data-open="${sp}|fr_${sp}_${d}_${a}_${h}">
+      <span class="dtop"><span class="sp">${SPORT_SHORT[sp] || sp.toUpperCase()}</span><b>${team}</b><span class="num dodds">${fmt(pick.odds)}</span></span>
+      <span class="dmeta">${pick.side === "home" ? "vs" : "at"} ${opp}, ${new Date(pick.start).toLocaleString("en-US",{weekday:"short",hour:"numeric",minute:"2-digit",timeZone:"America/New_York"})} ET</span>
+      <span class="dwhy">${pick.why || ""}</span>
+      <span class="dstat ${pick.result || ""}">${st}${rec}</span>
+    </button>`;
+}
 function renderTop(){
   const moves = topMoves(), angles = topAngles();
   const ago = t => { const m = Math.round(Date.now()/60000 - t); return m < 60 ? m + "m ago" : Math.round(m/60) + "h ago"; };
@@ -2020,6 +2046,7 @@ function renderTop(){
   view.innerHTML = `
     <h1>Top across all sports</h1>
     <p class="sub">The five biggest line moves and the ten strongest situational angles from every sport, in one place. Tap any item to open that game.</p>
+    ${dogHTML()}
     <h2>Top 5 line moves</h2>
     ${moves === null ? `<p class="note">Line moves come from your backend’s hourly snapshots.</p>`
       : moves.length ? `<ol class="toplist">${moves.map(m => { const [sp, d, a, h] = m.key.split("|");
