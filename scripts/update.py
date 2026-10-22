@@ -917,7 +917,18 @@ def _golf_field(ev):
         score = c.get("score")
         if isinstance(score, dict): score = score.get("displayValue")
         thru = st.get("thru") if st.get("thru") not in (None, 0) else ((st.get("type") or {}).get("shortDetail") or None)
-        out.append({"n": name, "pos": pos, "score": score, "thru": thru, "order": c.get("sortOrder") or i + 1})
+        out.append({"n": name, "pos": pos, "score": score, "thru": thru, "order": c.get("sortOrder") or i + 1,
+                    "rounds": len([l for l in (c.get("linescores") or []) if l.get("value") is not None or l.get("displayValue")])})
+    out.sort(key=lambda p: p["order"])
+    most = max((p["rounds"] for p in out), default=0)
+    rank = 0
+    for i, p in enumerate(out):
+        if i == 0 or p["score"] != out[i - 1]["score"]: rank = i + 1
+        if not p["pos"]:
+            if most >= 4 and 0 < p["rounds"] <= 2: p["pos"] = "MC"
+            else:
+                tie = (i > 0 and out[i - 1]["score"] == p["score"]) or (i + 1 < len(out) and out[i + 1]["score"] == p["score"])
+                p["pos"] = ("T" if tie else "") + str(rank)
     return out
 
 def _finish(pos):
@@ -1074,6 +1085,10 @@ def main():
                 snaps[f"{sp}|{key}"] = {"sl": o.get("sl"), "tot": o.get("tot"), "hml": o.get("hml")}
     for sp, recs in MK.items():
         for r in recs:
+            st = ((all_lines.get(sp) or {}).get(f"{r['date']}|{r['a']}|{r['h']}") or {}).get("start")
+            if r["date"] < TODAY_ET.isoformat(): continue
+            if st and dt.datetime.fromisoformat(st.replace("Z", "+00:00")) <= NOW: continue      # game already started: in-play price
+            if not st and r["date"] == TODAY_ET.isoformat() and NOW.astimezone(ET).hour >= 19: continue
             s = snaps.setdefault(f"{sp}|{r['date']}|{r['a']}|{r['h']}", {})
             s["k"] = mid((r.get("k") or {}).get("h")); s["p"] = (r.get("p") or {}).get("h")
     B["HISTORY"] = step("history", lambda: update_history(snaps)) or load("history.json", {})
