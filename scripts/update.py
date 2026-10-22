@@ -528,7 +528,7 @@ def update_history(snaps):
 
 # ---------------------------------------------------------------- paper-trading test: system picks, graded after the game
 FINALS = {}
-STRAT_NAMES = {"gap": "Market gap", "steam": "Steam follow", "angle": "Situational angles"}
+STRAT_NAMES = {"gap": "Market gap", "steam": "Steam follow", "angle": "Situational angles", "dog": "Underdog of the day"}
 SPREAD_TH = {"nfl": 1.5, "cfb": 2.0, "nba": 2.0, "ncaab": 2.5}
 TOTAL_TH = {"nfl": 2.0, "cfb": 3.0, "nba": 3.0, "ncaab": 3.0, "nhl": 0.5, "mlb": 0.5}
 
@@ -587,6 +587,8 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
     if B is not None:
         try: new += angle_picks(P, B, have)
         except Exception: log(f"angle picks failed:\n{traceback.format_exc()}")
+        try: new += dog_pick(P, B, MK)
+        except Exception: log(f"dog pick failed:\n{traceback.format_exc()}")
     P["picks"].extend(new)
     # grade anything finished
     graded = 0
@@ -602,7 +604,7 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
         a, h = f
         if p["mkt"] == "ml":
             m = h - a if p["side"] == "home" else a - h
-            res = "push" if m == 0 else "win" if m > 0 else "loss"
+            res = ("loss" if p["sport"] == "soccer" else "push") if m == 0 else "win" if m > 0 else "loss"   # soccer: a draw loses a win bet
         elif p["mkt"] == "spread":
             m = (h - a if p["side"] == "home" else a - h) + p["line"]
             res = "push" if m == 0 else "win" if m > 0 else "loss"
@@ -722,6 +724,53 @@ def angle_picks(P, B, have):
                     "at": NOW.isoformat(timespec="minutes")})
         if len(new) >= need: break
     return new
+
+# ---------------------------------------------------------------- strategy 4: one underdog of the day
+def dog_pick(P, B, MK):
+    today = TODAY_ET.isoformat()
+    if any(p["strat"] == "dog" and p["key"].split("|")[1] == today for p in P["picks"]): return []
+    if NOW.astimezone(ET).hour < 10: return []          # wait for the day's lines to settle
+    mk = {f"{sp}|{r['date']}|{r['a']}|{r['h']}": r for sp, recs in MK.items() for r in recs}
+    best = None
+    for sp, rk in ANGLE_SPORTS.items():
+        games = _rows_as_dicts(sp, B.get(rk))
+        if not games: continue
+        dml_idx = {}
+        if sp == "soccer":
+            for r in B.get(rk) or []:
+                if len(r) > 18: dml_idx[(r[1], r[3], r[4])] = r[18]
+        for g in games:
+            if g["played"] or g["date"] != today or g["hml"] is None or g["aml"] is None: continue
+            start = dt.datetime.fromisoformat(f"{g['date']}T{g['time']}:00").replace(tzinfo=ET)
+            if (start - NOW).total_seconds() < 1200: continue
+            key = f"{sp}|{g['date']}|{g['a']}|{g['h']}"
+            imps = [_imp(g["hml"]), _imp(g["aml"])]
+            d = dml_idx.get((g["date"], g["a"], g["h"]))
+            if d is not None: imps.append(_imp(d))
+            tot = sum(imps)
+            r = mk.get(key) or {}
+            cands = angle_candidates(sp, games, g)
+            for side, odds in (("home", g["hml"]), ("away", g["aml"])):
+                if odds is None or not (100 <= odds <= 250): continue
+                book_fair = _imp(odds) / tot
+                k = (r.get("k") or {}).get("h" if side == "home" else "a") or {}
+                kmid = (k["bid"] + k["ask"]) / 2 if k.get("bid") and k.get("ask") else None
+                pp = (r.get("p") or {}).get("h" if side == "home" else "a") if (r.get("p") or {}).get("vol", 0) > 0 else None
+                market = kmid if kmid is not None else pp
+                ev = market * _dec(odds) - 1 if market is not None else None
+                support = [c for c in cands if c["side"] == side and c["mkt"] in ("ml", "spread")]
+                ang = max((c["score"] for c in support), default=0)
+                ev_book = book_fair * _dec(odds) - 1             # value against the no-vig sportsbook price (about zero, minus the vig)
+                score = (ev if ev is not None else ev_book) * 100 + ang * 3   # every day gets a pick: the best-supported dog on the board
+                why = []
+                if ev is not None and ev > 0: why.append(f"{'Kalshi' if kmid is not None else 'Polymarket'} prices them at {market*100:.0f}%, the book’s odds imply {_imp(odds)*100:.0f}% ({ev*100:+.1f}% value)")
+                if support: why.append(max(support, key=lambda c: c["score"])["why"])
+                if not why: why.append(f"Best price among today’s underdogs; no strong market or trend signal behind it")
+                if best is None or score > best[0]:
+                    best = (score, {"strat": "dog", "key": key, "sport": sp, "mkt": "ml", "side": side, "odds": odds, "line": None,
+                                    "why": "; ".join(why), "rank": round(score, 2),
+                                    "start": start.astimezone(dt.timezone.utc).isoformat(timespec="minutes"), "at": NOW.isoformat(timespec="minutes")})
+    return [best[1]] if best else []
 
 def rows_final(B, key):
     sp, date, a, h = key.split("|")
