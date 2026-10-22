@@ -298,6 +298,12 @@ table.board.mkt{min-width:0}
 .topitem .sp{font-size:12px;font-weight:700;color:var(--pos);background:var(--pos-bg);border-radius:4px;padding:2px 0;text-align:center}
 .topitem .tx small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
 .tab{font-size:11px}
+
+.phead.golf,.prow.golf{grid-template-columns:44px minmax(0,1fr) 62px 104px}
+.prow.golf>span:nth-child(2){text-align:left}
+.gform{display:inline-flex;gap:3px;flex-wrap:wrap;justify-content:center}
+.gf{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;min-width:18px;padding:1px 3px;border-radius:3px;background:var(--surface2);color:var(--ink)}
+.gf.good{background:var(--pos-bg);color:var(--pos)}.gf.cut{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -312,6 +318,9 @@ table.board.mkt{min-width:0}
       <button class="chip" data-sport="nfl">NFL</button>
       <button class="chip" data-sport="cfb">NCAAF</button>
       <button class="chip" data-sport="mlb">MLB</button>
+      <button class="chip" data-sport="ncaab">NCAAB</button>
+      <button class="chip" data-sport="soccer">Soccer</button>
+      <button class="chip" data-sport="golf">Golf</button>
     </div>
   </div>
 </header>
@@ -1400,6 +1409,12 @@ function nflvBlock(g){
 
 function nflvConsensus(g){
   const r = g.nv; if (!r) return "";
+  if (g.sport === "soccer"){
+    const hl = r.sl == null ? null : -r.sl;
+    return `<div class="cons"><div><small>Handicap</small><b>${hl == null ? "—" : g.home + " " + fmtPt(hl)}</b></div>
+      <div><small>Goals</small><b>${r.tot ?? "—"}</b></div>
+      <div><small>Home / Draw / Away</small><b>${r.hml != null ? fmt(r.hml) + " / " + fmt(r.dml) + " / " + fmt(r.aml) : "—"}</b></div></div>`;
+  }
   const hl = r.sl == null ? null : -r.sl;
   return `<div class="cons"><div><small>Spread</small><b>${hl == null ? "—" : hl === 0 ? "Pick’em" : (hl < 0 ? g.home + " " + fmtPt(hl) : g.away + " " + fmtPt(-hl))}</b></div>
     <div><small>Total</small><b>${r.tot ?? "—"}</b></div>
@@ -1431,9 +1446,14 @@ const CFB_CONF=(window.SLB&&SLB.CFB_CONF)||{};
 const MLB_ROWS=(window.SLB&&SLB.MLB_ROWS)||[];
 const MLB_NAMES=(window.SLB&&SLB.MLB_NAMES)||{};
 const MLB_DIV=(window.SLB&&SLB.MLB_DIV)||{"BAL":"ALE","BOS":"ALE","NYY":"ALE","TB":"ALE","TOR":"ALE","CWS":"ALC","CLE":"ALC","DET":"ALC","KC":"ALC","MIN":"ALC","ATH":"ALW","HOU":"ALW","LAA":"ALW","SEA":"ALW","TEX":"ALW","ATL":"NLE","MIA":"NLE","NYM":"NLE","PHI":"NLE","WSH":"NLE","CHC":"NLC","CIN":"NLC","MIL":"NLC","PIT":"NLC","STL":"NLC","ARI":"NLW","COL":"NLW","LAD":"NLW","SD":"NLW","SF":"NLW"};
+const NCAAB_ROWS=(window.SLB&&SLB.NCAAB_ROWS)||[];
+const NCAAB_NAMES=(window.SLB&&SLB.NCAAB_NAMES)||{};
+const NCAAB_CONF=(window.SLB&&SLB.NCAAB_CONF)||{};
+const SOCCER_ROWS=(window.SLB&&SLB.SOCCER_ROWS)||[];
+
 /* ---------- Free research engine: NFL (nflverse, real closing lines), NBA + NHL (results via sportsdataverse) ---------- */
 const NBA_DIV_NAME = {A:"Atlantic",C:"Central",SE:"Southeast",NW:"Northwest",P:"Pacific",SW:"Southwest"};
-const parseRows = R => R.map(r => ({ season:r[0], date:r[1], time:r[2], a:r[3], h:r[4], as:r[5], hs:r[6], sl:r[7], tot:r[8], aml:r[9], hml:r[10], div:r[11], indoor:r[12], arest:r[13], hrest:r[14], neutral:r[15], ark:r[16], hrk:r[17], played:r[5] != null && r[6] != null }));
+const parseRows = R => R.map(r => ({ season:r[0], date:r[1], time:r[2], a:r[3], h:r[4], as:r[5], hs:r[6], sl:r[7], tot:r[8], aml:r[9], hml:r[10], div:r[11], indoor:r[12], arest:r[13], hrest:r[14], neutral:r[15], ark:r[16], hrk:r[17], dml:r[18], lg:r[19], played:r[5] != null && r[6] != null }));
 const CFB_CONF_NAME = Object.fromEntries(Object.values(CFB_CONF).map(c => [c, c]));
 const MLB_DIV_NAME = {ALE:"AL East",ALC:"AL Central",ALW:"AL West",NLE:"NL East",NLC:"NL Central",NLW:"NL West"};
 const restDaily = d => d == null ? null : d <= 1 ? "Back-to-back" : d === 2 ? "1 day rest" : "2+ days rest";
@@ -1454,10 +1474,14 @@ const RES = {
     rest:d => d == null ? null : d <= 5 ? "Short week" : d <= 8 ? "Normal week" : "Off a bye",
     name:ab => CFB_NAMES[ab] || ab, source:"CollegeFootballData lines (sportsdataverse)", updated:(window.SLB && SLB.UPDATED) || "Oct 18, 2026" }
 };
-if (window.SLB && SLB.NCAAB_ROWS && SLB.NCAAB_ROWS.length){
-  RES.ncaab = { rows:parseRows(SLB.NCAAB_ROWS), lines:(SLB.ARCHIVE && SLB.ARCHIVE.ncaab >= 300), label:"College basketball", unit:"points", days:2, splitSeasons:2, div:SLB.NCAAB_CONF || {}, divName:Object.fromEntries(Object.values(SLB.NCAAB_CONF || {}).map(c => [c, c])), divLabel:"Conference games", min:5,
-    slot:slotDaily, rest:restDaily, name:ab => (SLB.NCAAB_NAMES || {})[ab] || ab, source:"ESPN results and lines (your backend)", updated:SLB.UPDATED };
-}
+RES.ncaab = { rows:parseRows(NCAAB_ROWS), lines:!!(window.SLB && SLB.ARCHIVE && SLB.ARCHIVE.ncaab >= 300), label:"College basketball", unit:"points", days:2, splitSeasons:3,
+  div:NCAAB_CONF, divName:Object.fromEntries(Object.values(NCAAB_CONF).map(c => [c, c])), divLabel:"Conference games", min:8,
+  slot:slotDaily, rest:restDaily, name:ab => NCAAB_NAMES[ab] || ab, source:"ESPN results (sportsdataverse)", updated:(window.SLB && SLB.UPDATED) || "Oct 21, 2026" };
+const SOCCER_LEAGUE = { E0:"Premier League", SP1:"La Liga", I1:"Serie A", D1:"Bundesliga", F1:"Ligue 1" };
+if (SOCCER_ROWS.length) RES.soccer = { rows:parseRows(SOCCER_ROWS), lines:true, label:"Soccer", unit:"goals", days:4, splitSeasons:3, div:{}, divName:{}, min:8,
+  slot:t => { const h = hhmm(t); return h < 11 ? "Early kickoffs" : h < 14 ? "Midday kickoffs" : "Late kickoffs"; },
+  rest:d => d == null ? null : d <= 3 ? "Short rest (3 days or less)" : d <= 6 ? "Normal week" : "Long rest",
+  name:ab => ab, source:"football-data.co.uk, Pinnacle closing odds", updated:(window.SLB && SLB.UPDATED) || "" };
 Object.values(RES).forEach(R => R.season = Math.max(...R.rows.map(x => x.season)));
 const TESTLINE = store.get("sl_testlines") || {};
 
@@ -1497,7 +1521,7 @@ function resCtx(g){
   const time = row ? row.time : g.start.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit",timeZone:"America/New_York"});
   const tonight = etDate(g.start);
   const restFor = ab => { const last = resTeam(g.sport, ab).find(x => x.date < tonight); return last ? dayNum(tonight) - dayNum(last.date) : null; };
-  return { row, homeLine, tot, slot:R.slot(time), div:R.div[g.awayAbbr] && R.div[g.awayAbbr] === R.div[g.homeAbbr] ? 1 : 0, indoor:row ? row.indoor : null,
+  return { row, homeLine, tot, slot:time === "00:00" ? null : R.slot(time), div:R.div[g.awayAbbr] && R.div[g.awayAbbr] === R.div[g.homeAbbr] ? 1 : 0, indoor:row ? row.indoor : null,
     arest:row && row.arest != null ? row.arest : restFor(g.awayAbbr), hrest:row && row.hrest != null ? row.hrest : restFor(g.homeAbbr), tested:T.home != null || T.tot != null };
 }
 
@@ -1520,7 +1544,7 @@ function resSplits(g, ab, isHome){
     R.lines && role === "dog" && !isHome ? ["As a road underdog", recent.filter(x => !x.home && x.line > 0)] : null,
     R.lines && role === "fav" && isHome ? ["As a home favorite", recent.filter(x => x.home && x.line < 0)] : null,
     C.div ? [R.divLabel || "Division games", recent.filter(x => x.div)] : null,
-    [C.slot, recent.filter(x => x.slot === C.slot)],
+    C.slot ? [C.slot, recent.filter(x => x.slot === C.slot)] : null,
     rest ? [rest, recent.filter(x => R.rest(x.rest) === rest)] : null,
     C.indoor != null ? [C.indoor ? "Indoors" : "Outdoors", recent.filter(x => x.indoor === C.indoor)] : null,
     prevNow ? [prevNow === "W" ? "After a win" : prevNow === "L" ? "After a loss" : "After a tie", recent.filter(x => x.prev === prevNow)] : null,
@@ -1561,8 +1585,8 @@ function resBlock(g){
     </tbody></table></div></div>`;
   const T = TESTLINE[g.id] || {};
   const tester = R.lines && SA.line != null ? "" : `<div class="tester"><span class="note">${g.markets && g.markets.length && !SA.tested ? "Testing tonight’s live line. " : ""}Test a line:</span>
-    <label>${g.home} <input type="number" step="0.5" inputmode="decimal" data-tl-home="${g.id}" value="${T.home ?? ""}" placeholder="${{nhl:"-1.5",mlb:"-1.5",cfb:"-7.5"}[g.sport] || "-4.5"}"></label>
-    <label>Total <input type="number" step="0.5" inputmode="decimal" data-tl-tot="${g.id}" value="${T.tot ?? ""}" placeholder="${{nhl:"6.5",mlb:"8.5",cfb:"52.5",nfl:"44.5"}[g.sport] || "224.5"}"></label>
+    <label>${g.home} <input type="number" step="0.5" inputmode="decimal" data-tl-home="${g.id}" value="${T.home ?? ""}" placeholder="${{nhl:"-1.5",mlb:"-1.5",cfb:"-7.5",ncaab:"-6.5",soccer:"-0.5"}[g.sport] || "-4.5"}"></label>
+    <label>Total <input type="number" step="0.5" inputmode="decimal" data-tl-tot="${g.id}" value="${T.tot ?? ""}" placeholder="${{nhl:"6.5",mlb:"8.5",cfb:"52.5",nfl:"44.5",ncaab:"145.5",soccer:"2.5"}[g.sport] || "224.5"}"></label>
     <button class="chip" data-tl-go="${g.id}">Apply</button>${SA.tested ? `<button class="chip" data-tl-clear="${g.id}">Clear</button>` : ""}</div>`;
   const h2h = SH.h2h.slice(0,8);
   return `<div class="ttbar"><button class="chip ${open?"on":""}" data-rs="${g.id}">${open ? "Hide team records" : "Team records"}</button><span class="note">${R.lines ? `Real closing lines, ${R.season-2}–${R.season}` : "Last 3 seasons of results"}</span></div>
@@ -1585,11 +1609,16 @@ const _free = {};
 function freeGames(sp){
   if (_free[sp]) return _free[sp];
   const R = RES[sp], today = etDate(new Date()), lim = dayNum(today) + R.days;
-  return _free[sp] = R.rows.filter(x => !x.played && dayNum(x.date) >= dayNum(today) && dayNum(x.date) <= lim).map(x => {
+  let pick = R.rows.filter(x => !x.played && dayNum(x.date) >= dayNum(today) && dayNum(x.date) <= lim);
+  if (!pick.length){                                   // off-season or a gap: show the next slate that has games
+    const next = R.rows.filter(x => !x.played && dayNum(x.date) > lim).map(x => x.date).sort()[0];
+    if (next) pick = R.rows.filter(x => !x.played && x.date === next);
+  }
+  return _free[sp] = pick.map(x => {
     const start = etToDate(x.date, x.time), sameDay = x.date === today;
     return { id:"fr_" + sp + "_" + x.date + "_" + x.a + "_" + x.h, sport:sp, free:true, nv:x, away:(x.ark ? "No. " + x.ark + " " : "") + R.name(x.a), home:(x.hrk ? "No. " + x.hrk + " " : "") + R.name(x.h), awayAbbr:x.a, homeAbbr:x.h,
       start, started:false, markets:[], trends:[], move:histMove(sp, x.date, x.a, x.h),
-      time:(sameDay ? "Today " : start.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",timeZone:"America/New_York"}) + ", ") + start.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:"America/New_York"}) };
+      time:(sameDay ? "Today " : start.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",timeZone:"America/New_York"}) + ", ") + (x.time === "00:00" ? "time TBD" : start.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:"America/New_York"})) };
   });
 }
 
@@ -1834,6 +1863,7 @@ function marketRows(sp){
 }
 
 function renderMarkets(){
+  if (sport === "golf") return renderGolfMarkets();
   const has = window.SLB && SLB.MARKETS;
   const sports = has ? Object.keys(SLB.MARKETS).filter(s => SLB.MARKETS[s].length) : [];
   mktSport = sport;
@@ -1969,7 +1999,7 @@ function systemTestHTML(){
 
 
 /* ---------- Top: the best of all sports on one page ---------- */
-const SPORT_SHORT = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"NCAAF", ncaab:"NCAAB" };
+const SPORT_SHORT = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"NCAAF", ncaab:"NCAAB", soccer:"Soccer", golf:"Golf" };
 function topMoves(){
   if (!(window.SLB && SLB.HISTORY)) return null;
   const now = Date.now() / 60000;
@@ -2007,9 +2037,58 @@ function renderTop(){
   });
 }
 
+
+/* ---------- Golf: this week's PGA Tour event, form, and winner prices ---------- */
+let golfAll = false;
+const golfMid = p => p.k && p.k.bid && p.k.ask ? (p.k.bid + p.k.ask) / 2 : (p.k && p.k.ask) || p.p || null;
+function golfFormChip(f){
+  const good = typeof f === "number" && f <= 10, cut = f === "MC";
+  return `<span class="gf ${good ? "good" : cut ? "cut" : ""}">${f}</span>`;
+}
+function renderGolf(){
+  const G = window.SLB && SLB.GOLF;
+  if (!G){ view.innerHTML = `<h1>Golf</h1><div class="slip"><div class="empty">Golf loads from your backend: this week’s PGA Tour event, the field, recent form, last year’s finishes and Kalshi and Polymarket winner prices.</div></div>`; return; }
+  const ev = G.event, started = G.players.some(p => p.pos);
+  const fmtD = s => s ? new Date(s).toLocaleDateString("en-US",{month:"short",day:"numeric",timeZone:"America/New_York"}) : "";
+  const state = ev.state === "post" ? "Final" : ev.state === "in" || started ? "In progress" : "Upcoming";
+  const list = [...G.players].sort(started ? (a,b) => (a.order||999) - (b.order||999) : (a,b) => (golfMid(b) ?? -1) - (golfMid(a) ?? -1) || a.n.localeCompare(b.n));
+  const shown = list.slice(0, golfAll ? 200 : 30);
+  view.innerHTML = `
+    <h1>${ev.name || "This week’s event"}</h1>
+    <p class="sub">${[ev.course, fmtD(ev.start) + (ev.end ? "–" + fmtD(ev.end) : ""), state].filter(Boolean).join(" · ")}</p>
+    <div class="plist">
+      <div class="phead golf"><span>${started ? "Pos" : "#"}</span><span>Player</span><span>${started ? "Score" : "Win %"}</span><span>${started ? "Thru" : "Last 6"}</span></div>
+      ${shown.map((p,i) => `<div class="prow golf"><span class="num">${started ? (p.pos || "—") : i + 1}</span><span class="pn">${p.n}${!started && p.last != null ? `<small>Last year here: ${p.last}</small>` : ""}</span>
+        <span class="num">${started ? (p.score ?? "—") : golfMid(p) != null ? (golfMid(p)*100).toFixed(1) + "%" : "—"}</span>
+        <span>${started ? `<span class="num">${p.thru ?? "—"}</span>` : (p.form && p.form.length ? `<span class="gform">${p.form.map(golfFormChip).join("")}</span>` : `<span class="mut">—</span>`)}</span></div>`).join("")}
+    </div>
+    ${list.length > 30 ? `<p><button class="chip" id="golfAll">${golfAll ? "Show top 30" : "Show all " + list.length}</button></p>` : ""}
+    <p class="note">${started ? "Live leaderboard from ESPN." : "Win % is the Kalshi mid price, or Polymarket where Kalshi has none. Last 6 shows finishes in the player’s most recent events, newest first; MC means missed cut."} Data as of ${SLB.UPDATED}.</p>`;
+  const b = document.getElementById("golfAll"); if (b) b.onclick = () => { golfAll = !golfAll; renderGolf(); };
+}
+function renderGolfMarkets(){
+  const G = window.SLB && SLB.GOLF;
+  const rows = G ? G.players.filter(p => p.k || p.p) : [];
+  const cents = x => x == null ? "—" : (Math.round(x*1000)/10) + "¢";
+  const gap = p => p.k && p.k.ask && p.p != null ? p.p - (p.k.ask + kalshiFee(p.k.ask)) : null;
+  const ranked = rows.map(p => ({ p, g:gap(p), ask:p.k && p.k.ask ? p.k.ask + kalshiFee(p.k.ask) : null })).sort((a,b) => (golfMid(b.p) ?? 0) - (golfMid(a.p) ?? 0));
+  const ideas = ranked.filter(x => x.ask != null && x.p.p != null && Math.abs(x.p.p - x.ask) >= 0.01)
+    .map(x => x.p.p > x.ask ? `${x.p.n}: ${cents(x.p.k.ask)} on Kalshi vs ${cents(x.p.p)} on Polymarket. Cheaper on Kalshi, even with its fee.` : `${x.p.n}: ${cents(x.p.p)} on Polymarket vs ${cents(x.p.k.ask)} on Kalshi. Cheaper on Polymarket.`).slice(0, 5);
+  view.innerHTML = `
+    <h1>Golf winner markets</h1>
+    <p class="sub">${G ? G.event.name : "This week’s event"}: what each player costs to win outright on Kalshi and Polymarket. A contract pays $1 if he wins.</p>
+    ${!rows.length ? `<div class="slip"><div class="empty">No Kalshi or Polymarket winner prices matched this week’s field yet.</div></div>` : `
+    ${ideas.length ? `<h2>Price gaps</h2><ul class="trends angles">${ideas.map(t => `<li>${t}</li>`).join("")}</ul>` : ""}
+    <div class="board-wrap"><table class="board mkt"><thead><tr><th></th><th>Kalshi</th><th>Poly</th></tr></thead><tbody>
+    ${ranked.slice(0, 40).map(x => { const kc = x.ask != null && x.p.p != null && x.ask < x.p.p, pc = x.ask != null && x.p.p != null && x.p.p < x.ask;
+      return `<tr><td>${x.p.n}</td><td class="num ${kc ? "cheap" : ""}" style="font-size:14px">${x.p.k ? cents(x.p.k.bid) + " / " + cents(x.p.k.ask) : "—"}</td><td class="num ${pc ? "cheap" : ""}" style="font-size:14px">${cents(x.p.p)}</td></tr>`; }).join("")}
+    </tbody></table></div>`}
+    <p class="note">Outright winner prices include each app’s margin and can be thin on long shots, so small gaps may not be fillable. Which of these you can use depends on your state.</p>`;
+}
+
 /* ---------- Views ---------- */
 const view = document.getElementById("view");
-const SPORT_LABEL = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"College football" };
+const SPORT_LABEL = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"College football", ncaab:"College basketball", soccer:"Soccer", golf:"Golf" };
 
 function sparkSVG(arr){
   const w = 70, h = 22, min = Math.min(...arr), max = Math.max(...arr), r = (max-min)||1;
@@ -2019,6 +2098,7 @@ function sparkSVG(arr){
 function propLabel(p, side){ return p.p + " " + side.toLowerCase() + " " + p.line + " " + p.s.toLowerCase(); }
 
 function renderEdge(){
+  if (sport === "golf"){ view.innerHTML = `<h1>Golf edges</h1><p class="sub">Golf is priced as a field, not head to head. See the Games tab for the field with recent form and last year’s finishes, and the Markets tab for Kalshi vs Polymarket winner prices.</p>`; return; }
   const e = allEdges(sport);
   const live = isLive();
   const leans = live
@@ -2094,6 +2174,7 @@ function renderEdge(){
 }
 
 function renderOdds(){
+  if (sport === "golf") return renderGolf();
   const live = isLive();
   view.innerHTML = `
     <h1>${SPORT_LABEL[sport]} line shopping</h1>
@@ -2102,7 +2183,7 @@ function renderOdds(){
     ${getGames().map(g => `
       <section class="game">
         <div class="game-head">
-          <div><div class="teams">${matchup(g)}</div><div class="time">${g.started ? '<span class="inplay">In progress</span>' : g.time + " ET"}${g.nv && g.nv.neutral ? ", neutral site" : ""}</div></div>
+          <div><div class="teams">${matchup(g)}</div><div class="time">${g.nv && g.nv.lg && SOCCER_LEAGUE[g.nv.lg] ? SOCCER_LEAGUE[g.nv.lg] + ", " : ""}${g.started ? '<span class="inplay">In progress</span>' : g.time + (/TBD/.test(g.time) ? "" : " ET")}${g.nv && g.nv.neutral ? ", neutral site" : ""}</div></div>
           <div class="spark">${g.move && g.move.length > 1 ? sparkSVG(g.move) + `<span>${fmtPt(g.move[0])} → ${fmtPt(g.move[g.move.length-1])}</span>` : live ? "<span>Tracking line move</span>" : ""}</div>
         </div>
         ${g.free && RES[g.sport].lines ? nflvConsensus(g) : ""}
@@ -2179,6 +2260,7 @@ function leanTag(m){
 let gameFilter = "all", teamFilter = "both", sortBy = "edge", openKey = null;
 function renderProps(){
   if (isLive()) return renderLiveProps();
+  if (!RES[sport] && !CFG[sport] && !DATA[sport]){ view.innerHTML = `<h1>${SPORT_LABEL[sport]} props</h1><div class="slip"><div class="empty">${sport === "golf" ? "Golf props such as top 10s and matchups need the paid odds feed. The field, form and winner prices are on the Games and Markets tabs." : "Player props need live odds, which aren’t connected for this sport yet."}</div></div>`; return; }
   if (RES[sport]){ view.innerHTML = `<h1>${SPORT_LABEL[sport]} player props</h1>${liveBar()}<div class="slip"><div class="empty">Player props need live odds${CFG[sport] ? ". Connect your Odds API key above once your Zapier tasks reset, or after the backend is set up." : ", which aren’t connected for the " + SPORT_LABEL[sport] + " yet."} Team records are on the Odds tab.</div></div>`; wireLiveBar(); return; }
   const games = DATA[sport].games;
   if (!DATA[sport].stats.includes(statFilter)) statFilter = DATA[sport].stats[sport === "nhl" ? 3 : 0];
