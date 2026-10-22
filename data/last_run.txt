@@ -10,23 +10,8 @@ ESPN nfl: saved 1 pregame lines (archive 2)
 ESPN cfb: saved 8 pregame lines (archive 12)
 ESPN ncaab: saved 0 pregame lines (archive 0)
 NCAAB: 14246 games
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/ita.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/ger.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/ger.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/ger.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/fra.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/fra.1/scoreboard
-  400 from https://site.api.espn.com/apis/site/v2/sports/soccer/fra.1/scoreboard
-Soccer ESPN fixtures: 0 added
-Soccer: 3850 matches (1 upcoming)
+Soccer ESPN fixtures: 56 added
+Soccer: 3906 matches (57 upcoming)
 Golf: Butterfield Bermuda Championship (120 players, form for 0, Polymarket 96, Kalshi 114)
 Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
@@ -48,4 +33,4 @@ Injuries mlb: 279 players
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
 Weather: stopped early (3 failures)
-Weather: 6 outdoor games
+Weather: 8 outdoor games
