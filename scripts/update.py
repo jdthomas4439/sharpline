@@ -716,7 +716,7 @@ def angle_picks(P, B, have):
         if key in used or ("angle", key, c["mkt"]) in have: continue
         used.add(key)
         new.append({"strat": "angle", "key": key, "sport": sp, "mkt": c["mkt"], "side": c["side"], "odds": c["odds"], "line": c["line"],
-                    "why": c["why"], "score": round(score, 2), "start": start.astimezone(dt.timezone.utc).isoformat(timespec="minutes"),
+                    "why": c["why"], "rank": round(score, 2), "start": start.astimezone(dt.timezone.utc).isoformat(timespec="minutes"),
                     "at": NOW.isoformat(timespec="minutes")})
         if len(new) >= need: break
     return new
