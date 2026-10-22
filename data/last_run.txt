@@ -11,19 +11,7 @@ ESPN cfb: saved 8 pregame lines (archive 12)
 ESPN ncaab: saved 0 pregame lines (archive 0)
 NCAAB: 14246 games
 Soccer: 3850 matches (1 upcoming)
-golf failed:
-Traceback (most recent call last):
-  File "/home/runner/work/sharpline/sharpline/scripts/update.py", line 934, in step
-    try: return fn()
-                ^^^^
-  File "/home/runner/work/sharpline/sharpline/scripts/update.py", line 872, in build_golf
-    names = {norm(p["n"]): p for p in G["players"]}
-            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/runner/work/sharpline/sharpline/scripts/update.py", line 872, in <dictcomp>
-    names = {norm(p["n"]): p for p in G["players"]}
-             ^^^^
-NameError: name 'norm' is not defined
-
+Golf: Butterfield Bermuda Championship (120 players, form for 0, Polymarket 96, Kalshi 114)
 Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 49 games matched
