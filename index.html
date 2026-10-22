@@ -2048,17 +2048,21 @@ function golfFormChip(f){
 function renderGolf(){
   const G = window.SLB && SLB.GOLF;
   if (!G){ view.innerHTML = `<h1>Golf</h1><div class="slip"><div class="empty">Golf loads from your backend: this week’s PGA Tour event, the field, recent form, last year’s finishes and Kalshi and Polymarket winner prices.</div></div>`; return; }
-  const ev = G.event, started = G.players.some(p => p.pos);
+  const ev = G.event, started = ev.state === "in" || ev.state === "post" || G.players.some(p => p.pos || p.score != null);
   const fmtD = s => s ? new Date(s).toLocaleDateString("en-US",{month:"short",day:"numeric",timeZone:"America/New_York"}) : "";
   const state = ev.state === "post" ? "Final" : ev.state === "in" || started ? "In progress" : "Upcoming";
   const list = [...G.players].sort(started ? (a,b) => (a.order||999) - (b.order||999) : (a,b) => (golfMid(b) ?? -1) - (golfMid(a) ?? -1) || a.n.localeCompare(b.n));
+  if (started){                                        // ESPN sometimes omits positions: rank by order, ties by equal score
+    let rank = 0;
+    list.forEach((p, i) => { if (i === 0 || p.score !== list[i-1].score) rank = i + 1; p._pos = p.pos || ((list[i-1] && list[i-1].score === p.score) || (list[i+1] && list[i+1].score === p.score) ? "T" + rank : String(rank)); });
+  }
   const shown = list.slice(0, golfAll ? 200 : 30);
   view.innerHTML = `
     <h1>${ev.name || "This week’s event"}</h1>
     <p class="sub">${[ev.course, fmtD(ev.start) + (ev.end ? "–" + fmtD(ev.end) : ""), state].filter(Boolean).join(" · ")}</p>
     <div class="plist">
       <div class="phead golf"><span>${started ? "Pos" : "#"}</span><span>Player</span><span>${started ? "Score" : "Win %"}</span><span>${started ? "Thru" : "Last 6"}</span></div>
-      ${shown.map((p,i) => `<div class="prow golf"><span class="num">${started ? (p.pos || "—") : i + 1}</span><span class="pn">${p.n}${!started && p.last != null ? `<small>Last year here: ${p.last}</small>` : ""}</span>
+      ${shown.map((p,i) => `<div class="prow golf"><span class="num">${started ? (p._pos || p.pos || "—") : i + 1}</span><span class="pn">${p.n}${!started && p.last != null ? `<small>Last year here: ${p.last}</small>` : ""}</span>
         <span class="num">${started ? (p.score ?? "—") : golfMid(p) != null ? (golfMid(p)*100).toFixed(1) + "%" : "—"}</span>
         <span>${started ? `<span class="num">${p.thru ?? "—"}</span>` : (p.form && p.form.length ? `<span class="gform">${p.form.map(golfFormChip).join("")}</span>` : `<span class="mut">—</span>`)}</span></div>`).join("")}
     </div>
