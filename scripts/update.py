@@ -88,12 +88,14 @@ def add_rest(games):
             last[k] = d
     return games
 
-def to_rows(games):
+def to_rows(games, extra=False):
     out = []
     for g in sorted(games, key=lambda x: (x["date"], x["time"])):
-        out.append([g["season"], g["date"], g["time"], g["a"], g["h"], g.get("as"), g.get("hs"), g.get("sl"), g.get("tot"),
-                    g.get("aml"), g.get("hml"), g.get("div", 0), g.get("indoor"), g.get("ar"), g.get("hr"), g.get("neutral", 0),
-                    g.get("ark"), g.get("hrk")])
+        row = [g["season"], g["date"], g["time"], g["a"], g["h"], g.get("as"), g.get("hs"), g.get("sl"), g.get("tot"),
+               g.get("aml"), g.get("hml"), g.get("div", 0), g.get("indoor"), g.get("ar"), g.get("hr"), g.get("neutral", 0),
+               g.get("ark"), g.get("hrk")]
+        if extra: row += [g.get("dml"), g.get("lg")]
+        out.append(row)
     return out
 
 # ---------------------------------------------------------------- team maps
@@ -640,8 +642,8 @@ def _team_log(games, ab):
         x["prev"] = ("W" if p["pf"] > p["pa"] else "L" if p["pf"] < p["pa"] else "T") if p and p["season"] == x["season"] else None
     return list(reversed(asc))
 
-ANGLE_SPORTS = {"nfl": "NFLV_ROWS", "cfb": "CFB_ROWS", "nba": "NBA_ROWS", "nhl": "NHL_ROWS", "mlb": "MLB_ROWS"}
-REAL_LINES = {"nfl", "cfb"}
+ANGLE_SPORTS = {"nfl": "NFLV_ROWS", "cfb": "CFB_ROWS", "nba": "NBA_ROWS", "nhl": "NHL_ROWS", "mlb": "MLB_ROWS", "ncaab": "NCAAB_ROWS", "soccer": "SOCCER_ROWS"}
+REAL_LINES = {"nfl", "cfb", "soccer"}
 
 def angle_candidates(sp, games, g):
     real, cur = sp in REAL_LINES, max(x["season"] for x in games)
@@ -727,6 +729,197 @@ def rows_final(B, key):
         if g["played"] and g["a"] == a and g["h"] == h and g["date"] == date: return [g["as_"], g["hs"]]
     return None
 
+
+# ---------------------------------------------------------------- college basketball (sportsdataverse ESPN archive)
+def build_ncaab():
+    cur = season_year(8) + 1                      # file year = season end year
+    games, names, conf, confname = [], {}, {}, {}
+    for y in (cur - 2, cur - 1, cur):
+        d = parquet(f"{SDV}/espn_mens_college_basketball_schedules/mbb_schedule_{y}.parquet")
+        if d is None: continue
+        d = d[d.season_type.isin([2, 3])]
+        for _, r in d.iterrows():
+            a, h = r.away_abbreviation, r.home_abbreviation
+            if not a or not h: continue
+            names[a] = r.away_short_display_name or r.away_location or a
+            names[h] = r.home_short_display_name or r.home_location or h
+            for ab, cid in ((a, r.away_conference_id), (h, r.home_conference_id)):
+                if nz(cid) is not None: conf[ab] = str(int(cid))
+            if bool(r.conference_competition) and nz(r.groups_short_name) and nz(r.home_conference_id) is not None:
+                confname[str(int(r.home_conference_id))] = r.groups_short_name
+            date, time_ = et(r.start_date)
+            done = bool(r.status_type_completed)
+            rk = lambda v: int(v) if nz(v) is not None and 0 < int(v) <= 25 else None
+            games.append(dict(season=int(y), date=date, time=time_, a=a, h=h, **{"as": int(r.away_score) if done else None},
+                              hs=int(r.home_score) if done else None, div=1 if r.conference_competition else 0,
+                              neutral=1 if r.neutral_site else 0, ark=rk(r.away_current_rank), hrk=rk(r.home_current_rank)))
+    conf_named = {ab: confname.get(c, "Conference") for ab, c in conf.items()}
+    log(f"NCAAB: {len(games)} games")
+    return add_rest(games), names, conf_named
+
+# ---------------------------------------------------------------- soccer (football-data.co.uk: results + Pinnacle closing odds)
+SOCCER_LEAGUES = {"E0": "Premier League", "SP1": "La Liga", "I1": "Serie A", "D1": "Bundesliga", "F1": "Ligue 1"}
+LONDON = ZoneInfo("Europe/London")
+
+def _am(decv):
+    try:
+        d = float(decv)
+        if not d or d <= 1.0 or math.isnan(d): return None
+        return int(round((d - 1) * 100)) if d >= 2 else -int(round(100 / (d - 1)))
+    except Exception: return None
+
+def _first(row, *cols):
+    for c in cols:
+        if c in row and nz(row[c]) is not None and str(row[c]).strip() != "": return row[c]
+    return None
+
+def _soccer_dt(date_s, time_s):
+    date_s = str(date_s).strip()
+    for fmt in ("%d/%m/%Y", "%d/%m/%y"):
+        try:
+            d = dt.datetime.strptime(date_s, fmt); break
+        except Exception: d = None
+    if d is None: return None, None
+    hh, mm = (str(time_s).strip() or "15:00").split(":")[:2] if time_s and ":" in str(time_s) else ("15", "00")
+    local = d.replace(hour=int(hh), minute=int(mm), tzinfo=LONDON).astimezone(ET)
+    return local.strftime("%Y-%m-%d"), local.strftime("%H:%M")
+
+def _soccer_row(r, season, upcoming):
+    date, time_ = _soccer_dt(r.get("Date"), r.get("Time"))
+    if not date or not r.get("HomeTeam") or not r.get("AwayTeam"): return None
+    if upcoming:
+        h, d_, a = _first(r, "PSH", "AvgH", "B365H"), _first(r, "PSD", "AvgD", "B365D"), _first(r, "PSA", "AvgA", "B365A")
+        ou = _first(r, "P>2.5", "Avg>2.5", "B365>2.5"); ah = _first(r, "AHh")
+    else:
+        h, d_, a = _first(r, "PSCH", "AvgCH", "B365CH", "PSH"), _first(r, "PSCD", "AvgCD", "B365CD", "PSD"), _first(r, "PSCA", "AvgCA", "B365CA", "PSA")
+        ou = _first(r, "PC>2.5", "AvgC>2.5", "B365C>2.5", "P>2.5"); ah = _first(r, "AHCh", "AHh")
+    done = not upcoming and nz(r.get("FTHG")) is not None and nz(r.get("FTAG")) is not None
+    try: ahv = float(ah) if ah is not None else None
+    except Exception: ahv = None
+    return dict(season=season, date=date, time=time_, a=str(r["AwayTeam"]).strip(), h=str(r["HomeTeam"]).strip(),
+                **{"as": int(float(r["FTAG"])) if done else None}, hs=int(float(r["FTHG"])) if done else None,
+                sl=(-ahv if ahv is not None else None), tot=2.5 if ou is not None else None,
+                aml=_am(a), hml=_am(h), dml=_am(d_), div=0, lg=r.get("Div"))
+
+def build_soccer():
+    y = season_year(7)
+    games = []
+    for yy in (y - 2, y - 1, y):
+        code = f"{yy % 100:02d}{(yy + 1) % 100:02d}"
+        for div in SOCCER_LEAGUES:
+            rr = get(f"https://www.football-data.co.uk/mmz4281/{code}/{div}.csv", timeout=40)
+            if rr is None: continue
+            try: df = pd.read_csv(io.StringIO(rr.content.decode("latin-1")))
+            except Exception as e: log(f"  soccer {div} {code}: {e}"); continue
+            for rec in df.to_dict("records"):
+                rec["Div"] = rec.get("Div") or div
+                g = _soccer_row(rec, yy, False)
+                if g and g["hs"] is not None: games.append(g)
+    fx = get("https://www.football-data.co.uk/fixtures.csv", timeout=40)
+    n_up = 0
+    if fx is not None:
+        try:
+            df = pd.read_csv(io.StringIO(fx.content.decode("utf-8-sig", errors="replace")))
+            for rec in df.to_dict("records"):
+                if rec.get("Div") not in SOCCER_LEAGUES: continue
+                g = _soccer_row(rec, y, True)
+                if g: games.append(g); n_up += 1
+        except Exception as e: log(f"  soccer fixtures: {e}")
+    seen, out = set(), []
+    for g in games:
+        k = (g["date"], g["a"], g["h"])
+        if k in seen: continue
+        seen.add(k); out.append(g)
+    log(f"Soccer: {len(out)} matches ({n_up} upcoming)")
+    return add_rest(out)
+
+# ---------------------------------------------------------------- golf (ESPN PGA Tour + Kalshi/Polymarket winner prices)
+def _golf_events(js):
+    return (js or {}).get("events") or []
+
+def _golf_field(ev):
+    comp = (ev.get("competitions") or [{}])[0]
+    out = []
+    for i, c in enumerate(comp.get("competitors") or []):
+        ath = c.get("athlete") or {}
+        name = ath.get("displayName") or ath.get("fullName")
+        if not name: continue
+        st = c.get("status") or {}
+        pos = ((st.get("position") or {}).get("displayName")) or None
+        score = c.get("score")
+        if isinstance(score, dict): score = score.get("displayValue")
+        thru = st.get("thru") if st.get("thru") not in (None, 0) else ((st.get("type") or {}).get("shortDetail") or None)
+        out.append({"n": name, "pos": pos, "score": score, "thru": thru, "order": c.get("sortOrder") or i + 1})
+    return out
+
+def _finish(pos):
+    if not pos: return None
+    p = str(pos).upper().replace("T", "")
+    return int(p) if p.isdigit() else ("MC" if "CUT" in p or p == "MC" else p[:3])
+
+def build_golf():
+    base = f"{ESPN}/golf/pga/scoreboard"
+    js = get_json(base)
+    evs = _golf_events(js)
+    if not evs: log("Golf: no event"); return None
+    ev = evs[0]
+    comp = (ev.get("competitions") or [{}])[0]
+    start = (ev.get("date") or "")[:10]
+    G = {"event": {"name": ev.get("name") or ev.get("shortName"), "start": ev.get("date"), "end": ev.get("endDate"),
+                   "state": ((ev.get("status") or {}).get("type") or {}).get("state") or ((comp.get("status") or {}).get("type") or {}).get("state"),
+                   "course": ((comp.get("venue") or {}).get("fullName")) or ((ev.get("courses") or [{}])[0].get("name"))},
+         "players": _golf_field(ev)}
+    names = {norm(p["n"]): p for p in G["players"]}
+    try: d0 = dt.date.fromisoformat(start)
+    except Exception: d0 = TODAY_ET
+    # recent form: the previous 8 weekly events
+    form = {}
+    for k in range(1, 9):
+        day = d0 - dt.timedelta(days=7 * k)
+        for pe in _golf_events(get_json(base, {"dates": day.strftime("%Y%m%d")})):
+            if pe.get("id") == ev.get("id"): continue
+            for p in _golf_field(pe):
+                f = _finish(p["pos"])
+                if f is not None and norm(p["n"]) in names: form.setdefault(norm(p["n"]), []).append(f)
+            break
+    # last year at this event (same week a year earlier)
+    last = {}
+    for pe in _golf_events(get_json(base, {"dates": (d0 - dt.timedelta(days=364)).strftime("%Y%m%d")})):
+        for p in _golf_field(pe):
+            if norm(p["n"]) in names: last[norm(p["n"])] = _finish(p["pos"])
+        G["event"]["lastYearName"] = pe.get("name"); break
+    for p in G["players"]:
+        p["form"] = form.get(norm(p["n"]), [])[:6]; p["last"] = last.get(norm(p["n"]))
+    # winner markets
+    hits = 0
+    for tag in ("golf", "pga-tour", "pga"):
+        pj = get_json(f"{POLY}/events", {"tag_slug": tag, "active": "true", "closed": "false", "limit": 100})
+        if not isinstance(pj, list): continue
+        for pev in pj:
+            title = (pev.get("title") or "").lower()
+            if not any(w in title for w in norm(G["event"]["name"] or "").split()[:2]) or "win" not in title: continue
+            for m in pev.get("markets") or []:
+                q = m.get("question") or m.get("groupItemTitle") or ""
+                who = m.get("groupItemTitle") or re.sub(r"^Will (.*?) win.*$", r"\1", q)
+                try: price = float((json.loads(m["outcomePrices"]) if isinstance(m.get("outcomePrices"), str) else m.get("outcomePrices"))[0])
+                except Exception: continue
+                p = names.get(norm(who))
+                if p and 0 < price < 1: p["p"] = round(price, 4); hits += 1
+            break
+        if hits: break
+    kh = 0
+    for series in ("KXPGATOUR", "KXPGA", "KXGOLF"):
+        kj = get_json(f"{KALSHI}/events", {"series_ticker": series, "status": "open", "with_nested_markets": "true", "limit": 50})
+        for kev in (kj or {}).get("events", []) or []:
+            for m in kev.get("markets") or []:
+                p = names.get(norm(m.get("yes_sub_title") or ""))
+                if not p: continue
+                bid, ask = float(m.get("yes_bid_dollars") or 0), float(m.get("yes_ask_dollars") or 0)
+                if ask: p["k"] = {"bid": bid, "ask": ask}; kh += 1
+        if kh: break
+    log(f"Golf: {G['event']['name']} ({len(G['players'])} players, form for {len(form)}, Polymarket {hits}, Kalshi {kh})")
+    return G
+
 # ---------------------------------------------------------------- main
 def main():
     os.makedirs(DATA, exist_ok=True)
@@ -759,10 +952,16 @@ def main():
         all_lines[sp] = step(f"espn {sp}", lambda sp=sp: espn_archive(sp)) or load(f"lines_{sp}.json", {})
     nc_lines = step("espn ncaab", lambda: espn_archive("ncaab")) or {}
     all_lines["ncaab"] = nc_lines
-    nc = list(load("results_ncaab.json", {}).values())
+    ncb = step("ncaab", build_ncaab)
+    nc = ncb[0] if ncb else []
     if nc:
-        add_rest(nc); archive["ncaab"] = merge_lines(nc, nc_lines)
-        B["NCAAB_ROWS"] = to_rows(nc); B["NCAAB_NAMES"] = load("names_ncaab.json", {})
+        archive["ncaab"] = merge_lines(nc, nc_lines)
+        B["NCAAB_ROWS"], B["NCAAB_NAMES"], B["NCAAB_CONF"] = to_rows(nc), ncb[1], ncb[2]
+    else:
+        for k in ("NCAAB_ROWS", "NCAAB_NAMES", "NCAAB_CONF"): B[k] = old.get(k)
+    soc = step("soccer", build_soccer)
+    B["SOCCER_ROWS"] = to_rows(soc, extra=True) if soc else old.get("SOCCER_ROWS")
+    B["GOLF"] = step("golf", build_golf) or old.get("GOLF")
 
     if nba: B["NBA_ROWS"], B["NBA_NAMES"], B["NBA_DIVS"] = to_rows(nba[0]), nba[1], NBA_DIV
     else:
@@ -780,7 +979,7 @@ def main():
     nfl_games = [dict(date=r[2], time=r[3], a=r[4], h=r[5], **{"as": r[6]}) for r in (B.get("NFLV_ROWS") or [])]
     sched = {"nfl": (nfl_games, NFL_FULL), "nhl": (nhl or [], NHL_FULL),
              "nba": (nba[0] if nba else [], nba[1] if nba else {}), "mlb": (mlb[0] if mlb else [], mlb[1] if mlb else {}),
-             "cfb": (cfb[0] if cfb else [], cfb[1] if cfb else {}), "ncaab": (nc, load("names_ncaab.json", {}))}
+             "cfb": (cfb[0] if cfb else [], cfb[1] if cfb else {}), "ncaab": (nc, ncb[1] if ncb else {})}
     MK = {}
     for sp, (games, names) in sched.items():
         c = candidates(sp, games, names)
