@@ -15,19 +15,19 @@ Soccer: 3910 matches (61 upcoming)
 Golf: Butterfield Bermuda Championship (120 players, form for 94, Polymarket 96, Kalshi 114)
 Kalshi nfl: 14 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 48 games matched
+Kalshi nhl: 49 games matched
 Polymarket nhl: 25 games matched
-Kalshi nba: 37 games matched
+Kalshi nba: 36 games matched
 Polymarket nba: 43 games matched
 Kalshi mlb: 4 games matched
 Polymarket mlb: 4 games matched
 Kalshi cfb: 103 games matched
 Polymarket cfb: 0 games matched
-History: 243 games tracked
-Test picks: 5 new, 2 graded, 22 total
+History: 247 games tracked
+Test picks: 0 new, 1 graded, 22 total
 Injuries nfl: 800 players
 Injuries nba: 78 players
-Injuries nhl: 133 players
+Injuries nhl: 134 players
 Injuries mlb: 278 players
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
