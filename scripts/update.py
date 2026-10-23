@@ -347,25 +347,26 @@ def weather(nfl_rows):
         if not (TODAY_ET <= d <= lim) or r[5] not in NFL_OUTDOOR: continue
         lat, lon = NFL_OUTDOOR[r[5]]; spots[f"nfl|{r[2]}|{r[4]}|{r[5]}"] = (lat, lon, r[2], r[3])
     out = {}
-    started, fails = time.time(), 0
-    for key, (lat, lon, date, time_) in spots.items():
-        if not (TODAY_ET <= dt.date.fromisoformat(date) <= lim): continue
-        if fails >= 3 or time.time() - started > 120:        # weather is optional: never let it stall the run
-            log(f"Weather: stopped early ({fails} failures)"); break
-        r = get("https://api.open-meteo.com/v1/forecast", {"latitude": lat, "longitude": lon,
+    # one request per batch of stadiums for the whole week (NFL first), instead of one request per game
+    items = sorted(((k, v) for k, v in spots.items() if TODAY_ET <= dt.date.fromisoformat(v[2]) <= lim), key=lambda kv: (not kv[0].startswith("nfl"), kv[1][2]))
+    for i0 in range(0, len(items), 40):
+        chunk = items[i0:i0 + 40]
+        r = get("https://api.open-meteo.com/v1/forecast", {"latitude": ",".join(str(v[0]) for _, v in chunk), "longitude": ",".join(str(v[1]) for _, v in chunk),
               "hourly": "temperature_2m,wind_speed_10m,precipitation_probability", "temperature_unit": "fahrenheit",
-              "wind_speed_unit": "mph", "timezone": "America/New_York", "start_date": date, "end_date": date}, tries=1, timeout=8)
+              "wind_speed_unit": "mph", "timezone": "America/New_York", "start_date": TODAY_ET.isoformat(), "end_date": lim.isoformat()}, tries=2, timeout=20)
         try: js = r.json() if r is not None else None
         except Exception: js = None
-        if not js or "hourly" not in js:
-            fails += 1; continue
-        fails = 0
-        hrs = js["hourly"].get("time", []); want = f"{date}T{time_[:2]}:00"
-        i = hrs.index(want) if want in hrs else 0
-        H = js["hourly"]
-        out[key] = {"temp": H["temperature_2m"][i], "wind": H["wind_speed_10m"][i],
-                    "rain": (H.get("precipitation_probability") or [None])[i]}
-        time.sleep(0.3)
+        if js is None:
+            log(f"Weather: batch {i0 // 40 + 1} failed"); continue
+        if isinstance(js, dict): js = [js]
+        for (key, (lat, lon, date, time_)), res in zip(chunk, js):
+            H = (res or {}).get("hourly") or {}
+            hrs = H.get("time", []); want = f"{date}T{time_[:2]}:00"
+            if want not in hrs: continue
+            i = hrs.index(want)
+            out[key] = {"temp": H["temperature_2m"][i], "wind": H["wind_speed_10m"][i],
+                        "rain": (H.get("precipitation_probability") or [None] * (i + 1))[i]}
+        time.sleep(1)
     log(f"Weather: {len(out)} outdoor games")
     return out
 
