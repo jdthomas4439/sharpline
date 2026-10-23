@@ -27,11 +27,10 @@ History: 206 games tracked
 Test picks: 0 new, 0 graded, 17 total
 Injuries nfl: 800 players
 Injuries nba: 77 players
-Injuries nhl: 129 players
+Injuries nhl: 130 players
 Injuries mlb: 278 players
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
-  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
 Weather: stopped early (3 failures)
-Weather: 5 outdoor games
+Weather: 9 outdoor games
