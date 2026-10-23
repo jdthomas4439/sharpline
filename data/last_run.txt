@@ -4,9 +4,9 @@ NHL: 3968 games
 MLB: 7428 games
 CFB: 3049 games
 ESPN nba: saved 13 pregame lines (archive 28)
-ESPN nhl: saved 8 pregame lines (archive 28)
+ESPN nhl: saved 6 pregame lines (archive 28)
 ESPN mlb: saved 1 pregame lines (archive 2)
-ESPN nfl: saved 1 pregame lines (archive 2)
+ESPN nfl: saved 0 pregame lines (archive 2)
 ESPN cfb: saved 5 pregame lines (archive 12)
 ESPN ncaab: saved 0 pregame lines (archive 0)
 NCAAB: 14246 games
@@ -16,7 +16,7 @@ Golf: Butterfield Bermuda Championship (120 players, form for 94, Polymarket 96,
 Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 49 games matched
-Polymarket nhl: 31 games matched
+Polymarket nhl: 32 games matched
 Kalshi nba: 38 games matched
 Polymarket nba: 44 games matched
 Kalshi mlb: 4 games matched
@@ -32,5 +32,6 @@ Injuries mlb: 278 players
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
 Weather: stopped early (3 failures)
-Weather: 8 outdoor games
+Weather: 5 outdoor games
