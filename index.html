@@ -370,6 +370,15 @@ h2{font-size:14px;font-weight:600;color:var(--muted);margin:24px 0 4px;letter-sp
 .wxhist th{font-size:12px;font-weight:500;color:var(--muted);text-align:right;padding:4px 0}.wxhist th:first-child,.wxhist td:first-child{text-align:left}
 .wxhist td{padding:5px 0;text-align:right;border-top:1px solid var(--line)}.wxhist td.mut{color:var(--muted);text-align:right}
 .wxnote{font-size:13px;color:var(--muted);margin-top:6px}
+.agrp{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 0;color:var(--ink);font:inherit}
+.aghead{display:grid;grid-template-columns:22px 56px 1fr auto;gap:8px;align-items:baseline}
+.agn{font-family:"Archivo",sans-serif;font-stretch:75%;font-weight:600;color:var(--muted)}
+.ags{font-size:12px;font-weight:600;color:var(--muted)}
+.aghead b{font-size:16px;font-weight:600}.agt{font-size:14px;color:var(--muted);white-space:nowrap}
+.aglist{display:flex;flex-direction:column;gap:6px;margin:6px 0 0 86px}
+.agi{position:relative;padding-left:14px;font-size:16px;line-height:1.35}
+.agi::before{content:"";position:absolute;left:0;top:.55em;width:6px;height:6px;border-radius:50%;background:var(--gold)}
+.agi small{display:block;font-size:14px;color:var(--muted);margin-top:1px}
 .okdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pos);margin-left:6px;vertical-align:middle}
 </style>
 </head>
@@ -2080,12 +2089,20 @@ function topMoves(){
   return lineMoves().filter(m => now - m.ts < 1440 && m.key.split("|")[1] === today).sort((a,b) => rank(b) - rank(a) || b.size - a.size).slice(0, 5);
 }
 function topAngles(){
-  const out = [];
-  const today = etDate(new Date());
+  // one entry per game: up to 3 real closing-line angles, identical records merged ("last 10 and this season")
+  const groups = [], today = etDate(new Date());
   Object.keys(RES).forEach(sp => freeGames(sp).filter(g => etDate(g.start) === today && !g.started).forEach(g => {
-    resHighlights(g).filter(h => h.real).slice(0, 2).forEach(h => out.push({ ...h, sp, g }));     // real closing-line angles only, max 2 per game
+    const hs = resHighlights(g).filter(h => h.real);
+    if (!hs.length) return;
+    const items = [];
+    hs.forEach(h => {
+      const m = h.t.match(/^(.*?), ([^,]+)$/), base = m ? m[1] : h.t, label = m ? m[2] : "";
+      const ex = items.find(x => x.base === base);
+      if (ex){ if (label) ex.labels.push(label); } else items.push({ base, labels:label ? [label] : [] });
+    });
+    groups.push({ sp, g, items:items.slice(0, 3), s:hs[0].s });
   }));
-  return out.sort((a,b) => b.s - a.s).slice(0, 10);
+  return groups.sort((a,b) => b.s - a.s).slice(0, 6);
 }
 function dogHTML(){
   const P = window.SLB && SLB.PICKS;
@@ -2120,7 +2137,9 @@ function renderTop(){
         return `<li><button class="topitem" data-open="${sp}|fr_${sp}_${d}_${a}_${h}"><span class="sp">${SPORT_SHORT[sp] || sp.toUpperCase()}</span><span class="tx">${m.steam ? "<b>Steam:</b> " : ""}${m.text}<small>${ago(m.ts)}</small></span></button></li>`; }).join("")}</ol>`
       : `<p class="note">No big line moves on today’s games yet.</p>`}
     <h2>Angles</h2>
-    ${angles.length ? `<ol class="toplist">${angles.map(x => `<li><button class="topitem" data-open="${x.sp}|${x.g.id}"><span class="sp">${SPORT_SHORT[x.sp] || x.sp.toUpperCase()}</span><span class="tx">${x.t}<small>${matchup(x.g)}, ${when(x.g)}</small></span></button></li>`).join("")}</ol>`
+    ${angles.length ? angles.map((x, i) => { const join = L => L.length < 2 ? (L[0] || "") : L.slice(0, -1).join(", ") + " and " + L[L.length - 1];
+      return `<button class="agrp" data-open="${x.sp}|${x.g.id}"><span class="aghead"><span class="agn">${i + 1}</span><span class="ags">${SPORT_SHORT[x.sp] || x.sp.toUpperCase()}</span><b>${matchup(x.g)}</b><span class="agt">${x.g.time.replace(/^Today /, "")}${/TBD/.test(x.g.time) ? "" : " ET"}</span></span>
+      <span class="aglist">${x.items.map(it => `<span class="agi">${it.base}${it.labels.length ? `<small>${join(it.labels)}</small>` : ""}</span>`).join("")}</span></button>`; }).join("")
       : `<p class="note">No strong angles in today’s games.</p>`}
     <p class="note">Angles are against-the-spread and over–under records using each game’s real closing line, ranked by how far from 50/50 they are and how many games back them up. That’s NFL and college football today; NBA, NHL and MLB join as the backend’s line archive fills. Trends describe the past and are often already in the price.</p>`;
   view.querySelectorAll("[data-open]").forEach(b => b.onclick = () => {
