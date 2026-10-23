@@ -16,7 +16,7 @@ Golf: Butterfield Bermuda Championship (120 players, form for 94, Polymarket 96,
 Kalshi nfl: 14 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 48 games matched
-Polymarket nhl: 24 games matched
+Polymarket nhl: 25 games matched
 Kalshi nba: 36 games matched
 Polymarket nba: 42 games matched
 Kalshi mlb: 4 games matched
@@ -33,4 +33,4 @@ Injuries mlb: 278 players
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
   error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=8) on https://api.open-meteo.com/v1/forecast
 Weather: stopped early (3 failures)
-Weather: 9 outdoor games
+Weather: 8 outdoor games
