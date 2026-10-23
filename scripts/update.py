@@ -120,6 +120,7 @@ def season_year(month_start):
     return d.year if d.month >= month_start else d.year - 1
 
 # ---------------------------------------------------------------- NFL (nflverse)
+NFL_WX = {}
 def build_nfl():
     r = get(NFLVERSE, timeout=90)
     if r is None: return None
@@ -134,6 +135,8 @@ def build_nfl():
                     NFL_MAP.get(x.away_team, x.away_team), NFL_MAP.get(x.home_team, x.home_team),
                     f(x.away_score), f(x.home_score), f(x.spread_line), f(x.total_line), f(x.away_moneyline), f(x.home_moneyline),
                     int(x.div_game or 0), indoor, f(x.away_rest), f(x.home_rest), 1 if x.location == "Neutral" else 0])
+        if indoor == 0 and not pd.isna(x.get("temp")) and not pd.isna(x.home_score):     # kickoff weather for played outdoor games
+            NFL_WX[f"{x.gameday}|{out[-1][4]}|{out[-1][5]}"] = [int(x.temp), None if pd.isna(x.get("wind")) else int(x.wind)]
     log(f"NFL: {len(out)} games")
     return out
 
@@ -1149,7 +1152,10 @@ def main():
     nfl_names = {}
     B["INJURIES"] = {sp: step(f"injuries {sp}", lambda sp=sp: injuries(sp, nfl_names)) or (old.get("INJURIES") or {}).get(sp, {})
                      for sp in ("nfl", "nba", "nhl", "mlb")}
-    B["WEATHER"] = step("weather", lambda: weather(B["NFLV_ROWS"])) or old.get("WEATHER") or {}
+    wx_new = step("weather", lambda: weather(B["NFLV_ROWS"])) or {}
+    wx_old = {k: v for k, v in (old.get("WEATHER") or {}).items() if k.split("|")[1] >= TODAY_ET.isoformat()}
+    B["WEATHER"] = {**wx_old, **wx_new}                      # keep earlier forecasts when a run's lookups fail
+    B["NFL_WX"] = NFL_WX or old.get("NFL_WX") or {}
     o = step("odds", odds)
     if o and o[0]: B["ODDS"], B["ODDS_TIME"] = o
     B["UPDATED"] = NOW.astimezone(ET).strftime("%b %-d, %Y %-I:%M %p ET")
