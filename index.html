@@ -359,6 +359,17 @@ h2{font-size:14px;font-weight:600;color:var(--muted);margin:24px 0 4px;letter-sp
 .me{background:transparent;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0}
 .me div{text-align:left;padding:10px 0 10px 12px}.me div:first-child{padding-left:0}
 .me b{font-size:20px;font-weight:600}
+
+.wxbox{margin:4px 14px 10px;padding:10px 0 4px;border-top:1px solid var(--line)}
+.wxtop{display:flex;gap:12px;align-items:center}
+.wxtop svg{width:34px;height:34px;flex:none;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;stroke:var(--muted)}
+.wxbox.sun .wxtop svg{stroke:var(--gold)}.wxbox.rain .wxtop svg,.wxbox.snow .wxtop svg{stroke:#7FB2FF}.wxbox.wind .wxtop svg{stroke:var(--ink)}
+.wxtop b{display:block;font-size:20px}.wxtop span{font-size:14px;color:var(--muted)}
+.wxhist{margin-top:8px}.wxhist small{font-size:12px;color:var(--muted)}
+.wxhist table{width:100%;border-collapse:collapse;margin-top:4px;font-size:14px}
+.wxhist th{font-size:12px;font-weight:500;color:var(--muted);text-align:right;padding:4px 0}.wxhist th:first-child,.wxhist td:first-child{text-align:left}
+.wxhist td{padding:5px 0;text-align:right;border-top:1px solid var(--line)}.wxhist td.mut{color:var(--muted);text-align:right}
+.wxnote{font-size:13px;color:var(--muted);margin-top:6px}
 .okdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pos);margin-left:6px;vertical-align:middle}
 </style>
 </head>
@@ -1840,7 +1851,7 @@ function extrasBlock(g){
   if (!window.SLB) return "";
   const out = [];
   const W = SLB.WEATHER && SLB.WEATHER[g.sport + "|" + etDate(g.start) + "|" + g.awayAbbr + "|" + g.homeAbbr];
-  if (W) out.push(`<li class="${W.wind >= 15 ? "wx" : ""}">Weather at kickoff: ${Math.round(W.temp)}°F, wind ${Math.round(W.wind)} mph${W.rain != null ? ", " + W.rain + "% chance of rain" : ""}${W.wind >= 15 ? ". Strong wind usually pushes totals down." : ""}</li>`);
+  if (W && !["nfl","cfb"].includes(g.sport)) out.push(`<li class="${W.wind >= 15 ? "wx" : ""}">Weather at kickoff: ${Math.round(W.temp)}°F, wind ${Math.round(W.wind)} mph${W.rain != null ? ", " + W.rain + "% chance of rain" : ""}</li>`);
   const I = SLB.INJURIES && SLB.INJURIES[g.sport];
   if (I){
     const open = injOpen.has(g.id), parts = [];
@@ -2210,6 +2221,57 @@ function topBetHTML(g){
   return `<div class="topbet ${t.src}"><small>Desk pick</small><b>${t.bet}</b><span>${t.why}</span></div>`;
 }
 
+
+/* ---------- Weather box: forecast at game time + how each team has done in that weather ---------- */
+const WX_ICON = {
+  sun:'<circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>',
+  cloud:'<path d="M7 18h10a4 4 0 0 0 .4-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/><path d="M14 4.5a3.5 3.5 0 0 1 5 2.5"/>',
+  rain:'<path d="M7 15h10a4 4 0 0 0 .4-8A6 6 0 0 0 6 6.5 4.3 4.3 0 0 0 7 15z"/><path d="M8 18l-1 3M12 18l-1 3M16 18l-1 3"/>',
+  snow:'<path d="M7 14h10a4 4 0 0 0 .4-8A6 6 0 0 0 6 5.5 4.3 4.3 0 0 0 7 14z"/><path d="M8 18v.01M12 20v.01M16 18v.01M10 22v.01M14 22v.01"/>',
+  wind:'<path d="M3 8h11a3 3 0 1 0-3-3"/><path d="M3 12h16a3 3 0 1 1-3 3"/><path d="M3 16h8"/>',
+  dome:'<path d="M3 19h18"/><path d="M5 19a7 7 0 0 1 14 0"/><path d="M12 12v-2"/>'
+};
+function wxBucket(W){
+  if (W.wind >= 15) return { name:"windy games (15+ mph)", test:(t, w) => w != null && w >= 15 };
+  if (W.temp <= 40) return { name:"cold games (40°F or colder)", test:t => t <= 40 };
+  if (W.temp >= 80) return { name:"hot games (80°F or warmer)", test:t => t >= 80 };
+  return { name:"mild weather (41–79°F, light wind)", test:(t, w) => t > 40 && t < 80 && (w == null || w < 15) };
+}
+function wxRecord(R, ab, pick){
+  let w = 0, l = 0, cw = 0, cl = 0, o = 0, u = 0;
+  R.rows.forEach(x => {
+    if (!x.played || (x.a !== ab && x.h !== ab) || !pick(x)) return;
+    const home = x.h === ab, pf = home ? x.hs : x.as, pa = home ? x.as : x.hs;
+    if (pf > pa) w++; else if (pf < pa) l++;
+    if (x.sl != null){ const m = pf - pa + (home ? -x.sl : x.sl); if (m > 0) cw++; else if (m < 0) cl++; }
+    if (x.tot != null){ const t = pf + pa; if (t > x.tot) o++; else if (t < x.tot) u++; }
+  });
+  return { w, l, cw, cl, o, u, n:w + l };
+}
+function wxBox(g){
+  if (!["nfl","cfb"].includes(g.sport) || !window.SLB) return "";
+  const R = RES[g.sport], row = R && resCtx(g).row;
+  const W = SLB.WEATHER && SLB.WEATHER[g.sport + "|" + etDate(g.start) + "|" + g.awayAbbr + "|" + g.homeAbbr];
+  const indoor = row && row.indoor === 1;
+  if (!W && !indoor) return "";
+  const kind = indoor ? "dome" : W.rain >= 50 ? (W.temp <= 34 ? "snow" : "rain") : W.rain >= 25 ? "cloud" : W.wind >= 15 ? "wind" : "sun";
+  const label = { dome:"Indoors", snow:"Snow possible", rain:"Rain likely", cloud:"Clouds, some rain chance", wind:"Windy", sun:"Clear" }[kind];
+  const detail = indoor ? "Played under a roof, so weather won’t be a factor." : `${label}, wind ${Math.round(W.wind)} mph, ${W.rain ?? 0}% chance of rain at kickoff.`;
+  let hist = "";
+  if (g.sport === "nfl"){
+    const WX = SLB.NFL_WX || {}, B = indoor ? null : wxBucket(W);
+    const pick = indoor ? (x => x.indoor === 1) : (x => { const k = WX[x.date + "|" + x.a + "|" + x.h]; return k && B.test(k[0], k[1]); });
+    const rows = [[g.away, g.awayAbbr], [g.home, g.homeAbbr]].map(([nm, ab]) => ({ nm, r:wxRecord(R, ab, pick) }));
+    hist = `<div class="wxhist"><small>In ${indoor ? "indoor games" : B.name}, since 2021</small>
+      <table><thead><tr><th></th><th>Record</th><th>Spread</th><th>Over/under</th></tr></thead><tbody>
+      ${rows.map(({ nm, r }) => r.n < 3 ? `<tr><td>${nm}</td><td colspan="3" class="mut">Too few games</td></tr>`
+        : `<tr><td>${nm}</td><td class="num">${r.w}–${r.l}</td><td class="num">${r.cw}–${r.cl}</td><td class="num">${r.o}–${r.u}</td></tr>`).join("")}
+      </tbody></table></div>`;
+  } else hist = `<p class="wxnote">Weather history isn’t tracked for college games yet.</p>`;
+  return `<div class="wxbox ${kind}"><div class="wxtop"><svg viewBox="0 0 24 24" aria-hidden="true">${WX_ICON[kind]}</svg>
+    <div><b class="num">${indoor ? "Dome" : Math.round(W.temp) + "°F"}</b><span>${detail}</span></div></div>${hist}</div>`;
+}
+
 /* ---------- Views ---------- */
 const view = document.getElementById("view");
 const SPORT_LABEL = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"College football", ncaab:"College basketball", soccer:"Soccer", golf:"Golf" };
@@ -2312,6 +2374,7 @@ function renderOdds(){
         </div>
         ${g.free && RES[g.sport].lines ? nflvConsensus(g) : ""}
         ${!g.started ? topBetHTML(g) : ""}
+        ${wxBox(g)}
         ${extrasBlock(g)}
         ${RES[g.sport] ? resBlock(g) : g.live ? trendBlock(g) : g.trends && g.trends.length ? `<ul class="trends">${g.trends.map(t => `<li class="${t.div?"div":""}">${t.t}</li>`).join("")}</ul>` : ""}
         ${g.markets.map(m => {
