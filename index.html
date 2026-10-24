@@ -379,6 +379,7 @@ h2{font-size:14px;font-weight:600;color:var(--muted);margin:24px 0 4px;letter-sp
 .agi{position:relative;padding-left:14px;font-size:16px;line-height:1.35}
 .agi::before{content:"";position:absolute;left:0;top:.55em;width:6px;height:6px;border-radius:50%;background:var(--gold)}
 .agi small{display:block;font-size:14px;color:var(--muted);margin-top:1px}
+.cfbf{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:12px 0 4px;padding-bottom:2px}.cfbf .chip{flex:none}
 .okdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pos);margin-left:6px;vertical-align:middle}
 </style>
 </head>
@@ -2291,6 +2292,29 @@ function wxBox(g){
     <div><b class="num">${indoor ? "Dome" : Math.round(W.temp) + "°F"}</b><span>${detail}</span></div></div>${hist}</div>`;
 }
 
+
+/* ---------- College football filter: Top 25 or one conference ---------- */
+let cfbFilt = "all";
+const CFB_P4 = ["SEC", "Big Ten", "Big 12", "ACC"];
+function cfbRanked(g){ const r = g.nv || {}; return (r.ark && r.ark <= 25) || (r.hrk && r.hrk <= 25); }
+function oddsGames(){
+  const list = getGames();
+  if (sport !== "cfb" || cfbFilt === "all") return list;
+  if (cfbFilt === "top25") return list.filter(cfbRanked);
+  return list.filter(g => CFB_CONF[g.awayAbbr] === cfbFilt || CFB_CONF[g.homeAbbr] === cfbFilt);
+}
+function cfbFilterBar(){
+  if (sport !== "cfb") return "";
+  const games = getGames(), confs = new Set();
+  games.forEach(g => { [g.awayAbbr, g.homeAbbr].forEach(ab => CFB_CONF[ab] && confs.add(CFB_CONF[ab])); });
+  const order = [...confs].sort((a,b) => (CFB_P4.indexOf(a) < 0 ? 9 : CFB_P4.indexOf(a)) - (CFB_P4.indexOf(b) < 0 ? 9 : CFB_P4.indexOf(b)) || a.localeCompare(b));
+  const chip = (k, label) => `<button class="chip ${cfbFilt === k ? "on" : ""}" data-cf="${k}">${label}</button>`;
+  const rk = window.SLB && SLB.CFB_RANK;
+  return `<div class="filters cfbf" role="group" aria-label="Filter games">${chip("all", "All")}${chip("top25", "Top 25")}${order.map(c => chip(c, c)).join("")}</div>
+    ${rk && rk.poll ? `<p class="note">Rankings: ${rk.poll}${rk.headline ? ", " + rk.headline.replace(rk.poll, "").replace(/^[\s:,-]+/, "") : ""}</p>` : ""}
+    ${cfbFilt !== "all" && !oddsGames().length ? `<p class="note">No ${cfbFilt === "top25" ? "Top 25" : cfbFilt} games in this window.</p>` : ""}`;
+}
+
 /* ---------- Views ---------- */
 const view = document.getElementById("view");
 const SPORT_LABEL = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"College football", ncaab:"College basketball", soccer:"Soccer", golf:"Golf" };
@@ -2385,7 +2409,8 @@ function renderOdds(){
     <h1>${SPORT_LABEL[sport]}</h1>
     ${liveBar()}
     <p class="sub">Best prices are highlighted. Tap one to add it to your slip.</p>
-    ${getGames().map(g => `
+    ${cfbFilterBar()}
+    ${oddsGames().map(g => `
       <section class="game">
         <div class="game-head">
           <div><div class="teams">${matchup(g)}</div><div class="time">${g.nv && g.nv.lg && SOCCER_LEAGUE[g.nv.lg] ? SOCCER_LEAGUE[g.nv.lg] + ", " : ""}${g.started ? '<span class="inplay">In progress</span>' : g.time + (/TBD/.test(g.time) ? "" : " ET")}${g.nv && g.nv.neutral ? ", neutral site" : ""}</div></div>
@@ -2417,6 +2442,7 @@ function renderOdds(){
   view.querySelectorAll(".cell").forEach(c => c.onclick = () =>
     addLeg(c.dataset.g, c.dataset.t, c.dataset.s, c.dataset.b, +c.dataset.o, +c.dataset.p));
   view.querySelectorAll("[data-tt]").forEach(b => b.onclick = () => { const g = gameById(b.dataset.tt); openTrends.add(g.id); loadTrends(g); render(); });
+  view.querySelectorAll("[data-cf]").forEach(b => b.onclick = () => { cfbFilt = b.dataset.cf; renderOdds(); });
   view.querySelectorAll("[data-inj]").forEach(b => b.onclick = () => { const id = b.dataset.inj; injOpen.has(id) ? injOpen.delete(id) : injOpen.add(id); render(); });
   view.querySelectorAll("[data-rs]").forEach(b => b.onclick = () => { const id = b.dataset.rs; resOpen.has(id) ? resOpen.delete(id) : resOpen.add(id); render(); });
   view.querySelectorAll("[data-tl-go]").forEach(b => b.onclick = () => {
