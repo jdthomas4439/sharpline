@@ -10,7 +10,6 @@ ESPN nfl: saved 12 pregame lines (archive 14)
 ESPN cfb: saved 44 pregame lines (archive 56)
 ESPN ncaab: saved 0 pregame lines (archive 0)
 NCAAB: 14246 games
-  error ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer')) on https://site.api.espn.com/apis/site/v2/sports/soccer/esp.1/scoreboard
 Soccer ESPN fixtures: 38 added
 Soccer: 3936 matches (86 upcoming)
 Golf: Butterfield Bermuda Championship (120 players, form for 94, Polymarket 58, Kalshi 114)
@@ -20,7 +19,7 @@ Polymarket nfl: 0 games matched
 Kalshi nhl: 49 games matched
 Polymarket nhl: 26 games matched
 Kalshi nba: 28 games matched
-Polymarket nba: 38 games matched
+Polymarket nba: 37 games matched
 Kalshi mlb: 3 games matched
 Polymarket mlb: 4 games matched
 Kalshi cfb: 99 games matched
