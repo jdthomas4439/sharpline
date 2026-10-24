@@ -7,7 +7,6 @@ ESPN nba: saved 8 pregame lines (archive 36)
 ESPN nhl: saved 12 pregame lines (archive 40)
 ESPN mlb: saved 1 pregame lines (archive 3)
 ESPN nfl: saved 12 pregame lines (archive 14)
-  error ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer')) on https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard
 ESPN cfb: saved 44 pregame lines (archive 56)
 ESPN ncaab: saved 0 pregame lines (archive 0)
 NCAAB: 14246 games
