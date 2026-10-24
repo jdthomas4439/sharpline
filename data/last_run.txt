@@ -26,7 +26,7 @@ Polymarket cfb: 0 games matched
 History: 248 games tracked
 Test picks: 0 new, 0 graded, 40 total
 Injuries nfl: 800 players
-Injuries nba: 68 players
+Injuries nba: 67 players
 Injuries nhl: 137 players
 Injuries mlb: 216 players
 Weather: 65 outdoor games
