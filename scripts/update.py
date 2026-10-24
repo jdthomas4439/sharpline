@@ -1054,6 +1054,20 @@ def build_golf():
     log(f"Golf: {G['event']['name']} ({len(G['players'])} players, form for {len(form)}, Polymarket {hits}, Kalshi {kh})")
     return G
 
+# ---------------------------------------------------------------- college football: this week's Top 25 from ESPN
+def cfb_rankings():
+    js = get_json(f"{ESPN}/football/college-football/rankings")
+    polls = (js or {}).get("rankings") or []
+    pick = next((p for p in polls if "playoff" in (p.get("name") or "").lower()), None) or \
+           next((p for p in polls if (p.get("type") == "ap") or "ap" in (p.get("shortName") or "").lower().split()), None) or (polls[0] if polls else None)
+    if not pick: log("CFB rankings: none"); return None
+    ranks = {}
+    for r in pick.get("ranks") or []:
+        ab = ((r.get("team") or {}).get("abbreviation") or "").upper()
+        if ab and r.get("current"): ranks[ab] = int(r["current"])
+    log(f"CFB rankings: {pick.get('name')} ({len(ranks)} teams)")
+    return {"poll": pick.get("name"), "headline": pick.get("headline") or pick.get("shortHeadline"), "ranks": ranks}
+
 # ---------------------------------------------------------------- main
 def main():
     os.makedirs(DATA, exist_ok=True)
@@ -1105,6 +1119,12 @@ def main():
     else:
         for k in ("MLB_ROWS", "MLB_NAMES", "MLB_DIV"): B[k] = old.get(k)
     if cfb: B["CFB_ROWS"], B["CFB_NAMES"], B["CFB_CONF"] = to_rows(cfb[0]), cfb[1], cfb[2]
+    rk = step("cfb rankings", cfb_rankings)
+    if rk and B.get("CFB_ROWS"):
+        B["CFB_RANK"] = rk
+        for r in B["CFB_ROWS"]:                           # upcoming games show this week's ranking, not the schedule file's
+            if r[5] is None and r[1] >= TODAY_ET.isoformat():
+                r[16], r[17] = rk["ranks"].get(r[3]), rk["ranks"].get(r[4])
     else:
         for k in ("CFB_ROWS", "CFB_NAMES", "CFB_CONF"): B[k] = old.get(k)
     B["ARCHIVE"] = archive
