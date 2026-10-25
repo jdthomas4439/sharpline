@@ -3,8 +3,8 @@ NBA: 3671 games
 NHL: 3968 games
 MLB: 7428 games
 CFB: 3049 games
-ESPN nba: saved 6 pregame lines (archive 43)
-ESPN nhl: saved 7 pregame lines (archive 48)
+ESPN nba: saved 5 pregame lines (archive 43)
+ESPN nhl: saved 6 pregame lines (archive 48)
 ESPN mlb: saved 1 pregame lines (archive 4)
 ESPN nfl: saved 2 pregame lines (archive 15)
 ESPN cfb: saved 0 pregame lines (archive 56)
@@ -16,8 +16,8 @@ Golf: Butterfield Bermuda Championship (120 players, form for 94, Polymarket 58,
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 19 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 47 games matched
-Polymarket nhl: 32 games matched
+Kalshi nhl: 49 games matched
+Polymarket nhl: 31 games matched
 Kalshi nba: 32 games matched
 Polymarket nba: 32 games matched
 Kalshi mlb: 2 games matched
@@ -26,10 +26,10 @@ Kalshi cfb: 55 games matched
 Polymarket cfb: 0 games matched
 Kalshi ncaab: 48 games matched
 Polymarket ncaab: 0 games matched
-History: 297 games tracked
-Test picks: 1 new, 0 graded, 81 total
+History: 299 games tracked
+Test picks: 0 new, 0 graded, 81 total
 Injuries nfl: 800 players
-Injuries nba: 78 players
+Injuries nba: 79 players
 Injuries nhl: 127 players
 Injuries mlb: 216 players
 Weather: 63 outdoor games
