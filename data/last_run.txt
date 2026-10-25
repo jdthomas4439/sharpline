@@ -19,10 +19,10 @@ Polymarket nfl: 0 games matched
 Kalshi nhl: 47 games matched
 Polymarket nhl: 26 games matched
 Kalshi nba: 32 games matched
-Polymarket nba: 33 games matched
+Polymarket nba: 34 games matched
 Kalshi mlb: 2 games matched
 Polymarket mlb: 3 games matched
-Kalshi cfb: 57 games matched
+Kalshi cfb: 55 games matched
 Polymarket cfb: 0 games matched
 Kalshi ncaab: 0 games matched
 Polymarket ncaab: 0 games matched
