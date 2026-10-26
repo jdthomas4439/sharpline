@@ -17,9 +17,9 @@ CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 16 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 48 games matched
-Polymarket nhl: 31 games matched
-Kalshi nba: 33 games matched
-Polymarket nba: 32 games matched
+Polymarket nhl: 30 games matched
+Kalshi nba: 32 games matched
+Polymarket nba: 31 games matched
 Kalshi mlb: 2 games matched
 Polymarket mlb: 3 games matched
 Kalshi cfb: 55 games matched
@@ -29,7 +29,7 @@ Polymarket ncaab: 0 games matched
 History: 301 games tracked
 Test picks: 0 new, 0 graded, 81 total
 Injuries nfl: 800 players
-Injuries nba: 81 players
+Injuries nba: 82 players
 Injuries nhl: 127 players
 Injuries mlb: 216 players
 Weather: 63 outdoor games
