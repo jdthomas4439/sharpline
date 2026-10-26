@@ -2112,7 +2112,10 @@ function dogHTML(){
   const dogs = P.picks.filter(p => p.strat === "dog"), pick = dogs.find(p => p.key.split("|")[1] === today);
   const T = tallyOf(dogs), u = x => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(2) + "u";
   const rec = T.w + T.l + T.ps ? ` · Record ${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}, ${u(T.u)}` : "";
-  if (!pick) return `<h2>Underdog of the day</h2><p class="note">Today’s underdog is chosen after 10 AM ET from the games with posted odds.${rec}</p>`;
+  if (!pick){
+    const hr = +new Date().toLocaleString("en-US",{hour:"numeric",hour12:false,timeZone:"America/New_York"});
+    return `<h2>Underdog of the day</h2><p class="note">${hr < 10 ? "Today’s underdog is chosen after 10 AM ET from the games with posted odds." : "No underdog today yet. None of today’s underdogs has a price edge or a trend behind it, and the system won’t force a pick. It checks again every 30 minutes."}${rec}</p>`;
+  }
   const [sp, d, a, h] = pick.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
   const team = nm(pick.side === "home" ? h : a), opp = nm(pick.side === "home" ? a : h);
   const st = pick.result ? (pick.result === "win" ? "Won" : pick.result === "loss" ? "Lost" : "Push") + ` ${pick.units >= 0 ? "+" : ""}${pick.units.toFixed(2)}u, final ${pick.score}` : "Pending";
