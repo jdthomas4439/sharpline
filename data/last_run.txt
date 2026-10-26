@@ -6,17 +6,17 @@ CFB: 3049 games
 ESPN nba: saved 6 pregame lines (archive 48)
 ESPN nhl: saved 4 pregame lines (archive 48)
 ESPN mlb: saved 1 pregame lines (archive 4)
-ESPN nfl: saved 2 pregame lines (archive 15)
+ESPN nfl: saved 1 pregame lines (archive 15)
 ESPN cfb: saved 0 pregame lines (archive 56)
 ESPN ncaab: saved 0 pregame lines (archive 0)
 NCAAB: 14246 games
 Soccer ESPN fixtures: 53 added
 Soccer: 3951 matches (101 upcoming)
-Golf: Butterfield Bermuda Championship (120 players, form for 94, Polymarket 58, Kalshi 114)
+Golf: Butterfield Bermuda Championship (120 players, form for 94, Polymarket 2, Kalshi 114)
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 16 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 49 games matched
+Kalshi nhl: 48 games matched
 Polymarket nhl: 31 games matched
 Kalshi nba: 33 games matched
 Polymarket nba: 32 games matched
