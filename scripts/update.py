@@ -1096,6 +1096,32 @@ def cfb_rankings():
     log(f"CFB rankings: {pick.get('name')} ({len(ranks)} teams)")
     return {"poll": pick.get("name"), "headline": pick.get("headline") or pick.get("shortHeadline"), "ranks": ranks}
 
+# ---------------------------------------------------------------- money vs bets (DraftKings + Circa splits via SharpAPI, optional)
+SPLIT_LEAGUES = {"nfl": "nfl", "nba": "nba", "nhl": "nhl", "mlb": "mlb", "ncaab": "ncaab", "cfb": "ncaaf"}
+def betting_splits():
+    key = os.environ.get("SHARPAPI_KEY", "").strip()
+    if not key: return None
+    rows = []
+    for sp, lg in SPLIT_LEAGUES.items():
+        off = 0
+        while True:
+            try:
+                r = requests.get("https://api.sharpapi.io/api/v1/splits", params={"league": lg, "sportsbook": "draftkings,circa", "limit": 200, "offset": off},
+                                 headers={**UA, "X-API-Key": key}, timeout=30)
+            except Exception as e:
+                log(f"  splits {sp}: {e}"); break
+            if r.status_code != 200: log(f"  splits {sp}: HTTP {r.status_code}"); break
+            js = r.json()
+            for d in js.get("data") or []:
+                keep = lambda m: {k: (d.get(m) or {}).get(k) for k in ("handle_pct", "bets_pct", "line", "away_odds", "home_odds")}
+                rows.append({"sp": sp, "away": d.get("away_team"), "home": d.get("home_team"), "book": d.get("sportsbook"),
+                             "spread": keep("spread"), "total": keep("total"), "ml": keep("moneyline"), "at": d.get("fetched_at")})
+            pg = js.get("pagination") or {}
+            if not pg.get("has_more"): break
+            off = pg.get("next_offset") or off + 200
+    log(f"Splits: {len(rows)} rows")
+    return rows
+
 # ---------------------------------------------------------------- main
 def main():
     os.makedirs(DATA, exist_ok=True)
@@ -1138,6 +1164,7 @@ def main():
     soc = step("soccer", build_soccer)
     B["SOCCER_ROWS"] = to_rows(soc, extra=True) if soc else old.get("SOCCER_ROWS")
     B["GOLF"] = step("golf", build_golf) or old.get("GOLF")
+    B["SPLITS"] = step("splits", betting_splits) or (old.get("SPLITS") if os.environ.get("SHARPAPI_KEY") else None)
 
     if nba: B["NBA_ROWS"], B["NBA_NAMES"], B["NBA_DIVS"] = to_rows(nba[0]), nba[1], NBA_DIV
     else:
