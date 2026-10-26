@@ -234,6 +234,17 @@ def parse_odds(sport, comp, home_raw, away_raw):
     odds = (comp.get("odds") or [None])[0]
     if not odds: return None
     out = {"prov": (odds.get("provider") or {}).get("name"), "tot": nz(odds.get("overUnder"))}
+    def tprice(side):                                    # over/under price: hockey and baseball totals move by price
+        d = (odds.get("total") or {}).get(side) or {}
+        for stage in ("close", "current", "open"):
+            v = (d.get(stage) or {}).get("odds")
+            if v not in (None, ""):
+                v = str(v).strip().upper()
+                if v in ("EVEN", "EV"): return 100
+                try: return int(float(v.replace("+", "")))
+                except Exception: pass
+        return None
+    out["oo"], out["uo"] = tprice("over"), tprice("under")
     hml = (odds.get("homeTeamOdds") or {}).get("moneyLine"); aml = (odds.get("awayTeamOdds") or {}).get("moneyLine")
     if hml is None or aml is None:                       # newer ESPN format: odds.moneyline.home.close.odds = "-148"
         ml = odds.get("moneyline") or {}
@@ -517,7 +528,7 @@ def update_history(snaps):
     hist = load("history.json", {})
     t = int(NOW.timestamp() // 60)
     for key, s in snaps.items():
-        row = [t, s.get("sl"), s.get("tot"), s.get("hml"), s.get("k"), s.get("p")]
+        row = [t, s.get("sl"), s.get("tot"), s.get("hml"), s.get("k"), s.get("p"), s.get("po")]
         if all(v is None for v in row[1:]): continue
         arr = hist.setdefault(key, [])
         if arr and arr[-1][1:] == row[1:]: continue        # unchanged since last snapshot
@@ -535,6 +546,7 @@ FINALS = {}
 STRAT_NAMES = {"gap": "Market gap", "steam": "Steam follow", "angle": "Situational angles", "dog": "Underdog of the day"}
 SPREAD_TH = {"nfl": 1.5, "cfb": 2.0, "nba": 2.0, "ncaab": 2.5}
 TOTAL_TH = {"nfl": 2.0, "cfb": 3.0, "nba": 3.0, "ncaab": 3.0, "nhl": 0.5, "mlb": 0.5}
+PRICE_TOTALS = {"nhl": 6.5, "mlb": 10.0}
 
 def _dec(a): return 1 + a / 100 if a > 0 else 1 + 100 / -a
 def _imp(a): return 1 / _dec(a)
@@ -579,12 +591,17 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
                     line = -ls[1] if side == "home" else ls[1]
                     new.append({"strat": "steam", "key": key, "sport": sp, "mkt": "spread", "side": side, "odds": -110, "line": line,
                                 "move": round(ls[1] - fs[1], 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")})
-                ft = next((h for h in H if h[2] is not None), None); lt = next((h for h in reversed(H) if h[2] is not None), None)
-                tt = TOTAL_TH.get(sp)
-                if tt and ft and lt and abs(lt[2] - ft[2]) >= tt and ("steam", key, "total") not in have:
-                    side = "over" if lt[2] > ft[2] else "under"
-                    new.append({"strat": "steam", "key": key, "sport": sp, "mkt": "total", "side": side, "odds": -110, "line": lt[2],
-                                "move": round(lt[2] - ft[2], 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")})
+                K = PRICE_TOTALS.get(sp)          # goals/runs per unit of Over probability: 5.5 at -140 is close to 6.5 at +120
+                has = (lambda h: h[2] is not None and len(h) > 6 and h[6] is not None) if K else (lambda h: h[2] is not None)
+                eff = (lambda h: h[2] + (h[6] - 0.5) * K) if K else (lambda h: h[2])
+                ft = next((h for h in H if has(h)), None); lt = next((h for h in reversed(H) if has(h)), None)
+                tt = 0.4 if K else TOTAL_TH.get(sp)                  # hockey/baseball: about a 6-point shift in the Over's chance
+                mv = eff(lt) - eff(ft) if ft and lt else 0
+                if tt and ft and lt and abs(mv) >= tt and ("steam", key, "total") not in have:
+                    side = "over" if mv > 0 else "under"
+                    price = o.get("oo") if side == "over" else o.get("uo")
+                    new.append({"strat": "steam", "key": key, "sport": sp, "mkt": "total", "side": side, "odds": price if price is not None else -110, "line": lt[2],
+                                "move": round(mv, 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")})
     # cap: best 8 new market-gap picks per run so one noisy run can't flood the test
     gaps = sorted([p for p in new if p["strat"] == "gap"], key=lambda p: -p["edge"])[:8]
     new = gaps + [p for p in new if p["strat"] != "gap"]
@@ -694,6 +711,11 @@ def angle_candidates(sp, games, g):
                 if p >= .75 or p <= .25:
                     side = ("home" if is_home else "away") if p >= .5 else ("away" if is_home else "home")
                     odds = g["hml"] if side == "home" else g["aml"]
+                    if sp == "nhl":                                # hockey: records are already in the price, so demand value
+                        ph, pa = _imp(g["hml"]), _imp(g["aml"])
+                        book = (ph if side == "home" else pa) / (ph + pa)
+                        rec = 0.5 + ((p if p >= .5 else 1 - p) - 0.5) * len(su) / (len(su) + 20)   # shrink small samples toward 50%
+                        if not (-150 <= odds <= 150) or rec - book < 0.03: continue
                     if -200 <= odds <= 200:                       # skip heavy chalk, where a great record is already priced in
                         out.append(dict(score=abs(p - .5) * len(su) ** .5 * 0.7, mkt="ml", side=side, line=None, odds=odds,
                                         why=f"{ab} {w}–{len(su)-w} straight up, {label}" + ("" if p >= .5 else " (fading them)")))
@@ -765,7 +787,8 @@ def dog_pick(P, B, MK):
                 support = [c for c in cands if c["side"] == side and c["mkt"] in ("ml", "spread")]
                 ang = max((c["score"] for c in support), default=0)
                 ev_book = book_fair * _dec(odds) - 1             # value against the no-vig sportsbook price (about zero, minus the vig)
-                score = (ev if ev is not None else ev_book) * 100 + ang * 3   # every day gets a pick: the best-supported dog on the board
+                if not ((ev is not None and ev > 0) or support): continue   # no market edge and no trend: not a pick
+                score = (ev if ev is not None else ev_book) * 100 + ang * 3
                 why = []
                 if ev is not None and ev > 0: why.append(f"{'Kalshi' if kmid is not None else 'Polymarket'} prices them at {market*100:.0f}%, the book’s odds imply {_imp(odds)*100:.0f}% ({ev*100:+.1f}% value)")
                 if support: why.append(max(support, key=lambda c: c["score"])["why"])
@@ -1160,7 +1183,10 @@ def main():
     for sp, lines in all_lines.items():
         for key, o in (lines or {}).items():
             if o.get("ts", "")[:13] == NOW.isoformat(timespec="minutes")[:13] and key.split("|")[0] >= TODAY_ET.isoformat():
-                snaps[f"{sp}|{key}"] = {"sl": o.get("sl"), "tot": o.get("tot"), "hml": o.get("hml")}
+                po = None
+                if o.get("oo") is not None and o.get("uo") is not None:
+                    a_, b_ = _imp(o["oo"]), _imp(o["uo"]); po = round(a_ / (a_ + b_), 3)
+                snaps[f"{sp}|{key}"] = {"sl": o.get("sl"), "tot": o.get("tot"), "hml": o.get("hml"), "po": po}
     for sp, recs in MK.items():
         for r in recs:
             st = ((all_lines.get(sp) or {}).get(f"{r['date']}|{r['a']}|{r['h']}") or {}).get("start")
