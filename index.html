@@ -380,6 +380,14 @@ h2{font-size:14px;font-weight:600;color:var(--muted);margin:24px 0 4px;letter-sp
 .agi::before{content:"";position:absolute;left:0;top:.55em;width:6px;height:6px;border-radius:50%;background:var(--gold)}
 .agi small{display:block;font-size:14px;color:var(--muted);margin-top:1px}
 .cfbf{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:12px 0 4px;padding-bottom:2px}.cfbf .chip{flex:none}
+.splits{margin:4px 14px 10px;padding:10px 0 4px;border-top:1px solid var(--line)}
+.sphead{display:flex;justify-content:space-between;align-items:baseline;gap:10px}.sphead b{font-size:16px}
+.sphead span,.sphead a{font-size:14px;color:var(--muted)}.sphead a{color:var(--pos);min-height:44px;display:inline-flex;align-items:center}
+.splits table{width:100%;border-collapse:collapse;margin-top:6px;font-size:14px}
+.splits th{font-size:12px;font-weight:500;color:var(--muted);text-align:right;padding:4px 0}.splits th:nth-child(-n+2),.splits td:nth-child(-n+2){text-align:left}
+.splits td{padding:5px 0;text-align:right;border-top:1px solid var(--line)}
+.splits tr.sharp td{color:var(--pos);font-weight:600}.splits tr.ci td{border-top:0;padding-top:0;font-size:13px;color:var(--muted);text-align:left}
+.spnote{font-size:13px;color:var(--muted);margin-top:6px}
 .okdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pos);margin-left:6px;vertical-align:middle}
 </style>
 </head>
@@ -2318,6 +2326,40 @@ function cfbFilterBar(){
     ${cfbFilt !== "all" && !oddsGames().length ? `<p class="note">No ${cfbFilt === "top25" ? "Top 25" : cfbFilt} games in this window.</p>` : ""}`;
 }
 
+
+/* ---------- Money vs bets: where the dollars are vs where the tickets are ---------- */
+const SPLIT_SPORTS = ["nfl","cfb","nba","nhl","mlb","ncaab"];
+const splitNorm = s => String(s || "").toLowerCase().replace(/^no\.\s*\d+\s+/, "").replace(/[^a-z ]/g, "").trim();
+function splitRows(g){
+  const S = window.SLB && SLB.SPLITS; if (!S) return null;
+  const a = splitNorm(g.away), h = splitNorm(g.home);
+  const hit = (full, short) => { const f = splitNorm(full); return f && short && (f === short || f.endsWith(" " + short) || f.includes(short)); };
+  return S.filter(r => r.sp === g.sport && hit(r.away, a) && hit(r.home, h));
+}
+function splitsBox(g){
+  if (!SPLIT_SPORTS.includes(g.sport) || g.started) return "";
+  const rows = splitRows(g);
+  if (rows === null) return `<div class="splits"><div class="sphead"><b>Money vs bets</b><a href="https://vsin.com/betting-splits/" target="_blank" rel="noopener">DraftKings splits on VSiN ↗</a></div></div>`;
+  const dk = rows.find(r => r.book === "draftkings") || rows.find(r => r.book === "consensus"), ci = rows.find(r => r.book === "circa");
+  if (!dk && !ci) return `<div class="splits"><div class="sphead"><b>Money vs bets</b><span>No splits posted yet</span></div></div>`;
+  const label = (m, s) => m === "total" ? (s === "over" ? "Over" : "Under") : (s === "home" ? g.home : g.away).replace(/^No\. \d+ /, "");
+  const pc = x => x == null ? "–" : Math.round(x * 100) + "%";
+  const lines = [["spread","Spread"],["ml","Moneyline"],["total","Total"]].map(([m, name]) => {
+    const r = (dk || ci)[m]; if (!r || !r.bets_pct) return "";
+    const sides = m === "total" ? ["over","under"] : ["away","home"];
+    const best = sides.map(s => ({ s, b:r.bets_pct[s], h:r.handle_pct ? r.handle_pct[s] : null })).filter(x => x.b != null)
+      .sort((x, y) => ((y.h ?? y.b) - y.b) - ((x.h ?? x.b) - x.b))[0];
+    if (!best) return "";
+    const gap = best.h != null ? Math.round((best.h - best.b) * 100) : 0;
+    const c = ci && ci[m] && ci[m].handle_pct ? ci[m].handle_pct[best.s] : null;
+    return `<tr class="${gap >= 10 ? "sharp" : ""}"><td>${name}</td><td>${label(m, best.s)}</td><td class="num">${pc(best.b)}</td><td class="num">${pc(best.h)}</td><td class="num">${gap >= 10 ? "+" + gap : ""}</td></tr>${c != null ? `<tr class="ci"><td></td><td colspan="4">Circa money on ${label(m, best.s)}: ${pc(c)}</td></tr>` : ""}`;
+  }).join("");
+  const flag = /class="sharp"/.test(lines);
+  return `<div class="splits"><div class="sphead"><b>Money vs bets</b><span>${dk ? "DraftKings" : "Circa"}${ci && dk ? " + Circa" : ""}</span></div>
+    <table><thead><tr><th></th><th>Side</th><th>Bets</th><th>Money</th><th>Gap</th></tr></thead><tbody>${lines}</tbody></table>
+    <p class="spnote">${flag ? "Highlighted: at least 10 points more of the money than of the bets, which usually means fewer, bigger bets." : "No side is drawing clearly more money than bets."}</p></div>`;
+}
+
 /* ---------- Views ---------- */
 const view = document.getElementById("view");
 const SPORT_LABEL = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"College football", ncaab:"College basketball", soccer:"Soccer", golf:"Golf" };
@@ -2422,6 +2464,7 @@ function renderOdds(){
         ${g.free && RES[g.sport].lines ? nflvConsensus(g) : ""}
         ${!g.started ? topBetHTML(g) : ""}
         ${wxBox(g)}
+        ${splitsBox(g)}
         ${extrasBlock(g)}
         ${RES[g.sport] ? resBlock(g) : g.live ? trendBlock(g) : g.trends && g.trends.length ? `<ul class="trends">${g.trends.map(t => `<li class="${t.div?"div":""}">${t.t}</li>`).join("")}</ul>` : ""}
         ${g.markets.map(m => {
