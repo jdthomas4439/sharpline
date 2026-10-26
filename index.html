@@ -2643,6 +2643,21 @@ function toast(msg){
   el.textContent = msg; el.classList.add("show");
   clearTimeout(tt); tt = setTimeout(() => el.classList.remove("show"), 1800);
 }
+/* start on Top, with the sport bar set to a sport that has games today */
+(() => {
+  const order = ["nfl","cfb","nba","nhl","ncaab","soccer","mlb"], today = etDate(new Date());
+  const pick = order.find(sp => RES[sp] && freeGames(sp).some(g => etDate(g.start) === today && !g.started)) || order.find(sp => RES[sp] && freeGames(sp).length) || sport;
+  if (pick !== sport){
+    sport = pick;
+    if (DATA[sport]) statFilter = DATA[sport].stats[sport === "nhl" ? 3 : 0];
+    if (CFG[sport]){ LIVE = LIVE_BY[sport]; liveStat = Object.values(CFG[sport].markets)[0]; }
+    document.querySelectorAll("[data-sport]").forEach(x => x.classList.toggle("on", x.dataset.sport === sport));
+  }
+})();
+/* phones resume a home-screen app where it was left: after 10+ minutes away, reload so it opens fresh on Top with new data */
+let hiddenAt = 0;
+document.addEventListener("visibilitychange", () => { if (document.hidden) hiddenAt = Date.now(); else if (hiddenAt && Date.now() - hiddenAt > 10 * 60000) location.reload(); });
+window.addEventListener("pageshow", e => { if (e.persisted) location.reload(); });
 render();
 </script>
 
