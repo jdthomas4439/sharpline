@@ -3,14 +3,13 @@ NBA: 3671 games
 NHL: 3968 games
 MLB: 7428 games
 CFB: 3049 games
-ESPN nba: saved 8 pregame lines (archive 52)
+ESPN nba: saved 9 pregame lines (archive 52)
 ESPN nhl: saved 3 pregame lines (archive 48)
 ESPN mlb: saved 1 pregame lines (archive 4)
 ESPN nfl: saved 1 pregame lines (archive 15)
 ESPN cfb: saved 2 pregame lines (archive 58)
 ESPN ncaab: saved 0 pregame lines (archive 0)
 NCAAB: 14246 games
-  error ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer')) on https://site.api.espn.com/apis/site/v2/sports/soccer/fra.1/scoreboard
 Soccer ESPN fixtures: 56 added
 Soccer: 3954 matches (104 upcoming)
 Golf: Butterfield Bermuda Championship (120 players, form for 94, Polymarket 2, Kalshi 114)
