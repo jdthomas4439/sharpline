@@ -920,19 +920,24 @@ def soccer_upcoming_espn(games):
     for div, code in ESPN_SOCCER.items():
         known = {g["h"] for g in games if g.get("lg") == div} | {g["a"] for g in games if g.get("lg") == div}
         evs = []
-        for k in range(0, 8):                            # one request per day; ESPN rejects date ranges here
+        for k in range(-3, 8):                           # one request per day (ESPN rejects ranges); past 3 days give final scores
             js = get_json(f"{ESPN}/soccer/{code}/scoreboard", {"dates": (TODAY_ET + dt.timedelta(days=k)).strftime("%Y%m%d")})
             evs += (js or {}).get("events", []) or []
         for ev in evs:
             try:
                 comp = ev["competitions"][0]
-                if ((comp.get("status") or {}).get("type") or {}).get("state") != "pre": continue
+                state = ((comp.get("status") or {}).get("type") or {}).get("state")
+                if state not in ("pre", "post"): continue
                 home = next(c for c in comp["competitors"] if c["homeAway"] == "home")
                 away = next(c for c in comp["competitors"] if c["homeAway"] == "away")
                 h = _team_match(home["team"].get("displayName") or home["team"].get("name"), known)
                 a = _team_match(away["team"].get("displayName") or away["team"].get("name"), known)
                 if not h or not a: continue
                 date, time_ = et(ev["date"])
+                if state == "post":                          # final score, so soccer picks grade the same night
+                    try: FINALS[f"soccer|{date}|{a}|{h}"] = [int(away.get("score") or 0), int(home.get("score") or 0)]
+                    except Exception: pass
+                    continue
                 if (date, a, h) in have: continue
                 o = (comp.get("odds") or [{}])[0] or {}
                 ml = o.get("moneyline") or {}
