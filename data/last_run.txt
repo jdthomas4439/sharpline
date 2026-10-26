@@ -3,8 +3,8 @@ NBA: 3671 games
 NHL: 3968 games
 MLB: 7428 games
 CFB: 3049 games
-ESPN nba: saved 9 pregame lines (archive 52)
-ESPN nhl: saved 14 pregame lines (archive 59)
+ESPN nba: saved 7 pregame lines (archive 52)
+ESPN nhl: saved 13 pregame lines (archive 59)
 ESPN mlb: saved 1 pregame lines (archive 4)
 ESPN nfl: saved 1 pregame lines (archive 15)
 ESPN cfb: saved 2 pregame lines (archive 58)
