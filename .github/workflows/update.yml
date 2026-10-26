@@ -22,6 +22,7 @@ jobs:
       - name: Pull data
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          SHARPAPI_KEY: ${{ secrets.SHARPAPI_KEY }}
           ODDS_EVERY_HOURS: "6"
         run: python scripts/update.py
       - name: Save data
