@@ -1,5 +1,10 @@
 NFL: 1631 games
-NBA: 3671 games
+  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_schedules/nba_schedule_2025.parquet
+  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_schedules/nba_schedule_2025.parquet
+  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_schedules/nba_schedule_2025.parquet
+  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_schedules/nba_schedule_2026.parquet
+  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_schedules/nba_schedule_2026.parquet
+NBA: 2435 games
 NHL: 3968 games
 MLB: 7428 games
 CFB: 3049 games
