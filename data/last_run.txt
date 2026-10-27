@@ -12,7 +12,6 @@ ESPN ncaab: saved 0 pregame lines (archive 0)
 NCAAB: 14246 games
 Soccer ESPN fixtures: 56 added
 Soccer: 3954 matches (104 upcoming)
-  error ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer')) on https://gamma-api.polymarket.com/events
 Golf: Butterfield Bermuda Championship (120 players, form for 94, Polymarket 0, Kalshi 73)
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 14 games matched
