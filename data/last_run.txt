@@ -26,10 +26,10 @@ Kalshi cfb: 60 games matched
 Polymarket cfb: 0 games matched
 Kalshi ncaab: 52 games matched
 Polymarket ncaab: 0 games matched
-History: 241 games tracked
-Test picks: 5 new, 1 graded, 95 total
+History: 242 games tracked
+Test picks: 0 new, 0 graded, 95 total
 Injuries nfl: 800 players
-Injuries nba: 84 players
+Injuries nba: 83 players
 Injuries nhl: 127 players
 Injuries mlb: 217 players
 Weather: 64 outdoor games
