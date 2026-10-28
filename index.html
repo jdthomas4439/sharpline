@@ -439,8 +439,8 @@ h2{font-size:14px;font-weight:600;color:var(--muted);margin:24px 0 4px;letter-sp
 <script src="data/bundle.js"></script>
 <script>
 /* ---------- Sample data (live version pulls from odds + stats APIs) ---------- */
-const BOOKS = ["DK","FD","MGM","CZR"];
-const BOOK_NAMES = {DK:"DraftKings",FD:"FanDuel",MGM:"BetMGM",CZR:"Caesars",PIN:"Pinnacle"};
+const BOOKS = ["HR","DK","FD","MGM","CZR"];
+const BOOK_NAMES = {HR:"Hard Rock",DK:"DraftKings",FD:"FanDuel",MGM:"BetMGM",CZR:"Caesars",PIN:"Pinnacle"};
 
 const DATA = {
 nba: {
@@ -760,7 +760,7 @@ function sideProb(gid, sideName){
 }
 
 /* ---------- Live odds through the viewer's Zapier connector (The Odds API) ---------- */
-const BOOK_KEYS = { draftkings:"DK", fanduel:"FD", betmgm:"MGM", williamhill_us:"CZR" };
+const BOOK_KEYS = { hardrockbet_fl:"HR", draftkings:"DK", fanduel:"FD", betmgm:"MGM", williamhill_us:"CZR" };
 const NHL_ABBR = {"Anaheim Ducks":"ANA","Boston Bruins":"BOS","Buffalo Sabres":"BUF","Calgary Flames":"CGY","Carolina Hurricanes":"CAR","Chicago Blackhawks":"CHI","Colorado Avalanche":"COL","Columbus Blue Jackets":"CBJ","Dallas Stars":"DAL","Detroit Red Wings":"DET","Edmonton Oilers":"EDM","Florida Panthers":"FLA","Los Angeles Kings":"LAK","Minnesota Wild":"MIN","Montréal Canadiens":"MTL","Montreal Canadiens":"MTL","Nashville Predators":"NSH","New Jersey Devils":"NJD","New York Islanders":"NYI","New York Rangers":"NYR","Ottawa Senators":"OTT","Philadelphia Flyers":"PHI","Pittsburgh Penguins":"PIT","San Jose Sharks":"SJS","Seattle Kraken":"SEA","St Louis Blues":"STL","St. Louis Blues":"STL","Tampa Bay Lightning":"TBL","Toronto Maple Leafs":"TOR","Utah Mammoth":"UTA","Vancouver Canucks":"VAN","Vegas Golden Knights":"VGK","Washington Capitals":"WSH","Winnipeg Jets":"WPG"};
 const TWO_WORD = ["Maple Leafs","Red Wings","Blue Jackets","Golden Knights","Red Sox","White Sox","Blue Jays","Trail Blazers"];
 const nick = full => TWO_WORD.find(t => full.endsWith(t)) || full.split(" ").pop();
@@ -2108,8 +2108,8 @@ function systemTestHTML(){
 
 /* ---------- Props desk: top prop picks (paper-traded and graded) plus every NFL, NBA and NHL prop line, all from the backend ---------- */
 const PX_SPORTS = { nfl:"NFL", nba:"NBA", nhl:"NHL" };
-const PX_BOOKS = ["DK","FD","MGM","CZR","PIN"];
-const PX_US = ["DK","FD","MGM","CZR"];
+const PX_BOOKS = ["HR","DK","FD","MGM","CZR","PIN"];
+const PX_US = ["HR","DK","FD","MGM","CZR"];
 let pxView = (v => ["picks","nfl","nba","nhl"].includes(v) ? v : "picks")(store.get("sl_pxView"));
 const pxState = { nfl:{ game:"all", mkt:null }, nba:{ game:"all", mkt:null }, nhl:{ game:"all", mkt:null } };
 let pxOpen = null, pxAll = false;
@@ -2149,7 +2149,7 @@ function pxPicksHTML(){
     return `<div class="bet ${p.result === "void" ? "push" : p.result || "open"}"><div class="btop"><span class="bst">${st}</span><span class="stag s-prop">${PX_SPORTS[p.sport] || p.sport}</span><b>${p.player} ${p.side === "over" ? "over" : "under"} ${p.line} ${p.mkt.toLowerCase()}</b><span class="o">${p.result && p.result !== "void" ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
       <small>${pxNick(p.away)} at ${pxNick(p.home)}, ${pxTime(p.start)}. ${fmt(p.odds)} at ${BOOK_NAMES[p.book] || p.book}, ${pct(p.edge)} edge vs a fair ${Math.round(p.fair * 100)}% (${p.fair_src === "PIN" ? "Pinnacle" : "book average"})${p.actual != null ? ", finished with " + p.actual : ""}${p.result === "void" ? ", player didn’t play" : ""}${p.clv != null ? `, <span class="${p.clv > 0 ? "good" : p.clv < 0 ? "bad" : ""}">${pct(p.clv)} vs close</span>` : ""}</small></div>`; };
   return `
-    <p class="note">Each game day at 9 AM ET the desk takes up to 5 props where the best price at a US sportsbook beats the no-vig fair price (Pinnacle’s when it has the line) by 3% or more: one per player, two per game, odds between −200 and +200. Paper trading, 1 unit each, graded from the ESPN box score. A player who doesn’t play is void.</p>
+    <p class="note">Each game day at 9 AM ET the desk takes up to 5 props where the price at Hard Rock (or the best other US sportsbook when Hard Rock doesn’t have the line) beats the no-vig fair price (Pinnacle’s when it has the line) by 3% or more: one per player, two per game, odds between −200 and +200. Paper trading, 1 unit each, graded from the ESPN box score. A player who doesn’t play is void.</p>
     <div class="me">
       <div><b>${T0.w}–${T0.l}${T0.ps ? "–" + T0.ps : ""}</b><small>Record</small></div>
       <div><b style="color:${T0.u >= 0 ? "var(--pos)" : "var(--neg)"}">${T0.n ? u(T0.u) : "—"}</b><small>Units</small></div>
