@@ -16,11 +16,11 @@ Golf: VidantaWorld Mexico Open (120 players, form for 104, Polymarket 93, Kalshi
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 49 games matched
-Polymarket nhl: 35 games matched
+Kalshi nhl: 48 games matched
+Polymarket nhl: 34 games matched
 Kalshi nba: 33 games matched
 Polymarket nba: 25 games matched
-Kalshi mlb: 0 games matched
+Kalshi mlb: 1 games matched
 Polymarket mlb: 2 games matched
 Kalshi cfb: 60 games matched
 Polymarket cfb: 0 games matched
