@@ -4,7 +4,7 @@ NHL: 3968 games
 MLB: 7428 games
 CFB: 3049 games
 ESPN nba: saved 13 pregame lines (archive 68)
-ESPN nhl: saved 5 pregame lines (archive 63)
+ESPN nhl: saved 4 pregame lines (archive 63)
 ESPN mlb: saved 0 pregame lines (archive 5)
 ESPN nfl: saved 0 pregame lines (archive 15)
 ESPN cfb: saved 2 pregame lines (archive 60)
@@ -16,9 +16,9 @@ Golf: VidantaWorld Mexico Open (120 players, form for 104, Polymarket 93, Kalshi
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 14 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 57 games matched
-Polymarket nhl: 38 games matched
-Kalshi nba: 34 games matched
+Kalshi nhl: 51 games matched
+Polymarket nhl: 35 games matched
+Kalshi nba: 33 games matched
 Polymarket nba: 27 games matched
 Kalshi mlb: 1 games matched
 Polymarket mlb: 3 games matched
