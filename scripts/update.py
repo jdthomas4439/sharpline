@@ -386,7 +386,7 @@ def weather(nfl_rows):
 # league per pull no matter how many games; event odds (props) = prop markets returned x regions, per game; /sports and
 # /events are free; empty responses are free. Every response carries x-requests-used / x-requests-remaining headers.
 ODDS_BASE = "https://api.the-odds-api.com/v4"
-ODDS_BOOKS = "draftkings,fanduel,betmgm,williamhill_us,pinnacle"
+ODDS_BOOKS = "hardrockbet_fl,draftkings,fanduel,betmgm,williamhill_us,pinnacle"   # 6 books = 1 region (up to 10 cost the same)
 ODDS_LINE_SPORTS = {"nfl": "americanfootball_nfl", "nhl": "icehockey_nhl", "nba": "basketball_nba", "cfb": "americanfootball_ncaaf",
                     "ncaab": "basketball_ncaab", "epl": "soccer_epl", "laliga": "soccer_spain_la_liga", "seriea": "soccer_italy_serie_a",
                     "bundesliga": "soccer_germany_bundesliga", "ligue1": "soccer_france_ligue_one"}
@@ -399,7 +399,7 @@ PROP_SPORTS = {
     "nhl": ("icehockey_nhl", {"player_shots_on_goal": "Shots on goal", "player_points": "Points", "player_assists": "Assists",
             "player_goals": "Goals", "player_total_saves": "Saves"}),
 }
-US_BOOKS = {"draftkings": "DK", "fanduel": "FD", "betmgm": "MGM", "williamhill_us": "CZR"}
+US_BOOKS = {"hardrockbet_fl": "HR", "draftkings": "DK", "fanduel": "FD", "betmgm": "MGM", "williamhill_us": "CZR"}
 PROP_BOOKS = dict(US_BOOKS, pinnacle="PIN")
 LINES_EVERY_H = float(os.environ.get("ODDS_LINES_EVERY_HOURS", "3"))
 ODDS_BUDGET = int(os.environ.get("ODDS_MONTHLY_BUDGET", "18000"))    # stop paid pulls once this many credits are used this month
@@ -560,7 +560,9 @@ def prop_candidates(P):
             fair, src = prop_fair(books)
             if fair is None: continue
             for side, i, p in (("over", 0, fair), ("under", 1, 1 - fair)):
-                best = max(((bk, v[i]) for bk, v in books.items() if bk in US_BOOKS.values() and v[i] is not None), key=lambda t: _dec(t[1]), default=None)
+                # Hard Rock is the book Derek can bet in Florida: use its price whenever it has the line, else the best other US book
+                hr = (books.get("HR") or [None, None])[i]
+                best = ("HR", hr) if hr is not None else max(((bk, v[i]) for bk, v in books.items() if bk in US_BOOKS.values() and v[i] is not None), key=lambda t: _dec(t[1]), default=None)
                 if not best or not (-200 <= best[1] <= 200): continue
                 ev = p * _dec(best[1]) - 1
                 if ev >= PROP_MIN_EV:
