@@ -82,6 +82,7 @@ table.board{border-collapse:collapse;width:100%;min-width:440px}
 .board th:first-child{text-align:left}
 .board td{padding:3px 2px;text-align:center}
 .board td:first-child{text-align:left;font-weight:600;white-space:nowrap;padding-right:8px}
+@media (max-width:480px){table.board{min-width:0}.board td:first-child{white-space:normal;font-size:14px;padding-right:4px;max-width:96px}.board .cell{min-width:0;padding:5px 1px;font-size:15px}.board th{font-size:12px}}
 .cell{width:100%;min-width:54px;border:1px solid var(--line);background:var(--surface2);border-radius:6px;padding:5px 0;font-family:"Archivo",sans-serif;font-stretch:75%;font-variant-numeric:tabular-nums;font-size:16px;font-weight:600}
 .cell.best{background:var(--best-bg);border-color:var(--best-line);color:var(--ink)}
 .cell.picked{outline:2px solid var(--brand)}
@@ -330,6 +331,10 @@ table.board.mkt{min-width:0}
 .topbet b{font-family:"Archivo",sans-serif;font-stretch:75%;font-variant-numeric:tabular-nums;font-size:16px}
 .topbet span{font-size:14px;color:var(--muted);line-height:1.4}
 .topbet.pass{background:var(--surface2);border-left-color:var(--muted)}.topbet.pass small{color:var(--muted)}
+.deskread{margin:0 14px 10px;padding:10px 12px;border-radius:6px;background:var(--surface2);border-left:4px solid var(--line)}
+.deskread small{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.deskread p{margin:0 0 6px;font-size:14px;line-height:1.45;color:var(--ink)}.deskread p:last-child{margin-bottom:0}
+.splits .spnote{font-size:14px;color:var(--muted);margin:4px 0 0}
 .ggroup{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
 .ghead{display:flex;justify-content:space-between;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:16px}
 .ghead span{color:var(--muted);font-size:14px;white-space:nowrap}
@@ -1201,7 +1206,7 @@ const CFG = {
     markets:{ player_shots_on_goal:"Shots on goal", player_points:"Points", player_assists:"Assists", player_goals:"Goals", player_total_saves:"Saves" },
     min:{ l10:5, cur:3, prev:10, vs:3, loc:5, rest:5, div:5 },
     rest:gap => gap <= 0 ? "Back-to-back" : gap === 1 ? "1 day rest" : "2+ days rest", restGap:(a,b) => dayNum(a) - dayNum(b) - 1 },
-  nfl: { key:"americanfootball_nfl", label:"NFL", spread:"Spread", abbr:NFL_ABBR, div:NFL_DIV, divName:NFL_DIV_NAME, days:4,
+  nfl: { key:"americanfootball_nfl", label:"NFL", spread:"Spread", abbr:NFL_ABBR, div:NFL_DIV, divName:NFL_DIV_NAME, days:7,
     markets:{ player_pass_yds:"Pass yards", player_pass_tds:"Pass TDs", player_rush_yds:"Rush yards", player_reception_yds:"Receiving yards", player_receptions:"Receptions", player_anytime_td:"Anytime TD" },
     min:{ l10:4, cur:3, prev:6, vs:2, loc:4, rest:3, div:3 },
     rest:gap => gap <= 4 ? "Short week" : gap <= 7 ? "Normal week" : "Off a bye or long rest", restGap:(a,b) => dayNum(a) - dayNum(b) }
@@ -1304,7 +1309,7 @@ function slotOf(sp, d){
 }
 function gameLines(g){
   const C = CFG[g.sport];
-  const sm = g.markets.find(m => m.type === C.spread), tm = g.markets.find(m => m.type === "Total");
+  const sm = g.markets.find(m => C ? m.type === C.spread : (m.type === "Spread" || m.type === "Handicap")), tm = g.markets.find(m => m.type === "Total");
   const num = s => { const v = parseFloat(String(s).split(" ").pop()); return isNaN(v) ? null : v; };
   return { away:sm ? num(sm.sides[0].name) : null, home:sm ? num(sm.sides[1].name) : null, total:tm ? num(tm.sides[0].name) : null };
 }
@@ -1703,6 +1708,52 @@ function histMove(sp, date, a, h){
   const ml = H.filter(r => r[3] != null).map(r => r[3]); return ml.length > 1 ? ml : null;
 }
 const _free = {};
+
+/* ---------- Every sportsbook on the Games cards for leagues shown from free data (NBA, college, soccer) ---------- */
+const OX_STOP = new Set(["fc","cf","afc","sc","ac","the","and","club","university","college","state","de","del","la","le"]);
+const OX_ALIAS = { connecticut:"uconn", mississippi:"olemiss", "st":"state" };
+const oxAll = s => (s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/no\. \d+ /, "").replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(t => t.length >= 2).map(t => OX_ALIAS[t] || t);
+const oxTok = s => oxAll(s).filter(t => t.length >= 3 && !OX_STOP.has(t));
+function oxSame(a, b){
+  const A = oxTok(a), B = oxTok(b);
+  if (A.some(x => B.some(y => x === y || (Math.min(x.length, y.length) >= 3 && (x.startsWith(y) || y.startsWith(x))) || (x.length >= 4 && y.length >= 4 && (x.includes(y) || y.includes(x))) || (x.length >= 6 && y.length >= 6 && x.slice(-6) === y.slice(-6))))) return true;
+  const FA = oxAll(a), FB = oxAll(b);                       // short names like "NC State": every word must appear in the other name
+  return (!A.length && FA.length && FA.every(t => FB.includes(t))) || (!B.length && FB.length && FB.every(t => FA.includes(t)));
+}
+function oxMarketsFor(g){
+  const evs = window.SLB && SLB.ODDSX && SLB.ODDSX[g.sport]; if (!evs) return [];
+  const R = RES[g.sport], an = R.name(g.awayAbbr), hn = R.name(g.homeAbbr), day = etDate(g.start);
+  let flip = false;
+  const ev = evs.find(e => etDate(new Date(e.commence_time)) === day && ((oxSame(e.away_team, an) && oxSame(e.home_team, hn)) || ((flip = oxSame(e.away_team, hn) && oxSame(e.home_team, an)))));
+  if (!ev) return [];
+  const disp = { [ev.away_team]: flip ? g.home : g.away, [ev.home_team]: flip ? g.away : g.home, Draw:"Draw" };
+  const A = flip ? ev.home_team : ev.away_team, H = flip ? ev.away_team : ev.home_team;   // in the app's away/home order
+  const mk = {}, sharp = {};
+  ev.bookmakers.forEach(b => { const k = BOOK_KEYS[b.key]; b.markets.forEach(m => { if (k) (mk[m.key] = mk[m.key] || {})[k] = m.outcomes; if (b.key === "pinnacle") sharp[m.key] = m.outcomes; }); });
+  const markets = [];
+  if (mk.h2h){
+    const names = [A, ...(Object.values(mk.h2h).some(o => o.some(x => x.name === "Draw")) ? ["Draw"] : []), H];
+    const side = n => ({ name:disp[n], odds:Object.fromEntries(Object.entries(mk.h2h).map(([k,o]) => [k, (o.find(x => x.name === n) || {}).price])), sharp:(sharp.h2h || []).find(x => x.name === n)?.price ?? null });
+    markets.push({ type:"Moneyline", sides:names.map(side) });
+  }
+  if (mk.spreads){
+    const pt = +mostCommon(Object.values(mk.spreads).map(o => (o.find(x => x.name === A) || {}).point).filter(x => x != null));
+    if (!isNaN(pt)){
+      const pick = (n, p, src) => { const o = (src || []).find(x => x.name === n && x.point === p); return o ? o.price : null; };
+      const odds = (n, p) => Object.fromEntries(Object.entries(mk.spreads).map(([k,o]) => [k, pick(n, p, o)]));
+      markets.push({ type:g.sport === "soccer" ? "Handicap" : "Spread", sides:[
+        { name:disp[A] + " " + fmtPt(pt), odds:odds(A, pt), sharp:pick(A, pt, sharp.spreads) },
+        { name:disp[H] + " " + fmtPt(-pt), odds:odds(H, -pt), sharp:pick(H, -pt, sharp.spreads) } ]});
+    }
+  }
+  if (mk.totals){
+    const pt = +mostCommon(Object.values(mk.totals).map(o => (o[0] || {}).point));
+    const pick = (n, src) => { const o = (src || []).find(x => x.name === n && x.point === pt); return o ? o.price : null; };
+    markets.push({ type:"Total", sides:["Over","Under"].map(n => ({ name:n + " " + pt, odds:Object.fromEntries(Object.entries(mk.totals).map(([k,o]) => [k, pick(n, o)])), sharp:pick(n, sharp.totals) })) });
+  }
+  return markets.filter(m => m.sides.every(sd => Object.values(sd.odds).some(v => v != null)));
+}
+
 function freeGames(sp){
   if (_free[sp]) return _free[sp];
   const R = RES[sp], today = etDate(new Date()), lim = dayNum(today) + R.days;
@@ -1716,7 +1767,7 @@ function freeGames(sp){
     return { id:"fr_" + sp + "_" + x.date + "_" + x.a + "_" + x.h, sport:sp, free:true, nv:x, away:(x.ark ? "No. " + x.ark + " " : "") + R.name(x.a), home:(x.hrk ? "No. " + x.hrk + " " : "") + R.name(x.h), awayAbbr:x.a, homeAbbr:x.h,
       start, started:false, markets:[], trends:[], move:histMove(sp, x.date, x.a, x.h),
       time:(sameDay ? "Today " : start.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",timeZone:"America/New_York"}) + ", ") + (x.time === "00:00" ? "time TBD" : start.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:"America/New_York"})) };
-  });
+  }).map(g => { try { g.markets = oxMarketsFor(g); } catch(e){ g.markets = []; } return g; });
 }
 
 LIVE_REF = LIVE_BY;
@@ -2369,7 +2420,7 @@ function topBet(g){
   const sys = P ? P.picks.filter(p => p.key === `${g.sport}|${date}|${g.awayAbbr}|${g.homeAbbr}`).sort((a,b) => (order[a.strat] ?? 9) - (order[b.strat] ?? 9))[0] : null;
   if (sys) return { bet:pickText(sys) + (sys.mkt === "ml" ? "" : ` (${fmt(sys.odds)})`), why:`${STRAT_LABEL[sys.strat]} pick${sys.why ? ": " + sys.why : sys.edge != null ? ": " + pct(sys.edge) + " edge" : sys.move != null ? ": line moved " + fmtPt(sys.move) : ""}`, src:"system" };
   // 2. A live price edge
-  if (g.live){
+  if (g.live || (g.free && g.markets && g.markets.length)){
     const e = allEdges(g.sport).filter(x => x.g.id === g.id)[0];
     if (e) return { bet:`${e.s.name} ${fmt(e.odds)} at ${BOOK_NAMES[e.book]}`, why:`${pct(e.ev)} better than the fair price of ${fmt(e.fair)}`, src:"edge" };
   }
@@ -2390,6 +2441,73 @@ function topBet(g){
   }
   return { bet:"No position", why:"No price edge or strong trend for this game. Sitting it out is a position too.", src:"pass" };
 }
+/* ---------- Desk read: a plain-English summary of everything on the game card ---------- */
+function deskRead(g){
+  if (g.started) return "";
+  const nm = s => String(s || "").replace(/^No\. \d+ /, "");
+  const A = nm(g.away), H = nm(g.home), L = [];
+  const ml = g.markets && g.markets.find(m => m.type === "Moneyline");
+  const iA = 0, iH = ml ? ml.sides.length - 1 : 1, draw = ml && ml.sides.length === 3;
+  let fair = null;
+  if (ml){
+    fair = fairProbs(ml);
+    const sharp = ml.sides.every(s => s.sharp != null);
+    const fav = fair[iH] >= fair[iA] ? [H, fair[iH]] : [A, fair[iA]];
+    L.push(`The market makes <b>${fav[0]}</b> ${fav[1] >= 0.5 ? "a " + Math.round(fav[1] * 100) + "% favorite" : "the slight favorite at " + Math.round(fav[1] * 100) + "%"}${draw ? `, with a ${Math.round(fair[1] * 100)}% chance of a draw` : ""} (${sharp ? "Pinnacle’s no-vig price" : "average of the books, no Pinnacle line yet"}).`);
+    if (sharp){
+      const us = [];
+      BOOKS.forEach(b => { if (ml.sides.every(s => s.odds[b] != null)){ const p = ml.sides.map(s => imp(s.odds[b])), t = p.reduce((a, c) => a + c, 0); us.push(p[iH] / t); } });
+      if (us.length >= 2){
+        const d = fair[iH] - us.reduce((a, c) => a + c, 0) / us.length, side = d > 0 ? H : A;
+        L.push(Math.abs(d) >= 0.015
+          ? `Pinnacle, where sharp bettors play, rates <b>${side}</b> ${Math.round(Math.abs(d) * 100)} points higher than the US books do. That usually means the sharp money is on ${side} and the US books haven’t fully caught up, so ${side} is the side priced in your favor.`
+          : `Pinnacle and the US books agree within a point, so there’s no sharp-versus-public gap in the prices.`);
+      }
+    }
+    const best = i => { let v = null, b = null; BOOKS.forEach(k => { const o = ml.sides[i].odds[k]; if (o != null && (v == null || dec(o) > dec(v))){ v = o; b = k; } }); return v == null ? null : { v, b }; };
+    const bits = [[A, iA], [H, iH]].map(([n, i]) => { const bb = best(i), hr = ml.sides[i].odds.HR; if (!bb) return null;
+      return `${n} ${fmt(bb.v)} at ${BOOK_NAMES[bb.b]}${hr != null && bb.b !== "HR" && hr !== bb.v ? ` (Hard Rock ${fmt(hr)})` : ""}`; }).filter(Boolean);
+    if (bits.length) L.push(`Best moneyline: ${bits.join("; ")}.`);
+  }
+  if (g.move && g.move.length > 1){
+    const f0 = g.move[0], f1 = g.move[g.move.length - 1];
+    if (Math.abs(f0) < 60 && Math.abs(f1) < 60){
+      const d = f1 - f0;
+      if (Math.abs(d) >= 0.5) L.push(`The spread has moved ${Math.abs(d)} point${Math.abs(d) === 1 ? "" : "s"} toward <b>${d < 0 ? H : A}</b> since we started tracking it (${H} ${fmtPt(f0)} to ${fmtPt(f1)}).`);
+      else L.push(`The spread hasn’t moved since we started tracking it.`);
+    } else {
+      const d = imp(f1) - imp(f0);
+      if (Math.abs(d) >= 0.03) L.push(`The moneyline has moved toward <b>${d > 0 ? H : A}</b> (${H} ${fmt(f0)} to ${fmt(f1)}), about ${Math.round(Math.abs(d) * 100)} points of win chance.`);
+    }
+  }
+  const M = window.SLB && SLB.MARKETS && SLB.MARKETS[g.sport];
+  const r = M && M.find(x => x.a === g.awayAbbr && x.h === g.homeAbbr && x.date === etDate(g.start));
+  if (r && fair && !draw){
+    const km = pmMid(r.k && r.k.h), pp = r.p && r.p.vol > 0 ? r.p.h : null, pm = km ?? pp, src = km != null ? "Kalshi" : "Polymarket";
+    if (pm != null){
+      const d = pm - fair[iH];
+      L.push(Math.abs(d) >= 0.03
+        ? `${src} has ${H} at ${Math.round(pm * 100)}%, ${Math.round(Math.abs(d) * 100)} points ${d > 0 ? "above" : "below"} the sportsbooks, so the prediction market is leaning <b>${d > 0 ? H : A}</b>. See the Markets tab for the cheapest place to bet it.`
+        : `${src} agrees with the sportsbooks (${H} ${Math.round(pm * 100)}%).`);
+    }
+  }
+  const W = window.SLB && SLB.WEATHER && SLB.WEATHER[g.sport + "|" + etDate(g.start) + "|" + g.awayAbbr + "|" + g.homeAbbr];
+  if (W && (W.wind >= 15 || W.temp <= 32 || (W.rain != null && W.rain >= 60)))
+    L.push(`Weather matters here: ${Math.round(W.temp)}°F${W.wind >= 15 ? `, ${Math.round(W.wind)} mph wind` : ""}${W.rain != null && W.rain >= 60 ? `, ${W.rain}% chance of rain` : ""}. Wind and rain tend to hurt passing and kicking, which leans toward lower scoring.`);
+  const I = window.SLB && SLB.INJURIES && SLB.INJURIES[g.sport];
+  if (I){
+    const outs = [[g.awayAbbr, A], [g.homeAbbr, H]].map(([ab, n]) => [n, (I[ab] || []).filter(x => /out|doubtful|injured|reserve/i.test(x.s)).length]).filter(x => x[1]);
+    if (outs.length) L.push(`Injuries: ${outs.map(([n, c]) => `${n} ${c} out or doubtful`).join(", ")}. Books adjust for big names quickly, so this is usually already in the price.`);
+  }
+  const hs = RES[g.sport] ? resHighlights(g) : trendHighlights(g);
+  if (hs && hs[0]) L.push(`Strongest trend: ${hs[0].t.replace(/\.$/, "")}. Trends describe the past and are often already priced in.`);
+  const t = topBet(g);
+  if (t) L.push(t.src === "pass"
+    ? `<b>Bottom line: no position.</b> The prices are fair and nothing here clears our bar.`
+    : `<b>Bottom line: ${t.bet}.</b> ${t.why.replace(/\.$/, "")}.`);
+  return L.length > 1 ? `<div class="deskread"><small>Desk read</small>${L.map(x => `<p>${x}</p>`).join("")}</div>` : "";
+}
+
 function topBetHTML(g){
   const t = topBet(g); if (!t) return "";
   return `<div class="topbet ${t.src}"><small>Desk pick</small><b>${t.bet}</b><span>${t.why}</span></div>`;
@@ -2482,7 +2600,7 @@ function splitRows(g){
 function splitsBox(g){
   if (!SPLIT_SPORTS.includes(g.sport) || g.started) return "";
   const rows = splitRows(g);
-  if (rows === null) return `<div class="splits"><div class="sphead"><b>Money vs bets</b><a href="https://vsin.com/betting-splits/" target="_blank" rel="noopener">DraftKings splits on VSiN ↗</a></div></div>`;
+  if (rows === null) return `<div class="splits"><div class="sphead"><b>Money vs bets</b><a href="https://vsin.com/betting-splits/" target="_blank" rel="noopener">DraftKings splits on VSiN ↗</a></div><p class="spnote">The share of bets versus money on each side needs a paid splits feed (SharpAPI), so it isn’t filled in yet. Until then, the Desk read above compares Pinnacle, where sharp bettors play, with the US books, which shows the same thing indirectly.</p></div>`;
   const dk = rows.find(r => r.book === "draftkings") || rows.find(r => r.book === "consensus"), ci = rows.find(r => r.book === "circa");
   if (!dk && !ci) return `<div class="splits"><div class="sphead"><b>Money vs bets</b><span>No splits posted yet</span></div></div>`;
   const label = (m, s) => m === "total" ? (s === "over" ? "Over" : "Under") : (s === "home" ? g.home : g.away).replace(/^No\. \d+ /, "");
@@ -2605,7 +2723,7 @@ function renderOdds(){
           <div class="spark">${g.move && g.move.length > 1 ? sparkSVG(g.move) + `<span>${fmtPt(g.move[0])} → ${fmtPt(g.move[g.move.length-1])}</span>` : live ? "<span>Tracking line move</span>" : ""}</div>
         </div>
         ${g.free && RES[g.sport].lines ? nflvConsensus(g) : ""}
-        ${!g.started ? topBetHTML(g) : ""}
+        ${!g.started ? topBetHTML(g) + deskRead(g) : ""}
         ${wxBox(g)}
         ${splitsBox(g)}
         ${extrasBlock(g)}
