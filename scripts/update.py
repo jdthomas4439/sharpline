@@ -501,6 +501,23 @@ def odds():
         + (f"; paused: {api.blocked}" if api.blocked else ""))
     return {k: v for k, v in allodds.items() if k in ODDS_APP_SPORTS}, meta.get("last")
 
+ODDSX_GROUPS = {"nba": ["nba"], "cfb": ["cfb"], "ncaab": ["ncaab"], "soccer": ["epl", "laliga", "seriea", "bundesliga", "ligue1"]}
+def odds_more():
+    """Game lines for the leagues the app shows from free data (NBA, college, soccer), trimmed for the bundle so their
+    Games cards can show every sportsbook side by side. Reads what odds() saved; costs no credits."""
+    allodds = load("odds.json", {}) or {}
+    out = {}
+    for app_sp, keys in ODDSX_GROUPS.items():
+        evs = []
+        for k in keys:
+            for e in allodds.get(k) or []:
+                if dt.datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")) < NOW - dt.timedelta(hours=4): continue
+                evs.append({"id": e["id"], "commence_time": e["commence_time"], "home_team": e["home_team"], "away_team": e["away_team"],
+                            "bookmakers": [{"key": b["key"], "markets": [{"key": m["key"], "outcomes": m["outcomes"]} for m in b.get("markets") or []]}
+                                           for b in e.get("bookmakers") or []]})
+        if evs: out[app_sp] = evs
+    return out
+
 def props_pull(api, meta):
     P = load("props.json", {"events": {}})
     E = P["events"]
@@ -1525,6 +1542,7 @@ def main():
     B["NFL_WX"] = NFL_WX or old.get("NFL_WX") or {}
     o = step("odds", odds)
     if o and o[0]: B["ODDS"], B["ODDS_TIME"] = o
+    B["ODDSX"] = step("odds more", odds_more) or {}
     B["PROPS"] = step("props bundle", props_bundle) or {}
     B["PROPPICKS"] = step("prop picks", prop_picks_run) or load("prop_picks.json", None)
     B["UPDATED"] = NOW.astimezone(ET).strftime("%b %-d, %Y %-I:%M %p ET")
