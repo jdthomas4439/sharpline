@@ -3,7 +3,7 @@ NBA: 3671 games
 NHL: 3968 games
 MLB: 7428 games
 CFB: 3049 games
-ESPN nba: saved 13 pregame lines (archive 68)
+ESPN nba: saved 12 pregame lines (archive 68)
 ESPN nhl: saved 4 pregame lines (archive 63)
 ESPN mlb: saved 0 pregame lines (archive 5)
 ESPN nfl: saved 0 pregame lines (archive 15)
@@ -17,19 +17,19 @@ CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 14 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 51 games matched
-Polymarket nhl: 35 games matched
+Polymarket nhl: 34 games matched
 Kalshi nba: 33 games matched
 Polymarket nba: 27 games matched
 Kalshi mlb: 1 games matched
 Polymarket mlb: 3 games matched
-Kalshi cfb: 59 games matched
+Kalshi cfb: 58 games matched
 Polymarket cfb: 0 games matched
 Kalshi ncaab: 52 games matched
 Polymarket ncaab: 0 games matched
 History: 258 games tracked
-Test picks: 0 new, 1 graded, 98 total
+Test picks: 0 new, 2 graded, 98 total
 Injuries nfl: 800 players
 Injuries nba: 94 players
-Injuries nhl: 129 players
+Injuries nhl: 130 players
 Injuries mlb: 218 players
 Weather: 64 outdoor games
