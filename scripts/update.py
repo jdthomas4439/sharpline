@@ -381,25 +381,279 @@ def weather(nfl_rows):
     log(f"Weather: {len(out)} outdoor games")
     return out
 
-# ---------------------------------------------------------------- optional live odds (The Odds API)
+# ---------------------------------------------------------------- live odds and player props (The Odds API), with hard credit limits
+# Cost rules (Odds API v4 docs): game lines = markets x regions per request (up to 10 books = 1 region), so 3 credits per
+# league per pull no matter how many games; event odds (props) = prop markets returned x regions, per game; /sports and
+# /events are free; empty responses are free. Every response carries x-requests-used / x-requests-remaining headers.
+ODDS_BASE = "https://api.the-odds-api.com/v4"
+ODDS_BOOKS = "draftkings,fanduel,betmgm,williamhill_us,pinnacle"
+ODDS_LINE_SPORTS = {"nfl": "americanfootball_nfl", "nhl": "icehockey_nhl", "nba": "basketball_nba", "cfb": "americanfootball_ncaaf",
+                    "ncaab": "basketball_ncaab", "epl": "soccer_epl", "laliga": "soccer_spain_la_liga", "seriea": "soccer_italy_serie_a",
+                    "bundesliga": "soccer_germany_bundesliga", "ligue1": "soccer_france_ligue_one"}
+ODDS_APP_SPORTS = ("nfl", "nhl")                  # leagues the app's odds screens read from the bundle (all leagues are saved to odds.json)
+PROP_SPORTS = {
+    "nfl": ("americanfootball_nfl", {"player_pass_yds": "Pass yards", "player_pass_tds": "Pass TDs", "player_rush_yds": "Rush yards",
+            "player_reception_yds": "Receiving yards", "player_receptions": "Receptions", "player_anytime_td": "Anytime TD"}),
+    "nba": ("basketball_nba", {"player_points": "Points", "player_rebounds": "Rebounds", "player_assists": "Assists",
+            "player_threes": "Threes made", "player_points_rebounds_assists": "Pts + reb + ast"}),
+    "nhl": ("icehockey_nhl", {"player_shots_on_goal": "Shots on goal", "player_points": "Points", "player_assists": "Assists",
+            "player_goals": "Goals", "player_total_saves": "Saves"}),
+}
+US_BOOKS = {"draftkings": "DK", "fanduel": "FD", "betmgm": "MGM", "williamhill_us": "CZR"}
+PROP_BOOKS = dict(US_BOOKS, pinnacle="PIN")
+LINES_EVERY_H = float(os.environ.get("ODDS_LINES_EVERY_HOURS", "3"))
+ODDS_BUDGET = int(os.environ.get("ODDS_MONTHLY_BUDGET", "18000"))    # stop paid pulls once this many credits are used this month
+ODDS_RESERVE = int(os.environ.get("ODDS_RESERVE", "1500"))           # ...or when fewer than this are left on the plan
+PROP_AM_HOUR = 9                                                    # morning props pull (ET); second pull 60-120 min before start
+PROP_PICKS_PER_DAY, PROP_MIN_EV, PROP_MIN_BOOKS = 5, 0.03, 3
+
+class OddsAPI:
+    """Every Odds API request goes through here: one try (no retries, so nothing is paid twice), the plan's own
+    used/remaining counters checked before each paid call, and every credit logged."""
+    def __init__(self, key):
+        self.key, self.used, self.remaining, self.spent, self.blocked = key, None, None, 0, None
+        r = self._get("/sports", {})                                 # free: just reads the plan's counters
+        if r is None: self.blocked = self.blocked or "could not reach The Odds API"
+    def _get(self, path, params):
+        try: r = requests.get(ODDS_BASE + path, params={"apiKey": self.key, **params}, headers=UA, timeout=30)
+        except Exception as e:
+            log(f"  Odds API error on {path}: {e}"); return None
+        h = r.headers
+        try:
+            if h.get("x-requests-used") is not None: self.used = int(float(h["x-requests-used"]))
+            if h.get("x-requests-remaining") is not None: self.remaining = int(float(h["x-requests-remaining"]))
+            self.spent += int(float(h.get("x-requests-last") or 0))
+        except Exception: pass
+        if r.status_code != 200:
+            msg = r.text[:160].replace(self.key, "***")
+            log(f"  Odds API {r.status_code} on {path}: {msg}")
+            if r.status_code in (401, 429) or "OUT_OF_USAGE" in msg: self.blocked = f"Odds API {r.status_code}"
+            return None
+        try: return r.json()
+        except Exception: return None
+    def can_spend(self, est):
+        if self.blocked: return False
+        if self.used is not None and self.used + est > ODDS_BUDGET:
+            self.blocked = f"monthly budget reached ({self.used} of {ODDS_BUDGET} used)"; return False
+        if self.remaining is not None and self.remaining - est < ODDS_RESERVE:
+            self.blocked = f"reserve reached ({self.remaining} left, keeping {ODDS_RESERVE})"; return False
+        return True
+    def paid(self, path, params, est):
+        if not self.can_spend(est): return None
+        return self._get(path, params)
+    def free(self, path, params=None):
+        return None if self.blocked and "Odds API 401" in self.blocked else self._get(path, params or {})
+
+def _novig(o, u):
+    a, b = _imp(o), _imp(u); return a / (a + b)
+
+def compact_props(ev, sp):
+    """Event odds -> rows [market label, player, line, {book: [over, under]}]"""
+    names = PROP_SPORTS[sp][1]; rows = {}
+    for b in ev.get("bookmakers") or []:
+        bk = PROP_BOOKS.get(b.get("key"))
+        if not bk: continue
+        for m in b.get("markets") or []:
+            lab = names.get(m.get("key"))
+            if not lab: continue
+            for o in m.get("outcomes") or []:
+                pl = o.get("description") or ""
+                if not pl or re.search(r" D/ST$| Defense$", pl): continue
+                pt = o.get("point") if o.get("point") is not None else 0.5
+                r = rows.setdefault((lab, pl, pt), [lab, pl, pt, {}])
+                side = 0 if o.get("name") in ("Over", "Yes") else 1
+                r[3].setdefault(bk, [None, None])[side] = o.get("price")
+    return list(rows.values())
+
+def prop_fair(books):
+    """No-vig chance of the Over: Pinnacle's when it has both sides (the sharp price), else the average across books."""
+    pin = books.get("PIN")
+    if pin and pin[0] is not None and pin[1] is not None: return _novig(*pin), "PIN"
+    both = [v for v in books.values() if v[0] is not None and v[1] is not None]
+    return (sum(_novig(*v) for v in both) / len(both), "avg") if both else (None, None)
+
 def odds():
+    """Game lines every LINES_EVERY_H hours for every league, plus NFL/NBA/NHL props twice per game. Returns (bundle odds, time)."""
     key = os.environ.get("ODDS_API_KEY", "").strip()
-    if not key: return None, None
     meta = load("odds_meta.json", {})
-    every = float(os.environ.get("ODDS_EVERY_HOURS", "6"))
-    last = meta.get("last")
-    if last and (NOW - dt.datetime.fromisoformat(last)).total_seconds() < every * 3600 - 300:
-        return load("odds.json", None), last
+    if not key:
+        allodds = load("odds.json", {}) or {}
+        return {k: v for k, v in allodds.items() if k in ODDS_APP_SPORTS}, meta.get("last")
+    api = OddsAPI(key)
+    # 1. game lines: one pull per time slot. The slot is written down before any request, so a re-run, a push or a
+    #    manual run inside the same slot never pulls again.
+    slot = int(NOW.timestamp() // (LINES_EVERY_H * 3600))
+    allodds = load("odds.json", {})
+    if meta.get("lines_slot") != slot and api.can_spend(3 * len(ODDS_LINE_SPORTS)):
+        meta["lines_slot"] = slot; save("odds_meta.json", meta)
+        got = 0
+        for sp, k in ODDS_LINE_SPORTS.items():
+            js = api.paid(f"/sports/{k}/odds", {"regions": "us", "markets": "h2h,spreads,totals", "oddsFormat": "american", "bookmakers": ODDS_BOOKS}, 3)
+            if isinstance(js, list): allodds[sp] = js; got += 1
+        if got:
+            save("odds.json", allodds); meta["last"] = NOW.isoformat()
+    # 2. player props
+    try: props_pull(api, meta)
+    except Exception: log(f"props failed:\n{traceback.format_exc()}")
+    meta["used"], meta["remaining"], meta["checked"] = api.used, api.remaining, NOW.isoformat(timespec="minutes")
+    save("odds_meta.json", meta)
+    log(f"Odds API: {api.spent} credits this run; plan used {api.used}, remaining {api.remaining}; budget {ODDS_BUDGET}, reserve {ODDS_RESERVE}"
+        + (f"; paused: {api.blocked}" if api.blocked else ""))
+    return {k: v for k, v in allodds.items() if k in ODDS_APP_SPORTS}, meta.get("last")
+
+def props_pull(api, meta):
+    P = load("props.json", {"events": {}})
+    E = P["events"]
+    now_et = NOW.astimezone(ET)
+    for sp, (k, names) in PROP_SPORTS.items():
+        evs = api.free(f"/sports/{k}/events")
+        if not isinstance(evs, list): continue
+        for ev in evs:
+            st = dt.datetime.fromisoformat(ev["commence_time"].replace("Z", "+00:00"))
+            mins = (st - NOW).total_seconds() / 60
+            if mins < 20 or mins > 36 * 60: continue
+            rec = E.setdefault(ev["id"], {"sp": sp, "home": ev["home_team"], "away": ev["away_team"], "start": ev["commence_time"], "pulls": {}})
+            rec["start"] = ev["commence_time"]
+            stage = None
+            if mins <= 120 and "pre" not in rec["pulls"]: stage = "pre"
+            elif (st.astimezone(ET).date() == now_et.date() and now_et.hour >= PROP_AM_HOUR and mins > 120
+                  and "am" not in rec["pulls"]): stage = "am"
+            if not stage: continue
+            rec["pulls"][stage] = NOW.isoformat(timespec="minutes")         # written down first: never pulled twice
+            save("props.json", P)
+            js = api.paid(f"/sports/{k}/events/{ev['id']}/odds", {"regions": "us", "markets": ",".join(names), "oddsFormat": "american",
+                          "bookmakers": ",".join(PROP_BOOKS)}, len(names))
+            if isinstance(js, dict) and js.get("bookmakers"):
+                rec["rows"] = compact_props(js, sp); rec["updated"] = NOW.isoformat(timespec="minutes")
+                if stage == "pre": rec["close"] = rec["rows"]
+    cut = (NOW - dt.timedelta(days=3)).isoformat()
+    P["events"] = {i: r for i, r in E.items() if r["start"] >= cut}
+    save("props.json", P)
+    n = {sp: sum(1 for r in P["events"].values() if r["sp"] == sp and r.get("rows")) for sp in PROP_SPORTS}
+    log(f"Props: games with lines {n}")
+
+def props_bundle():
+    """Upcoming games' prop rows for the app."""
+    P = load("props.json", {"events": {}})
     out = {}
-    for sport, k in (("nhl", "icehockey_nhl"), ("nfl", "americanfootball_nfl")):
-        js = get_json(f"https://api.the-odds-api.com/v4/sports/{k}/odds", {"apiKey": key, "regions": "us",
-              "markets": "h2h,spreads,totals", "oddsFormat": "american", "bookmakers": "draftkings,fanduel,betmgm,williamhill_us,pinnacle"})
-        if isinstance(js, list): out[sport] = js
-    if out:
-        save("odds.json", out); meta["last"] = NOW.isoformat(); save("odds_meta.json", meta)
-        log(f"Odds: {', '.join(f'{k} {len(v)}' for k, v in out.items())}")
-        return out, meta["last"]
-    return load("odds.json", None), last
+    for i, r in P["events"].items():
+        if not r.get("rows") or dt.datetime.fromisoformat(r["start"].replace("Z", "+00:00")) <= NOW: continue
+        out[i] = {k: r[k] for k in ("sp", "home", "away", "start", "updated", "rows")}
+    return out
+
+# ---------------------------------------------------------------- props test: daily top prop picks, graded from ESPN box scores
+def _pname(n):
+    import unicodedata
+    n = unicodedata.normalize("NFKD", n).encode("ascii", "ignore").decode().lower()
+    n = re.sub(r"[.'\-]", " ", n); n = re.sub(r"\b(jr|sr|ii|iii|iv|v)\b", "", n)
+    return " ".join(n.split())
+
+def prop_candidates(P):
+    out = []
+    for eid, r in P["events"].items():
+        if not r.get("rows") or "am" not in r["pulls"]: continue
+        st = dt.datetime.fromisoformat(r["start"].replace("Z", "+00:00"))
+        if st.astimezone(ET).date() != TODAY_ET or (st - NOW).total_seconds() < 1800: continue
+        for lab, pl, pt, books in r["rows"]:
+            if lab == "Anytime TD": continue                              # one-sided market: no clean fair price
+            if sum(1 for v in books.values() if v[0] is not None and v[1] is not None) < PROP_MIN_BOOKS: continue
+            fair, src = prop_fair(books)
+            if fair is None: continue
+            for side, i, p in (("over", 0, fair), ("under", 1, 1 - fair)):
+                best = max(((bk, v[i]) for bk, v in books.items() if bk in US_BOOKS.values() and v[i] is not None), key=lambda t: _dec(t[1]), default=None)
+                if not best or not (-200 <= best[1] <= 200): continue
+                ev = p * _dec(best[1]) - 1
+                if ev >= PROP_MIN_EV:
+                    out.append({"strat": "prop", "eid": eid, "sport": r["sp"], "home": r["home"], "away": r["away"], "mkt": lab, "player": pl,
+                                "line": pt, "side": side, "odds": best[1], "book": best[0], "fair": round(p, 3), "fair_src": src,
+                                "edge": round(ev, 3), "start": r["start"], "at": NOW.isoformat(timespec="minutes")})
+    return out
+
+def espn_box(sp, home, away, start):
+    """Player stats {name: {stat: value}} from ESPN's box score, or None if the game isn't final."""
+    day = dt.datetime.fromisoformat(start.replace("Z", "+00:00")).astimezone(ET).strftime("%Y%m%d")
+    js = get_json(f"{ESPN}/{ESPN_PATH[sp]}/scoreboard", {"dates": day})
+    nk = lambda s: (s or "").split()[-1].lower()
+    ev = None
+    for e in (js or {}).get("events", []):
+        comp = e["competitions"][0]; cs = {c["homeAway"]: c["team"].get("displayName") or "" for c in comp["competitors"]}
+        if nk(cs.get("home")) == nk(home) and nk(cs.get("away")) == nk(away): ev = e; break
+    if not ev or ((ev["competitions"][0].get("status") or {}).get("type") or {}).get("state") != "post": return None
+    s = get_json(f"{ESPN}/{ESPN_PATH[sp]}/summary", {"event": ev["id"]})
+    out = {}
+    for team in ((s or {}).get("boxscore") or {}).get("players", []):
+        for g in team.get("statistics", []):
+            keys = g.get("keys") or []
+            for a in g.get("athletes", []):
+                if a.get("didNotPlay") or not a.get("stats"): continue
+                nm = _pname((a.get("athlete") or {}).get("displayName") or "")
+                d = out.setdefault(nm, {})
+                for k, v in zip(keys, a["stats"]):
+                    k = re.split(r"[-/]", k)[0]                      # "threePointFieldGoalsMade-threePointFieldGoalsAttempted" -> made
+                    try: d[f"{g.get('name') or ''}.{k}"] = float(re.split(r"[-/]", str(v))[0])
+                    except Exception: pass
+    return out
+
+def prop_value(sp, mkt, d):
+    g = lambda k: d.get(k, 0.0)
+    if sp == "nba":
+        pts, reb, ast, thr = g(".points"), g(".rebounds"), g(".assists"), g(".threePointFieldGoalsMade")
+        return {"Points": pts, "Rebounds": reb, "Assists": ast, "Threes made": thr, "Pts + reb + ast": pts + reb + ast}.get(mkt)
+    if sp == "nhl":
+        sk = lambda k: g(f"forwards.{k}") + g(f"defenses.{k}") + g(f"skaters.{k}")
+        return {"Shots on goal": sk("shotsTotal"), "Goals": sk("goals"), "Assists": sk("assists"), "Points": sk("goals") + sk("assists"),
+                "Saves": g("goalies.saves")}.get(mkt)
+    if sp == "nfl":
+        return {"Pass yards": g("passing.passingYards"), "Pass TDs": g("passing.passingTouchdowns"), "Rush yards": g("rushing.rushingYards"),
+                "Receiving yards": g("receiving.receivingYards"), "Receptions": g("receiving.receptions"),
+                "Anytime TD": g("rushing.rushingTouchdowns") + g("receiving.receivingTouchdowns")}.get(mkt)
+
+def prop_picks_run():
+    P = load("props.json", {"events": {}})
+    T = load("prop_picks.json", None) or {"start": NOW.isoformat(timespec="minutes"), "picks": []}
+    picks = T["picks"]; new = []
+    # 1. once a day, after the morning props pull: the day's top 5 by edge (one per player, two per game, never both sides)
+    today = TODAY_ET.isoformat()
+    if PROP_AM_HOUR <= NOW.astimezone(ET).hour < PROP_AM_HOUR + 2 and not any(p.get("day") == today for p in picks):
+        cands = sorted(prop_candidates(P), key=lambda c: -c["edge"])
+        if cands:
+            per_game = {}; players = set()
+            for c in cands:
+                if c["player"] in players or per_game.get(c["eid"], 0) >= 2: continue
+                c["day"] = today; new.append(c); players.add(c["player"]); per_game[c["eid"]] = per_game.get(c["eid"], 0) + 1
+                if len(new) >= PROP_PICKS_PER_DAY: break
+    picks.extend(new)
+    # 2. closing price from the pre-game pull, then grade from the box score
+    boxes, graded = {}, 0
+    for p in picks:
+        r = P["events"].get(p["eid"]) or {}
+        if p.get("close_fair") is None and r.get("close"):
+            for lab, pl, pt, books in r["close"]:
+                if lab == p["mkt"] and pl == p["player"] and pt == p["line"]:
+                    f, _ = prop_fair(books)
+                    if f is not None:
+                        p["close_fair"] = round(f if p["side"] == "over" else 1 - f, 3)
+                        p["clv"] = round(p["close_fair"] * _dec(p["odds"]) - 1, 3)      # value of our price at the closing fair chance
+                    co = (books.get(p["book"]) or [None, None])[0 if p["side"] == "over" else 1]
+                    if co is not None: p["close"] = co
+        if p.get("result") or dt.datetime.fromisoformat(p["start"].replace("Z", "+00:00")) > NOW - dt.timedelta(hours=2.5): continue
+        if p["eid"] not in boxes: boxes[p["eid"]] = espn_box(p["sport"], p["home"], p["away"], p["start"])
+        box = boxes[p["eid"]]
+        if box is None:
+            if NOW - dt.datetime.fromisoformat(p["start"].replace("Z", "+00:00")) > dt.timedelta(days=2): p["result"], p["units"] = "void", 0.0
+            continue
+        nm = _pname(p["player"]); d = box.get(nm)
+        if d is None:                                                     # initial + last name fallback
+            parts = nm.split()
+            d = next((v for k, v in box.items() if k.split() and parts and k.split()[-1] == parts[-1] and k[0] == nm[0]), None)
+        if d is None: p["result"], p["units"] = "void", 0.0; graded += 1; continue      # didn't play: no action
+        v = prop_value(p["sport"], p["mkt"], d); p["actual"] = v
+        res = "push" if v == p["line"] else "win" if (v > p["line"]) == (p["side"] == "over") else "loss"
+        p["result"] = res; p["units"] = round(_dec(p["odds"]) - 1, 3) if res == "win" else -1.0 if res == "loss" else 0.0
+        graded += 1
+    save("prop_picks.json", T)
+    log(f"Prop picks: {len(new)} new, {graded} graded, {len(picks)} total")
+    return T
 
 
 # ---------------------------------------------------------------- Kalshi + Polymarket
@@ -1269,6 +1523,8 @@ def main():
     B["NFL_WX"] = NFL_WX or old.get("NFL_WX") or {}
     o = step("odds", odds)
     if o and o[0]: B["ODDS"], B["ODDS_TIME"] = o
+    B["PROPS"] = step("props bundle", props_bundle) or {}
+    B["PROPPICKS"] = step("prop picks", prop_picks_run) or load("prop_picks.json", None)
     B["UPDATED"] = NOW.astimezone(ET).strftime("%b %-d, %Y %-I:%M %p ET")
     B = {k: v for k, v in B.items() if v is not None}
     with open(os.path.join(DATA, "bundle.js"), "w") as f:
