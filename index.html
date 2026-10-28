@@ -253,6 +253,15 @@ table.tt{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
 .bst{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .bet small{display:block;color:var(--muted);font-size:14px;margin-top:2px}
 .bet small .good{color:var(--pos)}.bet small .bad{color:var(--neg)}
+:root{--s-angle:#1F6FC2;--s-angle-bg:#E2EEFB;--s-steam:#6B4FC8;--s-steam-bg:#ECE6FA;--s-gap:#0F7F76;--s-gap-bg:#DDF2F0;--s-dog:var(--gold);--s-dog-bg:var(--gold-bg)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--s-angle:#6CB4FF;--s-angle-bg:#14263B;--s-steam:#B79CFF;--s-steam-bg:#251D3D;--s-gap:#4FD1C5;--s-gap-bg:#0F2E2B}}
+:root[data-theme="dark"]{--s-angle:#6CB4FF;--s-angle-bg:#14263B;--s-steam:#B79CFF;--s-steam-bg:#251D3D;--s-gap:#4FD1C5;--s-gap-bg:#0F2E2B}
+.stag{flex:none;font-size:12px;font-weight:600;border-radius:6px;padding:1px 6px;white-space:nowrap}
+.stag.s-angle{color:var(--s-angle);background:var(--s-angle-bg)}.stag.s-steam{color:var(--s-steam);background:var(--s-steam-bg)}
+.stag.s-gap{color:var(--s-gap);background:var(--s-gap-bg)}.stag.s-dog{color:var(--s-dog);background:var(--s-dog-bg)}
+.sdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
+.sdot.s-angle{background:var(--s-angle)}.sdot.s-steam{background:var(--s-steam)}.sdot.s-gap{background:var(--s-gap)}.sdot.s-dog{background:var(--s-dog)}
+.tt td.sub{padding-left:18px;color:var(--muted)}
 .bact{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .bact .chip{padding:2px 10px;font-size:14px}
 .logform{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px;margin-bottom:12px}
@@ -2021,7 +2030,7 @@ function lineMoves(){
 function movesSeen(){ return store.get("sl_moves_seen") || 0; }
 function newMoves(){ const s = movesSeen(); return lineMoves().filter(m => m.ts > s).length; }
 function movesHTML(){
-  if (!(window.SLB && SLB.HISTORY)) return `<h2>Line moves</h2><p class="note">Line-move alerts come from your backend, which saves every line and Kalshi/Polymarket price each hour and flags big moves, key-number crosses and late steam.</p>`;
+  if (!(window.SLB && SLB.HISTORY)) return `<h2>Line moves</h2><p class="note">Line-move alerts come from your backend, which saves every line and Kalshi/Polymarket price each hour and flags big moves, key-number crosses and late moves.</p>`;
   const seen = movesSeen(), all = lineMoves().filter(m => m.sp === sport), M = all.slice(0, movesAll ? 40 : 6);
   const ago = t => { const m = Math.round(Date.now()/60000 - t); return m < 60 ? m + "m ago" : m < 1440 ? Math.round(m/60) + "h ago" : Math.round(m/1440) + "d ago"; };
   const byGame = []; M.forEach(m => { let gp = byGame.find(x => x.game === m.game); if (!gp){ const [, d, a, h] = m.key.split("|"), gm = getGames().find(g => g.awayAbbr === a && g.homeAbbr === h && etDate(g.start) === d);
@@ -2029,7 +2038,7 @@ function movesHTML(){
     const tm = st ? (d === etDate(new Date()) ? "" : st.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",timeZone:"America/New_York"}) + ", ") + st.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:"America/New_York"}) + " ET" : "";
     byGame.push(gp = { game:m.game, list:[], start:st ? +st : Infinity, time:gm ? gm.time.replace(/^Today /, "") + (/TBD/.test(gm.time) ? "" : " ET") : st && st <= new Date() ? "Started " + tm : tm }); } gp.list.push(m); });
   byGame.sort((a,b) => a.start - b.start);
-  return `<h2>${SPORT_LABEL[sport] || ""} line moves</h2>${M.length ? byGame.map(gp => `<div class="ggroup"><div class="ghead"><b>${gp.game}</b><span>${gp.time}</span></div><ul class="trends moves">${gp.list.map(m => `<li class="${m.ts > seen ? "new" : ""}">${m.ts > seen ? `<span class="newtag">New</span> ` : ""}${m.steam ? "Steam: " : ""}${(t => t.charAt(0).toUpperCase() + t.slice(1))(m.text.replace(gp.game + ": ", ""))}<small>${ago(m.ts)}</small></li>`).join("")}</ul></div>`).join("") : `<p class="note">No significant ${SPORT_LABEL[sport] || ""} moves since the lines opened.</p>`}${all.length > 6 ? `<p class="moremoves"><button class="chip" id="movesMore">${movesAll ? "Show fewer" : "Show all " + all.length}</button></p>` : ""}`;
+  return `<h2>${SPORT_LABEL[sport] || ""} line moves</h2>${M.length ? byGame.map(gp => `<div class="ggroup"><div class="ghead"><b>${gp.game}</b><span>${gp.time}</span></div><ul class="trends moves">${gp.list.map(m => `<li class="${m.ts > seen ? "new" : ""}">${m.ts > seen ? `<span class="newtag">New</span> ` : ""}${m.steam ? "Late move: " : ""}${(t => t.charAt(0).toUpperCase() + t.slice(1))(m.text.replace(gp.game + ": ", ""))}<small>${ago(m.ts)}</small></li>`).join("")}</ul></div>`).join("") : `<p class="note">No significant ${SPORT_LABEL[sport] || ""} moves since the lines opened.</p>`}${all.length > 6 ? `<p class="moremoves"><button class="chip" id="movesMore">${movesAll ? "Show fewer" : "Show all " + all.length}</button></p>` : ""}`;
 }
 let movesAll = false;
 function updateMoveBadge(){
@@ -2039,7 +2048,10 @@ function updateMoveBadge(){
 
 
 /* ---------- System test: paper-traded picks made by the backend, graded after each game ---------- */
-const STRAT_LABEL = { gap:"Market gap", steam:"Steam follow", angle:"Situational angle", dog:"Underdog of the day" };
+const STRAT_LABEL = { gap:"Market gap", steam:"Late line move", angle:"Situational angle", dog:"Underdog of the day" };
+const STRAT_TAG = { gap:"Gap", steam:"Late move", angle:"Angle", dog:"Underdog" };
+const STEAM_LATE_MIN = 120;   // late line moves are logged in the last 2 hours before start (picks logged earlier used the old 3-hour rule)
+const pickLead = p => (new Date(p.start.replace(/Z$/, "+00:00")) - new Date(p.at)) / 60000;
 function pickCLV(p){
   if (p.close == null) return null;
   if (p.mkt === "ml") return { pct:imp(p.close)/imp(p.odds) - 1 };
@@ -2070,7 +2082,7 @@ function systemTestHTML(){
   const row = ([k, t]) => `<tr><td>${k}</td><td>${t.w}–${t.l}${t.ps ? "–" + t.ps : ""}</td><td style="color:${t.u >= 0 ? "var(--pos)" : "var(--neg)"}">${t.w + t.l + t.ps ? u(t.u) : "—"}</td><td>${t.open}</td></tr>`;
   const list = [...P.picks].reverse().slice(0, sysOpen ? 200 : 8);
   return `<h2>System test</h2>
-    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Three strategies run side by side: market gaps, steam moves, and the 5 strongest situational angles each night.</p>
+    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Four strategies run side by side, each with its own color: <span class="sdot s-angle"></span>situational angles (the 5 strongest each night), <span class="sdot s-steam"></span>late line moves (a big move in the last 3 hours, logged inside 2 hours of start), <span class="sdot s-dog"></span>the underdog of the day and <span class="sdot s-gap"></span>market gaps. The system never takes both sides of a game.</p>
     <div class="me">
       <div><b>${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}</b><small>Record</small></div>
       <div><b style="color:${T.u >= 0 ? "var(--pos)" : "var(--neg)"}">${T.w + T.l + T.ps ? u(T.u) : "—"}</b><small>Units</small></div>
@@ -2078,12 +2090,15 @@ function systemTestHTML(){
       <div><b>${T.clv != null ? (T.clv > 0 ? "+" : "") + T.clv.toFixed(1) : "—"}</b><small>CLV pts</small></div>
     </div>
     <div class="board-wrap" style="margin-bottom:10px"><table class="tt"><thead><tr><th></th><th>W–L</th><th>Units</th><th>Open</th></tr></thead><tbody>
-      ${by(p => STRAT_LABEL[p.strat] || p.strat).map(row).join("")}
+      ${by(p => p.strat).map(([k, t]) => row([`<span class="sdot s-${k}"></span>${STRAT_LABEL[k] || k}`, t]) + (k === "steam" ? (() => {
+        const st = inWin.filter(p => p.strat === "steam"), a = st.filter(p => pickLead(p) <= STEAM_LATE_MIN), b = st.filter(p => pickLead(p) > STEAM_LATE_MIN);
+        return (a.length ? `<tr><td class="sub">Inside 2 h</td>${row(["", tallyOf(a)]).replace(/^<tr><td><\/td>/, "")}` : "") + (b.length ? `<tr><td class="sub">2–3 h out (old rule)</td>${row(["", tallyOf(b)]).replace(/^<tr><td><\/td>/, "")}` : "");
+      })() : "")).join("")}
       ${by(p => SPORT_LABEL[p.sport] || p.sport.toUpperCase()).map(row).join("")}
     </tbody></table></div>
     ${T.n ? `<div class="bets">${list.map(p => { const c = pickCLV(p), [sp, d, a, h] = p.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
-      return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : "Push") : "Open"}</span><b>${pickText(p)}</b><span class="o">${p.result ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
-      <small>${nm(a)} at ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ")" : p.why ? ": " + p.why : ""}${p.result && p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")}</div>
+      return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : "Push") : "Open"}</span><span class="stag s-${p.strat}">${STRAT_TAG[p.strat] || p.strat}</span><b>${pickText(p)}</b><span class="o">${p.result ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
+      <small>${nm(a)} at ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ", logged " + (m => m >= 60 ? Math.floor(m/60) + " h " + (m%60 ? Math.round(m%60) + " m " : "") : Math.round(m) + " m ")(pickLead(p)) + "before start" + (pickLead(p) > STEAM_LATE_MIN ? ", old 3-hour rule" : "") + ")" : p.why ? ": " + p.why : ""}${p.result && p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")}</div>
       ${P.picks.length > 8 ? `<p><button class="chip" id="sysMore">${sysOpen ? "Show fewer" : "Show all " + P.picks.length + " picks"}</button></p>` : ""}` : `<p class="note">No picks yet. The system waits for a real edge or a big line move, so quiet days can have none.</p>`}`;
 }
 
@@ -2146,7 +2161,7 @@ function renderTop(){
     <h2>Line moves</h2>
     ${moves === null ? `<p class="note">Line moves come from your backend’s hourly snapshots.</p>`
       : moves.length ? `<ol class="toplist">${moves.map(m => { const [sp, d, a, h] = m.key.split("|");
-        return `<li><button class="topitem" data-open="${sp}|fr_${sp}_${d}_${a}_${h}"><span class="sp">${SPORT_SHORT[sp] || sp.toUpperCase()}</span><span class="tx">${m.steam ? "<b>Steam:</b> " : ""}${m.text}<small>${ago(m.ts)}</small></span></button></li>`; }).join("")}</ol>`
+        return `<li><button class="topitem" data-open="${sp}|fr_${sp}_${d}_${a}_${h}"><span class="sp">${SPORT_SHORT[sp] || sp.toUpperCase()}</span><span class="tx">${m.steam ? "<b>Late move:</b> " : ""}${m.text}<small>${ago(m.ts)}</small></span></button></li>`; }).join("")}</ol>`
       : `<p class="note">No big line moves on today’s games yet.</p>`}
     <h2>Angles</h2>
     ${angles.length ? angles.map((x, i) => { const join = L => L.length < 2 ? (L[0] || "") : L.slice(0, -1).join(", ") + " and " + L[L.length - 1];
