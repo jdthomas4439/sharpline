@@ -543,18 +543,31 @@ def update_history(snaps):
 
 # ---------------------------------------------------------------- paper-trading test: system picks, graded after the game
 FINALS = {}
-STRAT_NAMES = {"gap": "Market gap", "steam": "Steam follow", "angle": "Situational angles", "dog": "Underdog of the day"}
+STRAT_NAMES = {"gap": "Market gap", "steam": "Late line move", "angle": "Situational angles", "dog": "Underdog of the day"}
 SPREAD_TH = {"nfl": 1.5, "cfb": 2.0, "nba": 2.0, "ncaab": 2.5}
 TOTAL_TH = {"nfl": 2.0, "cfb": 3.0, "nba": 3.0, "ncaab": 3.0, "nhl": 0.5, "mlb": 0.5}
 PRICE_TOTALS = {"nhl": 6.5, "mlb": 10.0}
 
+TEST_END = "2026-12-31T23:59+00:00"   # keep tallying picks through year end; move this date to extend
+STEAM_WINDOW_MIN = 120      # late line move: only log picks in the last 2 hours before start
+STEAM_LOOKBACK_MIN = 180    # ...and only count the move made over the last 3 hours (not since the line opened)
+
 def _dec(a): return 1 + a / 100 if a > 0 else 1 + 100 / -a
+
+def _conflicts(p, pool):
+    """True if p bets against a pick already on the same game: the other team (spread/ML) or the other side of the total."""
+    for q in pool:
+        if q["key"] != p["key"]: continue
+        if p["mkt"] == "total" and q["mkt"] == "total" and q["side"] != p["side"]: return True
+        if p["mkt"] != "total" and q["mkt"] != "total" and q["side"] != p["side"]: return True
+    return False
 def _imp(a): return 1 / _dec(a)
 
 def make_and_grade_picks(all_lines, MK, hist, B=None):
     P = load("picks.json", None)
     if not P:
         P = {"start": NOW.isoformat(timespec="minutes"), "end": (NOW + dt.timedelta(days=7)).isoformat(timespec="minutes"), "picks": []}
+    if P.get("end", "") < TEST_END: P["end"] = TEST_END        # the test keeps running with the updated rules (first window ended Oct 28)
     have = {(p["strat"], p["key"], p["mkt"]) for p in P["picks"]}
     picked_games = {p["key"] for p in P["picks"]}
     mk = {f"{sp}|{r['date']}|{r['a']}|{r['h']}": r for sp, recs in MK.items() for r in recs}
@@ -581,35 +594,49 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
                             new.append({"strat": "gap", "key": key, "sport": sp, "mkt": "ml", "side": side, "odds": odds, "line": None,
                                         "fair": round(prob, 3), "edge": round(ev, 3), "start": o["start"], "at": NOW.isoformat(timespec="minutes")})
                             break
-            # Strategy 2, steam follow: a big line move, taken within 3 hours of start
+            # Strategy 2, late line move: a big move over the last 3 hours, logged in the last 2 hours before start,
+            # one pick per game (spread or total, the bigger move). Moves made earlier in the day are old news by then.
             H = hist.get(key) or []
-            if mins <= 180 and len(H) >= 2:
-                fs = next((h for h in H if h[1] is not None), None); ls = next((h for h in reversed(H) if h[1] is not None), None)
+            if mins <= STEAM_WINDOW_MIN and len(H) >= 2 and not any(p["strat"] == "steam" and p["key"] == key for p in P["picks"] + new):
+                ref_t = NOW.timestamp() / 60 - STEAM_LOOKBACK_MIN
+                base = lambda ok: next((h for h in reversed(H) if ok(h) and h[0] <= ref_t), None) or next((h for h in H if ok(h)), None)
+                cands = []
+                fs = base(lambda h: h[1] is not None); ls = next((h for h in reversed(H) if h[1] is not None), None)
                 th = SPREAD_TH.get(sp)
                 if th and fs and ls and abs(ls[1] - fs[1]) >= th and ("steam", key, "spread") not in have:
                     side = "home" if ls[1] > fs[1] else "away"            # sl rising = money on home
                     line = -ls[1] if side == "home" else ls[1]
-                    new.append({"strat": "steam", "key": key, "sport": sp, "mkt": "spread", "side": side, "odds": -110, "line": line,
-                                "move": round(ls[1] - fs[1], 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")})
+                    cands.append((abs(ls[1] - fs[1]) / th, {"strat": "steam", "key": key, "sport": sp, "mkt": "spread", "side": side, "odds": -110, "line": line,
+                                "move": round(ls[1] - fs[1], 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")}))
                 K = PRICE_TOTALS.get(sp)          # goals/runs per unit of Over probability: 5.5 at -140 is close to 6.5 at +120
                 has = (lambda h: h[2] is not None and len(h) > 6 and h[6] is not None) if K else (lambda h: h[2] is not None)
                 eff = (lambda h: h[2] + (h[6] - 0.5) * K) if K else (lambda h: h[2])
-                ft = next((h for h in H if has(h)), None); lt = next((h for h in reversed(H) if has(h)), None)
+                ft = base(has); lt = next((h for h in reversed(H) if has(h)), None)
                 tt = 0.4 if K else TOTAL_TH.get(sp)                  # hockey/baseball: about a 6-point shift in the Over's chance
                 mv = eff(lt) - eff(ft) if ft and lt else 0
                 if tt and ft and lt and abs(mv) >= tt and ("steam", key, "total") not in have:
                     side = "over" if mv > 0 else "under"
                     price = o.get("oo") if side == "over" else o.get("uo")
-                    new.append({"strat": "steam", "key": key, "sport": sp, "mkt": "total", "side": side, "odds": price if price is not None else -110, "line": lt[2],
-                                "move": round(mv, 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")})
+                    cands.append((abs(mv) / tt, {"strat": "steam", "key": key, "sport": sp, "mkt": "total", "side": side, "odds": price if price is not None else -110, "line": lt[2],
+                                "move": round(mv, 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")}))
+                for _, c in sorted(cands, key=lambda t: -t[0]):
+                    if not _conflicts(c, P["picks"] + new):
+                        new.append(c); break
     # cap: best 8 new market-gap picks per run so one noisy run can't flood the test
     gaps = sorted([p for p in new if p["strat"] == "gap"], key=lambda p: -p["edge"])[:8]
     new = gaps + [p for p in new if p["strat"] != "gap"]
     if B is not None:
-        try: new += angle_picks(P, B, have)
+        try: new += angle_picks(P, B, have, P["picks"] + new)
         except Exception: log(f"angle picks failed:\n{traceback.format_exc()}")
-        try: new += dog_pick(P, B, MK)
+        try: new += dog_pick(P, B, MK, P["picks"] + new)
         except Exception: log(f"dog pick failed:\n{traceback.format_exc()}")
+    # never bet both sides of a game: earlier picks stand, a later pick on the other side is dropped
+    kept, blocked = [], 0
+    for p in new:
+        if _conflicts(p, P["picks"] + kept): blocked += 1; continue
+        kept.append(p)
+    new = kept
+    if blocked: log(f"Test picks: {blocked} dropped for betting against an existing pick on the same game")
     P["picks"].extend(new)
     # grade anything finished
     graded = 0
@@ -621,7 +648,10 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
             elif p["mkt"] == "spread" and o.get("sl") is not None: p["close"] = -o["sl"] if p["side"] == "home" else o["sl"]
             elif p["mkt"] == "total": p["close"] = o.get("tot")
         f = FINALS.get(p["key"]) or (rows_final(B, p["key"]) if B is not None else None)
-        if p.get("result") is not None or not f: continue
+        if not f: continue
+        if p.get("result") is not None:                                # already graded: re-grade only if the final score was corrected
+            if p.get("score") == f"{f[0]}-{f[1]}": continue
+            log(f"  regrade {p['key']} {p['mkt']}: score {p.get('score')} -> {f[0]}-{f[1]}")
         a, h = f
         if p["mkt"] == "ml":
             m = h - a if p["side"] == "home" else a - h
@@ -721,7 +751,7 @@ def angle_candidates(sp, games, g):
                                         why=f"{ab} {w}–{len(su)-w} straight up, {label}" + ("" if p >= .5 else " (fading them)")))
     return out
 
-def angle_picks(P, B, have):
+def angle_picks(P, B, have, pool=()):
     today = TODAY_ET.isoformat()
     already = [p for p in P["picks"] if p["strat"] == "angle" and p["key"].split("|")[1] == today]
     need = 5 - len(already)
@@ -744,6 +774,7 @@ def angle_picks(P, B, have):
     new, used = [], set()
     for score, key, sp, start, c in pool:
         if key in used or ("angle", key, c["mkt"]) in have: continue
+        if _conflicts({"key": key, "mkt": c["mkt"], "side": c["side"]}, list(pool) + new): continue
         used.add(key)
         new.append({"strat": "angle", "key": key, "sport": sp, "mkt": c["mkt"], "side": c["side"], "odds": c["odds"], "line": c["line"],
                     "why": c["why"], "rank": round(score, 2), "start": start.astimezone(dt.timezone.utc).isoformat(timespec="minutes"),
@@ -752,7 +783,7 @@ def angle_picks(P, B, have):
     return new
 
 # ---------------------------------------------------------------- strategy 4: one underdog of the day
-def dog_pick(P, B, MK):
+def dog_pick(P, B, MK, pool=()):
     today = TODAY_ET.isoformat()
     if any(p["strat"] == "dog" and p["key"].split("|")[1] == today for p in P["picks"]): return []
     if NOW.astimezone(ET).hour < 10: return []          # wait for the day's lines to settle
@@ -778,6 +809,7 @@ def dog_pick(P, B, MK):
             cands = angle_candidates(sp, games, g)
             for side, odds in (("home", g["hml"]), ("away", g["aml"])):
                 if odds is None or not (100 <= odds <= 250): continue
+                if _conflicts({"key": key, "mkt": "ml", "side": side}, pool): continue
                 book_fair = _imp(odds) / tot
                 k = (r.get("k") or {}).get("h" if side == "home" else "a") or {}
                 kmid = (k["bid"] + k["ask"]) / 2 if k.get("bid") and k.get("ask") else None
