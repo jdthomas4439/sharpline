@@ -623,8 +623,9 @@ function allEdges(sport){
     const fp = fairProbs(m);
     m.sides.forEach((s,i) => BOOKS.forEach(b => {
       const o = s.odds[b]; if (o == null) return;
+      if (o > 300 || o < -300) return;                 // long shots and heavy chalk: no-vig fair prices are unreliable out there
       const ev = fp[i]*dec(o) - 1;
-      if (ev > 0.004){
+      if (ev > 0.004 && ev <= 0.15){                   // above 15% is almost always a stale or mismatched line, not a real edge
         const bb = dec(o)-1, kelly = Math.max(0,(bb*fp[i] - (1-fp[i]))/bb) / 4;
         out.push({ g, m, s, book:b, odds:o, ev, prob:fp[i], fair:toAm(1/fp[i]), stake:Math.round(kelly*BANKROLL) });
       }
@@ -2635,8 +2636,8 @@ function propLabel(p, side){ return p.p + " " + side.toLowerCase() + " " + p.lin
 function renderEdge(){
   if (sport === "golf"){ view.innerHTML = `<h1>Golf edges</h1><p class="sub">Golf is priced as a field, not head to head. See the Games tab for the field with recent form and last year’s finishes, and the Markets tab for Kalshi vs Polymarket winner prices.</p>`; return; }
   const e = allEdges(sport);
-  const live = isLive();
-  const leans = live
+  const live = isLive() || (RES[sport] && getGames().some(g => g.markets && g.markets.length));
+  const leans = isLive()
     ? livePropsAll().map(r => ({ live:true, r, lean:rowLean(r) })).filter(x => x.lean).sort((a,b) => b.lean.ev - a.lean.ev).slice(0,8)
     : RES[sport] ? [] : (PROPS_ALL[sport] || []).map(p => ({ p, lean:p.m.lean })).filter(x => x.lean).sort((a,b) => b.lean.ev - a.lean.ev).slice(0,6);
   const best = e[0];
@@ -2644,7 +2645,7 @@ function renderEdge(){
   view.innerHTML = `
     <h1>Today’s ${SPORT_LABEL[sport]} edges</h1>
     ${liveBar()}
-    <p class="sub">Bets priced better than the fair line. ${live ? "Fair prices come from Pinnacle, or the no-vig consensus when Pinnacle has no matching line." : ""} Stakes use quarter-Kelly on a $${BANKROLL} bankroll.</p>
+    <p class="sub">Bets priced better than the fair line, between −300 and +300. ${live ? "Fair prices come from Pinnacle, or the no-vig consensus when Pinnacle has no matching line." : ""} Stakes use quarter-Kelly on a $${BANKROLL} bankroll.</p>
     <div class="summary">
       <div><b class="num">${e.length + leans.length}</b><small>Edges found</small></div>
       <div><b class="num" style="color:var(--pos)">${best ? pct(best.ev) : "—"}</b><small>Best price edge</small></div>
@@ -2692,7 +2693,7 @@ function renderEdge(){
           <span>Last 10 <strong>${x.p.hit10}/10</strong></span>
           <button class="add" data-lean="${i}">Add to slip</button>
         </div>
-      </div>`).join("") : `<p class="note">${live ? "Load player props for a game on the Props tab to see prop edges here." : (RES[sport] ? "Player prop leans appear once live prop odds are connected." : "No prop leans right now.")}</p>`}
+      </div>`).join("") : `<p class="note">${live ? "Prop edges for the NFL, NBA and NHL are on the Props tab, under each sport." : (RES[sport] ? "Player prop leans appear once live prop odds are connected." : "No prop leans right now.")}</p>`}
     ${movesHTML()}
     ${live || RES[sport] ? (() => { const grp = games.map(g => ({ g, hs:trendHighlights(g) })).filter(x => x.hs.length).sort((a,b) => a.g.start - b.g.start); const ang = grp; return `<h2>Situational angles</h2>${ang.length ? ang.map(x => `<div class="ggroup"><div class="ghead"><b>${matchup(x.g)}</b><span>${x.g.time}${/TBD/.test(x.g.time) ? "" : " ET"}</span></div><ul class="trends">${x.hs.slice(0,4).map(h => `<li>${h.t}</li>`).join("")}</ul></div>`).join("") : `<p class="note">${RES[sport] ? "No strong trends in the upcoming games." : "Load team history on a game in the Odds tab to see its strongest trends here."}</p>`}`; })() : ""}
     <p class="note">${live ? "Live " + SPORT_LABEL[sport] + " odds from The Odds API through your Zapier connection." : RES[sport] ? "Free mode: schedule and team records from " + RES[sport].source + ", through " + RES[sport].updated + ". Connect live odds to compare books and find price edges." : "Sample data for layout."}</p>`;
