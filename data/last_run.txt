@@ -3,7 +3,7 @@ NBA: 3671 games
 NHL: 3968 games
 MLB: 7428 games
 CFB: 3049 games
-ESPN nba: saved 10 pregame lines (archive 69)
+ESPN nba: saved 9 pregame lines (archive 69)
 ESPN nhl: saved 15 pregame lines (archive 74)
 ESPN mlb: saved 1 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 16)
@@ -34,5 +34,5 @@ Injuries nhl: 129 players
 Injuries mlb: 217 players
 Weather: 64 outdoor games
 Props: games with lines {'nfl': 0, 'nba': 12, 'nhl': 4}
-Odds API: 10 credits this run; plan used 261, remaining 19739; budget 18000, reserve 1500
+Odds API: 0 credits this run; plan used 261, remaining 19739; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 5 total
