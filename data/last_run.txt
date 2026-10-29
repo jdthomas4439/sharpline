@@ -17,7 +17,7 @@ CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 48 games matched
-Polymarket nhl: 31 games matched
+Polymarket nhl: 32 games matched
 Kalshi nba: 24 games matched
 Polymarket nba: 21 games matched
 Kalshi mlb: 0 games matched
@@ -47,5 +47,5 @@ Injuries nhl: 132 players
 Injuries mlb: 218 players
 Weather: 65 outdoor games
 Props: games with lines {'nfl': 0, 'nba': 12, 'nhl': 4}
-Odds API: 30 credits this run; plan used 426, remaining 19574; budget 18000, reserve 1500
+Odds API: 0 credits this run; plan used 426, remaining 19574; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 5 total
