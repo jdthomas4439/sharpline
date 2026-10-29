@@ -41,8 +41,8 @@ TypeError: tuple indices must be integers or slices, not str
 Test picks: 0 new, 0 graded, 109 total
 Injuries nfl: 800 players
 Injuries nba: 90 players
-Injuries nhl: 123 players
-Injuries mlb: 218 players
+Injuries nhl: 122 players
+Injuries mlb: 217 players
 Weather: 65 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 15, 'nhl': 15}
 Odds API: 0 credits this run; plan used 551, remaining 19449; budget 18000, reserve 1500
