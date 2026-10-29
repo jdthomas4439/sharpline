@@ -1024,7 +1024,7 @@ def angle_candidates(sp, games, g):
                                         why=f"{ab} {w}–{len(su)-w} straight up, {label}" + ("" if p >= .5 else " (fading them)")))
     return out
 
-def angle_picks(P, B, have, pool=()):
+def angle_picks(P, B, have, exposure=()):
     today = TODAY_ET.isoformat()
     already = [p for p in P["picks"] if p["strat"] == "angle" and p["key"].split("|")[1] == today]
     need = 5 - len(already)
@@ -1047,7 +1047,7 @@ def angle_picks(P, B, have, pool=()):
     new, used = [], set()
     for score, key, sp, start, c in pool:
         if key in used or ("angle", key, c["mkt"]) in have: continue
-        if _conflicts({"key": key, "mkt": c["mkt"], "side": c["side"]}, list(pool) + new): continue
+        if _conflicts({"key": key, "mkt": c["mkt"], "side": c["side"]}, list(exposure) + new): continue
         used.add(key)
         new.append({"strat": "angle", "key": key, "sport": sp, "mkt": c["mkt"], "side": c["side"], "odds": c["odds"], "line": c["line"],
                     "why": c["why"], "rank": round(score, 2), "start": start.astimezone(dt.timezone.utc).isoformat(timespec="minutes"),
