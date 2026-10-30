@@ -822,6 +822,11 @@ TOTAL_TH = {"nfl": 2.0, "cfb": 3.0, "nba": 3.0, "ncaab": 3.0, "nhl": 0.5, "mlb":
 PRICE_TOTALS = {"nhl": 6.5, "mlb": 10.0}
 
 TEST_END = "2026-12-31T23:59+00:00"   # keep tallying picks through year end; move this date to extend
+# Late line move picks from before the 2-hour rule (Oct 21-28) that also pass it: the line moved 2+ points (or the
+# price-adjusted total moved) in the 3 hours before the pick, and the pick was logged inside 2 hours of start.
+# Checked against the saved line history on Oct 30. Every other old late-move pick is tagged "3h" and hidden in the app.
+STEAM_2H_OLD = {"cfb|2026-10-23|ARMY|TLSA|spread", "cfb|2026-10-24|BAY|KU|spread", "cfb|2026-10-24|SDSU|CSU|spread",
+                "nba|2026-10-26|MIN|CLE|spread", "mlb|2026-10-28|MIL|TB|total"}
 STEAM_WINDOW_MIN = 120      # late line move: only log picks in the last 2 hours before start
 STEAM_LOOKBACK_MIN = 180    # ...and only count the move made over the last 3 hours (not since the line opened)
 
@@ -841,6 +846,9 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
     if not P:
         P = {"start": NOW.isoformat(timespec="minutes"), "end": (NOW + dt.timedelta(days=7)).isoformat(timespec="minutes"), "picks": []}
     if P.get("end", "") < TEST_END: P["end"] = TEST_END        # the test keeps running with the updated rules (first window ended Oct 28)
+    for p in P["picks"]:                                   # which rule each late line move pick was made under
+        if p["strat"] == "steam" and "rule" not in p:
+            p["rule"] = "2h" if f"{p['key']}|{p['mkt']}" in STEAM_2H_OLD else "3h"
     have = {(p["strat"], p["key"], p["mkt"]) for p in P["picks"]}
     picked_games = {p["key"] for p in P["picks"]}
     mk = {f"{sp}|{r['date']}|{r['a']}|{r['h']}": r for sp, recs in MK.items() for r in recs}
@@ -879,7 +887,7 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
                 if th and fs and ls and abs(ls[1] - fs[1]) >= th and ("steam", key, "spread") not in have:
                     side = "home" if ls[1] > fs[1] else "away"            # sl rising = money on home
                     line = -ls[1] if side == "home" else ls[1]
-                    cands.append((abs(ls[1] - fs[1]) / th, {"strat": "steam", "key": key, "sport": sp, "mkt": "spread", "side": side, "odds": -110, "line": line,
+                    cands.append((abs(ls[1] - fs[1]) / th, {"strat": "steam", "rule": "2h", "key": key, "sport": sp, "mkt": "spread", "side": side, "odds": -110, "line": line,
                                 "move": round(ls[1] - fs[1], 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")}))
                 K = PRICE_TOTALS.get(sp)          # goals/runs per unit of Over probability: 5.5 at -140 is close to 6.5 at +120
                 has = (lambda h: h[2] is not None and len(h) > 6 and h[6] is not None) if K else (lambda h: h[2] is not None)
@@ -890,7 +898,7 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
                 if tt and ft and lt and abs(mv) >= tt and ("steam", key, "total") not in have:
                     side = "over" if mv > 0 else "under"
                     price = o.get("oo") if side == "over" else o.get("uo")
-                    cands.append((abs(mv) / tt, {"strat": "steam", "key": key, "sport": sp, "mkt": "total", "side": side, "odds": price if price is not None else -110, "line": lt[2],
+                    cands.append((abs(mv) / tt, {"strat": "steam", "rule": "2h", "key": key, "sport": sp, "mkt": "total", "side": side, "odds": price if price is not None else -110, "line": lt[2],
                                 "move": round(mv, 1), "start": o["start"], "at": NOW.isoformat(timespec="minutes")}))
                 for _, c in sorted(cands, key=lambda t: -t[0]):
                     if not _conflicts(c, P["picks"] + new):
@@ -1546,6 +1554,7 @@ def main():
     B["PROPS"] = step("props bundle", props_bundle) or {}
     B["PROPPICKS"] = step("prop picks", prop_picks_run) or load("prop_picks.json", None)
     B["UPDATED"] = NOW.astimezone(ET).strftime("%b %-d, %Y %-I:%M %p ET")
+    B["UPDATED_ISO"] = NOW.isoformat(timespec="minutes")
     B = {k: v for k, v in B.items() if v is not None}
     with open(os.path.join(DATA, "bundle.js"), "w") as f:
         f.write("window.SLB=" + json.dumps(B, separators=(",", ":")) + ";\n")
