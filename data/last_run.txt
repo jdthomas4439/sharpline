@@ -10,8 +10,8 @@ ESPN nfl: saved 0 pregame lines (archive 16)
 ESPN cfb: saved 50 pregame lines (archive 112)
 ESPN ncaab: saved 0 pregame lines (archive 0)
 NCAAB: 14246 games
-Soccer ESPN fixtures: 50 added
-Soccer: 3958 matches (60 upcoming)
+Soccer ESPN fixtures: 51 added
+Soccer: 3959 matches (61 upcoming)
 Golf: VidantaWorld Mexico Open (120 players, form for 104, Polymarket 90, Kalshi 118)
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 14 games matched
@@ -19,7 +19,7 @@ Polymarket nfl: 0 games matched
 Kalshi nhl: 48 games matched
 Polymarket nhl: 27 games matched
 Kalshi nba: 36 games matched
-Polymarket nba: 20 games matched
+Polymarket nba: 19 games matched
 Kalshi cfb: 108 games matched
 Polymarket cfb: 0 games matched
 Kalshi ncaab: 52 games matched
