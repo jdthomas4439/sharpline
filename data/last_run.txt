@@ -33,4 +33,4 @@ Injuries mlb: 215 players
 Weather: 65 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 15, 'nhl': 15}
 Odds API: 0 credits this run; plan used 687, remaining 19313; budget 18000, reserve 1500
-Prop picks: 0 new, 3 graded, 10 total
+Prop picks: 0 new, 0 graded, 10 total
