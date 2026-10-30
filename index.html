@@ -335,6 +335,7 @@ table.board.mkt{min-width:0}
 .deskread small{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
 .deskread p{margin:0 0 6px;font-size:14px;line-height:1.45;color:var(--ink)}.deskread p:last-child{margin-bottom:0}
 .splits .spnote{font-size:14px;color:var(--muted);margin:4px 0 0}
+.upd{font-size:12px;color:var(--muted);margin:-2px 0 10px;font-variant-numeric:tabular-nums}
 .ggroup{background:var(--surface);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
 .ghead{display:flex;justify-content:space-between;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);font-size:16px}
 .ghead span{color:var(--muted);font-size:14px;white-space:nowrap}
@@ -2020,7 +2021,7 @@ function renderMarkets(){
   const top = sports.flatMap(sp => marketRows(sp).flatMap(r => r.ideas.slice(0,1).map(i => ({ ...i, sp, label:r.label })))).sort((a,b) => b.v - a.v).slice(0, 5);
   const cents = x => x == null ? "—" : Math.round(x*100) + "¢";
   view.innerHTML = `
-    <h1>Kalshi & Polymarket</h1>
+    <h1>Kalshi & Polymarket</h1>${updLine(tRun(), "Prices")}
     <p class="sub">Prediction-market prices are probabilities: 58¢ means 58%. Gaps against the sportsbooks’ fair price are where the value is.</p>
     ${!has ? `<div class="slip"><div class="empty">Kalshi and Polymarket prices load through your backend, which pulls them every hour for free. Once it’s set up (see the README in sharpline-backend.zip), this tab fills in by itself.</div></div>` : `
     <details class="howto"><summary>How to act on these prices</summary>
@@ -2093,7 +2094,7 @@ function movesHTML(){
     const tm = st ? (d === etDate(new Date()) ? "" : st.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",timeZone:"America/New_York"}) + ", ") + st.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",timeZone:"America/New_York"}) + " ET" : "";
     byGame.push(gp = { game:m.game, list:[], start:st ? +st : Infinity, time:gm ? gm.time.replace(/^Today /, "") + (/TBD/.test(gm.time) ? "" : " ET") : st && st <= new Date() ? "Started " + tm : tm }); } gp.list.push(m); });
   byGame.sort((a,b) => a.start - b.start);
-  return `<h2>${SPORT_LABEL[sport] || ""} line moves</h2>${M.length ? byGame.map(gp => `<div class="ggroup"><div class="ghead"><b>${gp.game}</b><span>${gp.time}</span></div><ul class="trends moves">${gp.list.map(m => `<li class="${m.ts > seen ? "new" : ""}">${m.ts > seen ? `<span class="newtag">New</span> ` : ""}${m.steam ? "Late move: " : ""}${(t => t.charAt(0).toUpperCase() + t.slice(1))(m.text.replace(gp.game + ": ", ""))}<small>${ago(m.ts)}</small></li>`).join("")}</ul></div>`).join("") : `<p class="note">No significant ${SPORT_LABEL[sport] || ""} moves since the lines opened.</p>`}${all.length > 6 ? `<p class="moremoves"><button class="chip" id="movesMore">${movesAll ? "Show fewer" : "Show all " + all.length}</button></p>` : ""}`;
+  return `<h2>${SPORT_LABEL[sport] || ""} line moves</h2>${updLine(tMoves(), "Lines")}${M.length ? byGame.map(gp => `<div class="ggroup"><div class="ghead"><b>${gp.game}</b><span>${gp.time}</span></div><ul class="trends moves">${gp.list.map(m => `<li class="${m.ts > seen ? "new" : ""}">${m.ts > seen ? `<span class="newtag">New</span> ` : ""}${m.steam ? "Late move: " : ""}${(t => t.charAt(0).toUpperCase() + t.slice(1))(m.text.replace(gp.game + ": ", ""))}<small>${ago(m.ts)}</small></li>`).join("")}</ul></div>`).join("") : `<p class="note">No significant ${SPORT_LABEL[sport] || ""} moves since the lines opened.</p>`}${all.length > 6 ? `<p class="moremoves"><button class="chip" id="movesMore">${movesAll ? "Show fewer" : "Show all " + all.length}</button></p>` : ""}`;
 }
 let movesAll = false;
 function updateMoveBadge(){
@@ -2107,6 +2108,8 @@ const STRAT_LABEL = { gap:"Market gap", steam:"Late line move", angle:"Situation
 const STRAT_TAG = { gap:"Gap", steam:"Late move", angle:"Angle", dog:"Underdog" };
 const STEAM_LATE_MIN = 120;   // late line moves are logged in the last 2 hours before start (picks logged earlier used the old 3-hour rule)
 const pickLead = p => (new Date(p.start.replace(/Z$/, "+00:00")) - new Date(p.at)) / 60000;
+const oldSteam = p => p.strat === "steam" && p.rule !== "2h";   // didn’t pass the 2-hour rule (old 3-hour picks): kept in the data file, not shown
+const shownPicks = P => P.picks.filter(p => !oldSteam(p));
 function pickCLV(p){
   if (p.close == null) return null;
   if (p.mkt === "ml") return { pct:imp(p.close)/imp(p.odds) - 1 };
@@ -2130,14 +2133,14 @@ let sysOpen = false;
 function systemTestHTML(){
   const P = window.SLB && SLB.PICKS;
   if (!P) return `<h2>System test</h2><p class="note">Your backend paper-trades the system’s picks every hour, grades them after each game and keeps the tally here. It starts on the first run after the update.</p>`;
-  const inWin = P.picks.filter(p => p.at <= P.end), T = tallyOf(inWin);
+  const inWin = shownPicks(P).filter(p => p.at <= P.end), T = tallyOf(inWin);
   const by = (f) => { const m = {}; inWin.forEach(p => (m[f(p)] = m[f(p)] || []).push(p)); return Object.entries(m).map(([k,v]) => [k, tallyOf(v)]); };
   const u = x => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(2) + "u";
   const end = new Date(P.end), done = Date.now() > end.getTime();
   const row = ([k, t]) => `<tr><td>${k}</td><td>${t.w}–${t.l}${t.ps ? "–" + t.ps : ""}</td><td style="color:${t.u >= 0 ? "var(--pos)" : "var(--neg)"}">${t.w + t.l + t.ps ? u(t.u) : "—"}</td><td>${t.open}</td></tr>`;
-  const list = [...P.picks].reverse().slice(0, sysOpen ? 200 : 8);
-  return `<h2>System test</h2>
-    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Four strategies run side by side, each with its own color: <span class="sdot s-angle"></span>situational angles (the 5 strongest each night), <span class="sdot s-steam"></span>late line moves (a big move in the last 3 hours, logged inside 2 hours of start), <span class="sdot s-dog"></span>the underdog of the day and <span class="sdot s-gap"></span>market gaps. The system never takes both sides of a game.</p>
+  const list = [...shownPicks(P)].reverse().slice(0, sysOpen ? 200 : 8);
+  return `<h2>System test</h2>${updLine(tRun(), "Picks and grades")}
+    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Four strategies run side by side, each with its own color: <span class="sdot s-angle"></span>situational angles (the 5 strongest each night), <span class="sdot s-steam"></span>late line moves (a big move in the last 3 hours, logged inside 2 hours of start), <span class="sdot s-dog"></span>the underdog of the day and <span class="sdot s-gap"></span>market gaps. The system never takes both sides of a game.${(n => n ? ` ${n} late line move picks from Oct 21–28 that don’t pass the 2-hour rule are left out of this record so it isn’t overstated.` : "")(P.picks.filter(oldSteam).length)}</p>
     <div class="me">
       <div><b>${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}</b><small>Record</small></div>
       <div><b style="color:${T.u >= 0 ? "var(--pos)" : "var(--neg)"}">${T.w + T.l + T.ps ? u(T.u) : "—"}</b><small>Units</small></div>
@@ -2145,15 +2148,12 @@ function systemTestHTML(){
       <div><b>${T.clv != null ? (T.clv > 0 ? "+" : "") + T.clv.toFixed(1) : "—"}</b><small>CLV pts</small></div>
     </div>
     <div class="board-wrap" style="margin-bottom:10px"><table class="tt"><thead><tr><th></th><th>W–L</th><th>Units</th><th>Open</th></tr></thead><tbody>
-      ${by(p => p.strat).map(([k, t]) => row([`<span class="sdot s-${k}"></span>${STRAT_LABEL[k] || k}`, t]) + (k === "steam" ? (() => {
-        const st = inWin.filter(p => p.strat === "steam"), a = st.filter(p => pickLead(p) <= STEAM_LATE_MIN), b = st.filter(p => pickLead(p) > STEAM_LATE_MIN);
-        return (a.length ? `<tr><td class="sub">Inside 2 h</td>${row(["", tallyOf(a)]).replace(/^<tr><td><\/td>/, "")}` : "") + (b.length ? `<tr><td class="sub">2–3 h out (old rule)</td>${row(["", tallyOf(b)]).replace(/^<tr><td><\/td>/, "")}` : "");
-      })() : "")).join("")}
+      ${by(p => p.strat).map(([k, t]) => row([`<span class="sdot s-${k}"></span>${STRAT_LABEL[k] || k}`, t])).join("")}
       ${by(p => SPORT_LABEL[p.sport] || p.sport.toUpperCase()).map(row).join("")}
     </tbody></table></div>
     ${T.n ? `<div class="bets">${list.map(p => { const c = pickCLV(p), [sp, d, a, h] = p.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
       return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : "Push") : "Open"}</span><span class="stag s-${p.strat}">${STRAT_TAG[p.strat] || p.strat}</span><b>${pickText(p)}</b><span class="o">${p.result ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
-      <small>${nm(a)} at ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ", logged " + (m => m >= 60 ? Math.floor(m/60) + " h " + (m%60 ? Math.round(m%60) + " m " : "") : Math.round(m) + " m ")(pickLead(p)) + "before start" + (pickLead(p) > STEAM_LATE_MIN ? ", old 3-hour rule" : "") + ")" : p.why ? ": " + p.why : ""}${p.result && p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")}</div>
+      <small>${nm(a)} at ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ", logged " + (m => m >= 60 ? Math.floor(m/60) + " h " + (m%60 ? Math.round(m%60) + " m " : "") : Math.round(m) + " m ")(pickLead(p)) + "before start)" : p.why ? ": " + p.why : ""}${p.result && p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")}</div>
       ${P.picks.length > 8 ? `<p><button class="chip" id="sysMore">${sysOpen ? "Show fewer" : "Show all " + P.picks.length + " picks"}</button></p>` : ""}` : `<p class="note">No picks yet. The system waits for a real edge or a big line move, so quiet days can have none.</p>`}`;
 }
 
@@ -2210,7 +2210,7 @@ function pxPicksHTML(){
     </div>
     ${picks.length ? `<div class="board-wrap" style="margin-bottom:10px"><table class="tt"><thead><tr><th></th><th>W–L</th><th>Units</th><th>Open</th></tr></thead><tbody>
       ${by(p => PX_SPORTS[p.sport] || p.sport).map(row).join("")}${by(p => p.mkt).map(row).join("")}</tbody></table></div>` : ""}
-    <h2>Today’s prop picks</h2>
+    <h2>Today’s prop picks</h2>${updLine(tRun(), "Picks and grades")}
     ${todays.length ? `<div class="bets">${todays.map(card).join("")}</div>` : `<p class="note">${T ? "No picks yet today. They’re made at 9 AM ET once the morning props are in, and only when a price clears the 3% edge." : "Prop picks start the first game-day morning after the Odds API key is connected."}</p>`}
     ${earlier.length ? `<h2>Earlier picks</h2><div class="bets">${earlier.slice(0, pxAll ? 500 : 10).map(card).join("")}</div>
       ${earlier.length > 10 ? `<p><button class="chip" id="pxMore">${pxAll ? "Show fewer" : "Show all " + earlier.length}</button></p>` : ""}` : ""}`;
@@ -2234,7 +2234,7 @@ function pxSportHTML(sp){
     <div class="filters" role="group" aria-label="Prop type">
       ${mkts.map(m => `<button class="chip ${m === S.mkt ? "on" : ""}" data-pxm="${m}">${m}</button>`).join("")}
     </div>
-    <div class="listbar"><span>${list.length} lines, ${list.filter(r => r.lean).length} with an edge${upd ? ", updated " + pxTime(upd) : ""}</span></div>
+    ${updLine(upd, "Prop lines")}<div class="listbar"><span>${list.length} lines, ${list.filter(r => r.lean).length} with an edge</span></div>
     <div class="plist">
       <div class="phead lp"><span>Player</span><span>Line</span><span>Best over</span><span>Best under</span><span>Edge</span></div>
       ${list.map(r => { const open = pxOpen === r.key; return `
@@ -2282,6 +2282,18 @@ function renderPropsDesk(){
   });
 }
 
+
+/* ---------- "Last updated" stamps on every list ---------- */
+function updLine(t, what){
+  const d = t instanceof Date ? t : t ? new Date(t) : null; if (!d || isNaN(d)) return "";
+  const m = Math.max(0, Math.round((Date.now() - d) / 60000));
+  const ago = m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " d ago";
+  return `<p class="upd">${what ? what + " updated " : "Updated "}${d.toLocaleString("en-US", { weekday:"short", hour:"numeric", minute:"2-digit", timeZone:"America/New_York" })} ET · ${ago}</p>`;
+}
+const tRun = () => window.SLB && SLB.UPDATED_ISO ? new Date(SLB.UPDATED_ISO) : null;               // last backend run: picks, records, Kalshi, injuries
+const tOdds = () => window.SLB && SLB.ODDS_TIME ? new Date(SLB.ODDS_TIME) : tRun();                 // last sportsbook odds pull
+const tMoves = () => { const H = window.SLB && SLB.HISTORY; if (!H) return null; let mx = 0; Object.values(H).forEach(a => a.forEach(r => { if (r[0] > mx) mx = r[0]; })); return mx ? new Date(mx * 60000) : null; };
+const tProps = () => { const P = window.SLB && SLB.PROPS; if (!P) return null; const u = Object.values(P).map(e => e.updated).filter(Boolean).sort().pop(); return u ? new Date(u) : null; };
 
 /* ---------- Top: the best of all sports on one page ---------- */
 const SPORT_SHORT = { nba:"NBA", nhl:"NHL", nfl:"NFL", mlb:"MLB", cfb:"NCAAF", ncaab:"NCAAB", soccer:"Soccer", golf:"Golf" };
@@ -2336,14 +2348,14 @@ function renderTop(){
   const when = g => g.start.toLocaleString("en-US", { weekday:"short", hour:"numeric", minute:"2-digit", timeZone:"America/New_York" }) + " ET";
   view.innerHTML = `
     <h1>${new Date().toLocaleDateString("en-US",{weekday:"long",timeZone:"America/New_York"})}’s board</h1>
-    ${(() => { const P = window.SLB && SLB.PICKS; if (!P) return ""; const T = tallyOf(P.picks); return `<div class="kpi"><div><small>System test</small><b class="num">${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}</b></div><div><small>Units</small><b class="num ${T.u >= 0 ? "pos" : "neg"}">${(T.u >= 0 ? "+" : "−") + Math.abs(T.u).toFixed(2)}</b></div><div><small>Open picks</small><b class="num">${T.open}</b></div></div>`; })()}
+    ${(() => { const P = window.SLB && SLB.PICKS; if (!P) return ""; const T = tallyOf(shownPicks(P)); return `<div class="kpi"><div><small>System test</small><b class="num">${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}</b></div><div><small>Units</small><b class="num ${T.u >= 0 ? "pos" : "neg"}">${(T.u >= 0 ? "+" : "−") + Math.abs(T.u).toFixed(2)}</b></div><div><small>Open picks</small><b class="num">${T.open}</b></div></div>`; })()}
     ${dogHTML()}
-    <h2>Line moves</h2>
+    <h2>Line moves</h2>${updLine(tMoves(), "Lines")}
     ${moves === null ? `<p class="note">Line moves come from your backend’s hourly snapshots.</p>`
       : moves.length ? `<ol class="toplist">${moves.map(m => { const [sp, d, a, h] = m.key.split("|");
         return `<li><button class="topitem" data-open="${sp}|fr_${sp}_${d}_${a}_${h}"><span class="sp">${SPORT_SHORT[sp] || sp.toUpperCase()}</span><span class="tx">${m.steam ? "<b>Late move:</b> " : ""}${m.text}<small>${ago(m.ts)}</small></span></button></li>`; }).join("")}</ol>`
       : `<p class="note">No big line moves on today’s games yet.</p>`}
-    <h2>Angles</h2>
+    <h2>Angles</h2>${updLine(tRun(), "Records")}
     ${angles.length ? angles.map((x, i) => { const join = L => L.length < 2 ? (L[0] || "") : L.slice(0, -1).join(", ") + " and " + L[L.length - 1];
       return `<button class="agrp" data-open="${x.sp}|${x.g.id}"><span class="aghead"><span class="agn">${i + 1}</span><span class="ags">${SPORT_SHORT[x.sp] || x.sp.toUpperCase()}</span><b>${matchup(x.g)}</b><span class="agt">${x.g.time.replace(/^Today /, "")}${/TBD/.test(x.g.time) ? "" : " ET"}</span></span>
       <span class="aglist">${x.items.map(it => `<span class="agi">${it.base}${it.labels.length ? `<small>${join(it.labels)}</small>` : ""}</span>`).join("")}</span></button>`; }).join("")
@@ -2651,7 +2663,7 @@ function renderEdge(){
       <div><b class="num" style="color:var(--pos)">${best ? pct(best.ev) : "—"}</b><small>Best price edge</small></div>
       <div><b class="num">${games.length}</b><small>Games not started</small></div>
     </div>
-    <h2>Game lines</h2>
+    <h2>Game lines</h2>${updLine(tOdds(), "Odds")}
     ${!live ? `<p class="note">${CFG[sport] ? "Price edges need live sportsbook odds from several books. Add your Odds API key to the backend to turn them on." : "Live sportsbook odds aren’t connected for the " + (SPORT_LABEL[sport] || sport) + " yet, so this section is empty for now."}</p>` : ""}
     ${!live ? "" : e.length ? e.map((x,i) => `
       <div class="edge">
@@ -2715,7 +2727,7 @@ function renderOdds(){
   view.innerHTML = `
     <h1>${SPORT_LABEL[sport]}</h1>
     ${liveBar()}
-    <p class="sub">Best prices are highlighted. Tap one to add it to your slip.</p>
+    <p class="sub">Best prices are highlighted. Tap one to add it to your slip.</p>${updLine(getGames().some(g => g.markets && g.markets.length) ? tOdds() : tRun(), "Odds")}
     ${cfbFilterBar()}
     ${oddsGames().map(g => `
       <section class="game">
