@@ -17,7 +17,7 @@ CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 27 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 48 games matched
-Polymarket nhl: 32 games matched
+Polymarket nhl: 30 games matched
 Kalshi nba: 26 games matched
 Polymarket nba: 25 games matched
 Kalshi cfb: 105 games matched
