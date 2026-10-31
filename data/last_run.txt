@@ -7,7 +7,7 @@ ESPN nba: saved 6 pregame lines (archive 87)
 ESPN nhl: saved 10 pregame lines (archive 87)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 0 pregame lines (archive 16)
-ESPN cfb: saved 48 pregame lines (archive 112)
+ESPN cfb: saved 47 pregame lines (archive 112)
 ESPN ncaab: saved 0 pregame lines (archive 0)
 NCAAB: 14246 games
 Soccer ESPN fixtures: 5 added
@@ -16,9 +16,9 @@ Golf: VidantaWorld Mexico Open (120 players, form for 104, Polymarket 54, Kalshi
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 14 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 49 games matched
+Kalshi nhl: 48 games matched
 Polymarket nhl: 29 games matched
-Kalshi nba: 30 games matched
+Kalshi nba: 28 games matched
 Polymarket nba: 25 games matched
 Kalshi cfb: 108 games matched
 Polymarket cfb: 0 games matched
@@ -32,5 +32,5 @@ Injuries nhl: 132 players
 Injuries mlb: 191 players
 Weather: 67 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 25, 'nhl': 18}
-Odds API: 0 credits this run; plan used 1054, remaining 18946; budget 18000, reserve 1500
+Odds API: 30 credits this run; plan used 1084, remaining 18916; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 10 total
