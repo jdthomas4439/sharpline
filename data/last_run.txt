@@ -19,13 +19,13 @@ Polymarket nfl: 0 games matched
 Kalshi nhl: 48 games matched
 Polymarket nhl: 31 games matched
 Kalshi nba: 28 games matched
-Polymarket nba: 27 games matched
+Polymarket nba: 28 games matched
 Kalshi cfb: 106 games matched
 Polymarket cfb: 1 games matched
 Kalshi ncaab: 52 games matched
 Polymarket ncaab: 0 games matched
 History: 297 games tracked
-Test picks: 5 new, 0 graded, 126 total
+Test picks: 0 new, 0 graded, 126 total
 Injuries nfl: 800 players
 Injuries nba: 85 players
 Injuries nhl: 132 players
