@@ -14,7 +14,7 @@ Soccer ESPN fixtures: 46 added
 Soccer: 4002 matches (94 upcoming)
 Golf: VidantaWorld Mexico Open (120 players, form for 104, Polymarket 54, Kalshi 118)
 CFB rankings: AP Top 25 (25 teams)
-Kalshi nfl: 22 games matched
+Kalshi nfl: 20 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 50 games matched
 Polymarket nhl: 33 games matched
@@ -25,12 +25,12 @@ Polymarket cfb: 0 games matched
 Kalshi ncaab: 152 games matched
 Polymarket ncaab: 0 games matched
 History: 418 games tracked
-Test picks: 0 new, 2 graded, 137 total
+Test picks: 0 new, 1 graded, 137 total
 Injuries nfl: 800 players
-Injuries nba: 91 players
+Injuries nba: 94 players
 Injuries nhl: 130 players
 Injuries mlb: 190 players
-Weather: 74 outdoor games
+Weather: 73 outdoor games
 Props: games with lines {'nfl': 13, 'nba': 24, 'nhl': 29}
-Odds API: 5 credits this run; plan used 453, remaining 19547; budget 18000, reserve 1500
+Odds API: 0 credits this run; plan used 453, remaining 19547; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 20 total
