@@ -8,8 +8,8 @@ ESPN nhl: saved 4 pregame lines (archive 96)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 29)
 ESPN cfb: saved 2 pregame lines (archive 114)
-ESPN ncaab: saved 118 pregame lines (archive 123)
-NCAAB: 18685 games
+ESPN ncaab: saved 117 pregame lines (archive 123)
+NCAAB: 18686 games
 Soccer ESPN fixtures: 46 added
 Soccer: 4002 matches (94 upcoming)
 Golf: VidantaWorld Mexico Open (120 players, form for 104, Polymarket 0, Kalshi 3)
@@ -22,7 +22,7 @@ Kalshi nba: 31 games matched
 Polymarket nba: 27 games matched
 Kalshi cfb: 63 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 193 games matched
+Kalshi ncaab: 191 games matched
 Polymarket ncaab: 0 games matched
 History: 453 games tracked
 Test picks: 0 new, 0 graded, 143 total
