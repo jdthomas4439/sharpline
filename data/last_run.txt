@@ -3,7 +3,7 @@ NBA: 3671 games
 NHL: 3968 games
 MLB: 7426 games
 CFB: 3049 games
-ESPN nba: saved 6 pregame lines (archive 96)
+ESPN nba: saved 12 pregame lines (archive 102)
 ESPN nhl: saved 5 pregame lines (archive 96)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 2 pregame lines (archive 29)
@@ -12,12 +12,12 @@ ESPN ncaab: saved 120 pregame lines (archive 123)
 NCAAB: 18685 games
 Soccer ESPN fixtures: 46 added
 Soccer: 4002 matches (94 upcoming)
-Golf: VidantaWorld Mexico Open (120 players, form for 104, Polymarket 18, Kalshi 3)
+Golf: VidantaWorld Mexico Open (120 players, form for 104, Polymarket 17, Kalshi 3)
 CFB rankings: AP Top 25 (25 teams)
-Kalshi nfl: 20 games matched
+Kalshi nfl: 19 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 51 games matched
-Polymarket nhl: 32 games matched
+Kalshi nhl: 50 games matched
+Polymarket nhl: 31 games matched
 Kalshi nba: 32 games matched
 Polymarket nba: 26 games matched
 Kalshi cfb: 60 games matched
@@ -30,7 +30,8 @@ Injuries nfl: 800 players
 Injuries nba: 91 players
 Injuries nhl: 129 players
 Injuries mlb: 190 players
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
 Weather: 73 outdoor games
-Props: games with lines {'nfl': 13, 'nba': 24, 'nhl': 26}
-Odds API: 10 credits this run; plan used 463, remaining 19537; budget 18000, reserve 1500
-Prop picks: 0 new, 2 graded, 20 total
+Props: games with lines {'nfl': 13, 'nba': 24, 'nhl': 25}
+Odds API: 35 credits this run; plan used 498, remaining 19502; budget 18000, reserve 1500
+Prop picks: 0 new, 1 graded, 20 total
