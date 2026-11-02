@@ -4,11 +4,11 @@ NHL: 3968 games
 MLB: 7426 games
 CFB: 3049 games
 ESPN nba: saved 15 pregame lines (archive 107)
-ESPN nhl: saved 8 pregame lines (archive 100)
+ESPN nhl: saved 15 pregame lines (archive 107)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 29)
 ESPN cfb: saved 2 pregame lines (archive 114)
-ESPN ncaab: saved 116 pregame lines (archive 123)
+ESPN ncaab: saved 115 pregame lines (archive 123)
 NCAAB: 18686 games
 Soccer ESPN fixtures: 46 added
 Soccer: 4002 matches (94 upcoming)
@@ -22,7 +22,7 @@ Kalshi nba: 31 games matched
 Polymarket nba: 28 games matched
 Kalshi cfb: 63 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 190 games matched
+Kalshi ncaab: 189 games matched
 Polymarket ncaab: 0 games matched
 History: 453 games tracked
 Test picks: 0 new, 0 graded, 149 total
