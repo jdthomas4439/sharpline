@@ -18,19 +18,19 @@ Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 50 games matched
 Polymarket nhl: 40 games matched
-Kalshi nba: 25 games matched
+Kalshi nba: 26 games matched
 Polymarket nba: 28 games matched
 Kalshi cfb: 66 games matched
 Polymarket cfb: 0 games matched
 Kalshi ncaab: 140 games matched
 Polymarket ncaab: 0 games matched
-History: 473 games tracked
+History: 474 games tracked
 Test picks: 0 new, 0 graded, 158 total
 Injuries nfl: 800 players
 Injuries nba: 96 players
 Injuries nhl: 125 players
 Injuries mlb: 145 players
 Weather: 72 outdoor games
-Props: games with lines {'nfl': 13, 'nba': 25, 'nhl': 24}
-Odds API: 0 credits this run; plan used 1195, remaining 18805; budget 18000, reserve 1500
+Props: games with lines {'nfl': 13, 'nba': 24, 'nhl': 24}
+Odds API: 40 credits this run; plan used 1235, remaining 18765; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 23 total
