@@ -1,4 +1,3 @@
-  error HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Read timed out. (read timeout=90) on https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv
 NFL: 1631 games
 NBA: 3671 games
 NHL: 3968 games
@@ -9,7 +8,7 @@ ESPN nhl: saved 15 pregame lines (archive 122)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 30)
 ESPN cfb: saved 5 pregame lines (archive 119)
-ESPN ncaab: saved 10 pregame lines (archive 153)
+ESPN ncaab: saved 11 pregame lines (archive 154)
 NCAAB: 18687 games
 Soccer ESPN fixtures: 46 added
 Soccer: 4002 matches (46 upcoming)
@@ -32,6 +31,6 @@ Injuries nba: 96 players
 Injuries nhl: 127 players
 Injuries mlb: 145 players
 Weather: 73 outdoor games
-Props: games with lines {'nfl': 4, 'nba': 32, 'nhl': 21}
+Props: games with lines {'nfl': 2, 'nba': 32, 'nhl': 21}
 Odds API: 0 credits this run; plan used 1576, remaining 18424; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 28 total
