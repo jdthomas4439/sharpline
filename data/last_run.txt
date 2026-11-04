@@ -8,7 +8,7 @@ ESPN nhl: saved 15 pregame lines (archive 111)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 0 pregame lines (archive 29)
 ESPN cfb: saved 5 pregame lines (archive 117)
-ESPN ncaab: saved 22 pregame lines (archive 147)
+ESPN ncaab: saved 28 pregame lines (archive 153)
 NCAAB: 18687 games
 Soccer ESPN fixtures: 46 added
 Soccer: 4002 matches (46 upcoming)
@@ -17,20 +17,21 @@ CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 50 games matched
-Polymarket nhl: 40 games matched
+Polymarket nhl: 41 games matched
 Kalshi nba: 26 games matched
-Polymarket nba: 28 games matched
+Polymarket nba: 29 games matched
 Kalshi cfb: 66 games matched
 Polymarket cfb: 0 games matched
 Kalshi ncaab: 159 games matched
 Polymarket ncaab: 0 games matched
-History: 493 games tracked
+History: 494 games tracked
 Test picks: 0 new, 0 graded, 160 total
 Injuries nfl: 800 players
-Injuries nba: 97 players
+Injuries nba: 95 players
 Injuries nhl: 125 players
 Injuries mlb: 145 players
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
 Weather: 72 outdoor games
 Props: games with lines {'nfl': 13, 'nba': 23, 'nhl': 22}
-Odds API: 0 credits this run; plan used 1245, remaining 18755; budget 18000, reserve 1500
+Odds API: 30 credits this run; plan used 1275, remaining 18725; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 23 total
