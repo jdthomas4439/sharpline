@@ -28,9 +28,12 @@ History: 398 games tracked
 Test picks: 0 new, 0 graded, 174 total
 Injuries nfl: 800 players
 Injuries nba: 91 players
-Injuries nhl: 124 players
+Injuries nhl: 123 players
 Injuries mlb: 145 players
-Weather: 74 outdoor games
+  503 from https://api.open-meteo.com/v1/forecast
+  503 from https://api.open-meteo.com/v1/forecast
+Weather: batch 2 failed
+Weather: 40 outdoor games
 Props: games with lines {'nfl': 2, 'nba': 31, 'nhl': 30}
 Odds API: 0 credits this run; plan used 1935, remaining 18065; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 33 total
