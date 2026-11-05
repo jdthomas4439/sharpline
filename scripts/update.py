@@ -840,6 +840,13 @@ def _conflicts(p, pool):
         if p["mkt"] != "total" and q["mkt"] != "total" and q["side"] != p["side"]: return True
     return False
 def _imp(a): return 1 / _dec(a)
+def _tag_agree(taken, p):
+    """If p is the same bet as a standing pick on its game, tag the standing pick with p's strategy. True if tagged."""
+    for q in taken:
+        if q["mkt"] == p["mkt"] and q["side"] == p["side"]:
+            if p["strat"] not in q.setdefault("agree", []): q["agree"].append(p["strat"])
+            return True
+    return False
 
 def make_and_grade_picks(all_lines, MK, hist, B=None):
     P = load("picks.json", None)
@@ -912,12 +919,20 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
         try: new += dog_pick(P, B, MK, P["picks"] + new)
         except Exception: log(f"dog pick failed:\n{traceback.format_exc()}")
     # never bet both sides of a game: earlier picks stand, a later pick on the other side is dropped
-    kept, blocked = [], 0
+    # one pick per game across strategies: a later pick from another strategy on a game already picked is dropped;
+    # if it was the same bet (same market and side), the standing pick is tagged with that strategy in "agree"
+    kept, blocked, dup = [], 0, 0
     for p in new:
         if _conflicts(p, P["picks"] + kept): blocked += 1; continue
+        taken = [q for q in P["picks"] + kept if q["key"] == p["key"] and q["strat"] != p["strat"]]
+        if taken:
+            dup += 1
+            if _tag_agree(taken, p): log(f"Test picks: {p['strat']} agreed with {taken[0]['strat']} on {p['key']} (tagged, not logged twice)")
+            continue
         kept.append(p)
     new = kept
     if blocked: log(f"Test picks: {blocked} dropped for betting against an existing pick on the same game")
+    if dup: log(f"Test picks: {dup} dropped, game already picked by another strategy")
     P["picks"].extend(new)
     # grade anything finished
     graded = 0
@@ -1053,8 +1068,14 @@ def angle_picks(P, B, have, exposure=()):
                 pool.append((c["score"], key, sp, start, c))
     pool.sort(key=lambda t: -t[0])
     new, used = [], set()
+    others = {}                                    # games already picked by another strategy: skip them (tag if same bet) so the slot goes to the next game
+    for q in exposure:
+        if q["strat"] != "angle": others.setdefault(q["key"], []).append(q)
     for score, key, sp, start, c in pool:
         if key in used or ("angle", key, c["mkt"]) in have: continue
+        if key in others:
+            used.add(key)                          # only the game's best angle counts for the tag
+            _tag_agree(others[key], {"strat": "angle", "mkt": c["mkt"], "side": c["side"]}); continue
         if _conflicts({"key": key, "mkt": c["mkt"], "side": c["side"]}, list(exposure) + new): continue
         used.add(key)
         new.append({"strat": "angle", "key": key, "sport": sp, "mkt": c["mkt"], "side": c["side"], "odds": c["odds"], "line": c["line"],
@@ -1069,7 +1090,8 @@ def dog_pick(P, B, MK, pool=()):
     if any(p["strat"] == "dog" and p["key"].split("|")[1] == today for p in P["picks"]): return []
     if NOW.astimezone(ET).hour < 10: return []          # wait for the day's lines to settle
     mk = {f"{sp}|{r['date']}|{r['a']}|{r['h']}": r for sp, recs in MK.items() for r in recs}
-    best = None
+    best = best_all = None                     # best_all ignores the one-pick-per-game rule, to tag agreement
+    taken_keys = {q["key"] for q in pool}
     for sp, rk in ANGLE_SPORTS.items():
         games = _rows_as_dicts(sp, B.get(rk))
         if not games: continue
@@ -1106,10 +1128,14 @@ def dog_pick(P, B, MK, pool=()):
                 if ev is not None and ev > 0: why.append(f"{'Kalshi' if kmid is not None else 'Polymarket'} prices them at {market*100:.0f}%, the book’s odds imply {_imp(odds)*100:.0f}% ({ev*100:+.1f}% value)")
                 if support: why.append(max(support, key=lambda c: c["score"])["why"])
                 if not why: why.append(f"Best price among today’s underdogs; no strong market or trend signal behind it")
-                if best is None or score > best[0]:
-                    best = (score, {"strat": "dog", "key": key, "sport": sp, "mkt": "ml", "side": side, "odds": odds, "line": None,
+                cand = (score, {"strat": "dog", "key": key, "sport": sp, "mkt": "ml", "side": side, "odds": odds, "line": None,
                                     "why": "; ".join(why), "rank": round(score, 2),
                                     "start": start.astimezone(dt.timezone.utc).isoformat(timespec="minutes"), "at": NOW.isoformat(timespec="minutes")})
+                if best_all is None or score > best_all[0]: best_all = cand
+                if key not in taken_keys and (best is None or score > best[0]): best = cand
+    if best_all and best_all[1]["key"] in taken_keys:                      # the top underdog was already picked: tag it
+        p = best_all[1]
+        if _tag_agree([q for q in pool if q["key"] == p["key"]], p): log(f"Underdog of the day agreed with an existing pick on {p['key']} (tagged); next-best underdog used")
     return [best[1]] if best else []
 
 def rows_final(B, key):
