@@ -4,6 +4,7 @@ NHL: 3968 games
 MLB: 7426 games
 CFB: 3049 games
 ESPN nba: saved 2 pregame lines (archive 123)
+  error ('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer')) on https://site.api.espn.com/apis/site/v2/sports/hockey/nhl/scoreboard
 ESPN nhl: saved 11 pregame lines (archive 122)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 30)
