@@ -2140,7 +2140,7 @@ function systemTestHTML(){
   const row = ([k, t]) => `<tr><td>${k}</td><td>${t.w}–${t.l}${t.ps ? "–" + t.ps : ""}</td><td style="color:${t.u >= 0 ? "var(--pos)" : "var(--neg)"}">${t.w + t.l + t.ps ? u(t.u) : "—"}</td><td>${t.open}</td></tr>`;
   const list = [...shownPicks(P)].reverse().slice(0, sysOpen ? 200 : 8);
   return `<h2>System test</h2>${updLine(tRun(), "Picks and grades")}
-    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Four strategies run side by side, each with its own color: <span class="sdot s-angle"></span>situational angles (the 5 strongest each night), <span class="sdot s-steam"></span>late line moves (a big move in the last 3 hours, logged inside 2 hours of start), <span class="sdot s-dog"></span>the underdog of the day and <span class="sdot s-gap"></span>market gaps. The system never takes both sides of a game.${(n => n ? ` ${n} late line move picks from Oct 21–28 that don’t pass the 2-hour rule are left out of this record so it isn’t overstated.` : "")(P.picks.filter(oldSteam).length)}</p>
+    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Four strategies run side by side, each with its own color: <span class="sdot s-angle"></span>situational angles (the 5 strongest each night), <span class="sdot s-steam"></span>late line moves (a big move in the last 3 hours, logged inside 2 hours of start), <span class="sdot s-dog"></span>the underdog of the day and <span class="sdot s-gap"></span>market gaps. The system never takes both sides of a game, and from Nov 5 on it makes one pick per game: once a game has a pick, the other strategies skip it.${(n => n ? ` ${n} late line move picks from Oct 21–28 that don’t pass the 2-hour rule are left out of this record so it isn’t overstated.` : "")(P.picks.filter(oldSteam).length)}</p>
     <div class="me">
       <div><b>${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}</b><small>Record</small></div>
       <div><b style="color:${T.u >= 0 ? "var(--pos)" : "var(--neg)"}">${T.w + T.l + T.ps ? u(T.u) : "—"}</b><small>Units</small></div>
@@ -2930,15 +2930,16 @@ function renderSocial(){
 }
 
 const RENDER = { top:renderTop, edge:renderEdge, odds:renderOdds, props:renderPropsDesk, markets:renderMarkets, parlay:renderParlay, social:renderSocial };
+const NO_SPORT_BAR = new Set(["top", "props", "social"]);   // tabs that don't use the sport switcher
 function render(){
-  const bar = document.querySelector(".sport-bar"); if (bar) bar.hidden = current === "top" || current === "props";
+  const bar = document.querySelector(".sport-bar"); if (bar) bar.hidden = NO_SPORT_BAR.has(current);
   RENDER[current]();
   if (current === "edge" && window.SLB && SLB.HISTORY){ const M = lineMoves(); if (M.length) store.set("sl_moves_seen", Math.max(movesSeen(), M[0].ts)); }
   updateMoveBadge(); updateBadge();
 }
 function go(t){
   current = t;
-  const bar = document.querySelector(".sport-bar"); if (bar) bar.hidden = t === "top" || t === "props";
+  const bar = document.querySelector(".sport-bar"); if (bar) bar.hidden = NO_SPORT_BAR.has(t);
   document.querySelectorAll(".tab").forEach(b => { b.classList.toggle("on", b.dataset.tab === t); b.setAttribute("aria-current", b.dataset.tab === t ? "page" : "false"); });
   render(); window.scrollTo(0,0);
 }
