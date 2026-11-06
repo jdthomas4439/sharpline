@@ -247,7 +247,14 @@ table.tt{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
 
 .bets{display:flex;flex-direction:column;gap:8px}
 .bet{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--brand);border-radius:6px;padding:10px 12px}
-.bet.win{border-left-color:var(--pos)}.bet.loss{border-left-color:var(--neg)}.bet.push{border-left-color:var(--muted)}
+.bet.win{border-left-color:var(--pos);background:var(--win-bg)}.bet.loss{border-left-color:var(--neg);background:var(--loss-bg)}.bet.push{border-left-color:var(--muted)}
+:root{--win-bg:#EAF7EF;--loss-bg:#FBEDED}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--win-bg:#11241A;--loss-bg:#2A1719}}
+:root[data-theme="dark"]{--win-bg:#11241A;--loss-bg:#2A1719}
+.dayhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin:14px 0 2px;padding-bottom:4px;border-bottom:1px solid var(--line);font-weight:600}
+.dayhead:first-child{margin-top:0}
+.dayhead span{font-size:14px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+.dayhead .good{color:var(--pos)}.dayhead .bad{color:var(--neg)}
 .btop{display:flex;gap:8px;align-items:baseline}
 .btop b{flex:1;font-weight:600}
 .btop .o{font-family:"Archivo",sans-serif;font-stretch:75%;font-variant-numeric:tabular-nums;font-size:16px;font-weight:600}
@@ -2138,7 +2145,12 @@ function systemTestHTML(){
   const u = x => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(2) + "u";
   const end = new Date(P.end), done = Date.now() > end.getTime();
   const row = ([k, t]) => `<tr><td>${k}</td><td>${t.w}–${t.l}${t.ps ? "–" + t.ps : ""}</td><td style="color:${t.u >= 0 ? "var(--pos)" : "var(--neg)"}">${t.w + t.l + t.ps ? u(t.u) : "—"}</td><td>${t.open}</td></tr>`;
-  const list = [...shownPicks(P)].reverse().slice(0, sysOpen ? 200 : 8);
+  const all = shownPicks(P), gd = p => p.key.split("|")[1];
+  const days = {}; all.forEach(p => (days[gd(p)] = days[gd(p)] || []).push(p));
+  const dayKeys = Object.keys(days).sort().reverse(), showDays = sysOpen ? dayKeys : dayKeys.slice(0, 2);
+  const dayHead = d => { const t = tallyOf(days[d]), g = t.w + t.l + t.ps;
+    const nm = new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+    return `<div class="dayhead">${nm}<span>${g ? `${t.w}–${t.l}${t.ps ? "–" + t.ps : ""} · <span class="${t.u > 0 ? "good" : t.u < 0 ? "bad" : ""}">${u(t.u)}</span>` : ""}${t.open ? `${g ? " · " : ""}${t.open} open` : ""}</span></div>`; };
   return `<h2>System test</h2>${updLine(tRun(), "Picks and grades")}
     <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Four strategies run side by side, each with its own color: <span class="sdot s-angle"></span>situational angles (the 5 strongest each night), <span class="sdot s-steam"></span>late line moves (a big move in the last 3 hours, logged inside 2 hours of start), <span class="sdot s-dog"></span>the underdog of the day and <span class="sdot s-gap"></span>market gaps. The system never takes both sides of a game, and from Nov 5 on it makes one pick per game: once a game has a pick, the other strategies skip it.${(n => n ? ` ${n} late line move picks from Oct 21–28 that don’t pass the 2-hour rule are left out of this record so it isn’t overstated.` : "")(P.picks.filter(oldSteam).length)}</p>
     <div class="me">
@@ -2151,10 +2163,10 @@ function systemTestHTML(){
       ${by(p => p.strat).map(([k, t]) => row([`<span class="sdot s-${k}"></span>${STRAT_LABEL[k] || k}`, t])).join("")}
       ${by(p => SPORT_LABEL[p.sport] || p.sport.toUpperCase()).map(row).join("")}
     </tbody></table></div>
-    ${T.n ? `<div class="bets">${list.map(p => { const c = pickCLV(p), [sp, d, a, h] = p.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
+    ${T.n ? `<div class="bets">${showDays.map(d => dayHead(d) + [...days[d]].sort((x, y) => (x.start || "").localeCompare(y.start || "")).map(p => { const c = pickCLV(p), [sp, d, a, h] = p.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
       return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : "Push") : "Open"}</span><span class="stag s-${p.strat}">${STRAT_TAG[p.strat] || p.strat}</span><b>${pickText(p)}</b><span class="o">${p.result ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
-      <small>${nm(a)} at ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ", logged " + (m => m >= 60 ? Math.floor(m/60) + " h " + (m%60 ? Math.round(m%60) + " m " : "") : Math.round(m) + " m ")(pickLead(p)) + "before start)" : p.why ? ": " + p.why : ""}${p.result && p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")}</div>
-      ${P.picks.length > 8 ? `<p><button class="chip" id="sysMore">${sysOpen ? "Show fewer" : "Show all " + P.picks.length + " picks"}</button></p>` : ""}` : `<p class="note">No picks yet. The system waits for a real edge or a big line move, so quiet days can have none.</p>`}`;
+      <small>${nm(a)} at ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ", logged " + (m => m >= 60 ? Math.floor(m/60) + " h " + (m%60 ? Math.round(m%60) + " m " : "") : Math.round(m) + " m ")(pickLead(p)) + "before start)" : p.why ? ": " + p.why : ""}${p.result && p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")).join("")}</div>
+      ${dayKeys.length > 2 ? `<p><button class="chip" id="sysMore">${sysOpen ? "Show fewer" : "Show all " + all.length + " picks (" + dayKeys.length + " days)"}</button></p>` : ""}` : `<p class="note">No picks yet. The system waits for a real edge or a big line move, so quiet days can have none.</p>`}`;
 }
 
 
