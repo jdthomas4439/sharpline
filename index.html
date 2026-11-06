@@ -2151,7 +2151,10 @@ function systemTestHTML(){
   const dayHead = d => { const t = tallyOf(days[d]), g = t.w + t.l + t.ps;
     const nm = new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
     return `<div class="dayhead">${nm}<span>${g ? `${t.w}–${t.l}${t.ps ? "–" + t.ps : ""} · <span class="${t.u > 0 ? "good" : t.u < 0 ? "bad" : ""}">${u(t.u)}</span>` : ""}${t.open ? `${g ? " · " : ""}${t.open} open` : ""}</span></div>`; };
-  return `<h2>System test</h2>${updLine(tRun(), "Picks and grades")}
+  const miss = (P.grade_check && P.grade_check.missing) || [];
+  const missLine = miss.length ? `<p class="note" style="color:var(--neg)">Not graded yet: ${miss.map(m => { const [sp, d, a, h] = m.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
+    return `${nm(a)} at ${nm(h)} (${new Date(d + "T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})})`; }).join(", ")}. A daily 8 AM ET check flags any pick still ungraded 6 hours after its game; it stays open until a final score is found.</p>` : "";
+  return `<h2>System test</h2>${updLine(tRun(), "Picks and grades")}${missLine}
     <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Four strategies run side by side, each with its own color: <span class="sdot s-angle"></span>situational angles (the 5 strongest each night), <span class="sdot s-steam"></span>late line moves (a big move in the last 3 hours, logged inside 2 hours of start), <span class="sdot s-dog"></span>the underdog of the day and <span class="sdot s-gap"></span>market gaps. The system never takes both sides of a game, and from Nov 5 on it makes one pick per game: once a game has a pick, the other strategies skip it.${(n => n ? ` ${n} late line move picks from Oct 21–28 that don’t pass the 2-hour rule are left out of this record so it isn’t overstated.` : "")(P.picks.filter(oldSteam).length)}</p>
     <div class="me">
       <div><b>${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}</b><small>Record</small></div>
