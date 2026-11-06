@@ -943,7 +943,7 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
             if p["mkt"] == "ml": p["close"] = o.get("hml") if p["side"] == "home" else o.get("aml")
             elif p["mkt"] == "spread" and o.get("sl") is not None: p["close"] = -o["sl"] if p["side"] == "home" else o["sl"]
             elif p["mkt"] == "total": p["close"] = o.get("tot")
-        f = FINALS.get(p["key"]) or (rows_final(B, p["key"]) if B is not None else None)
+        f = final_score(B, p["key"])
         if not f: continue
         if p.get("result") is not None:                                # already graded: re-grade only if the final score was corrected
             if p.get("score") == f"{f[0]}-{f[1]}": continue
@@ -961,6 +961,7 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
         p["result"], p["score"] = res, f"{a}-{h}"
         p["units"] = round(_dec(p["odds"]) - 1, 3) if res == "win" else -1.0 if res == "loss" else 0.0
         graded += 1
+    grade_check(P)
     save("picks.json", P)
     log(f"Test picks: {len(new)} new, {graded} graded, {len(P['picks'])} total")
     return P
@@ -1137,6 +1138,35 @@ def dog_pick(P, B, MK, pool=()):
         p = best_all[1]
         if _tag_agree([q for q in pool if q["key"] == p["key"]], p): log(f"Underdog of the day agreed with an existing pick on {p['key']} (tagged); next-best underdog used")
     return [best[1]] if best else []
+
+def final_score(B, key):
+    """[away, home] final for a pick key. Falls back to the same game listed with home/away swapped
+    (neutral-site games: ESPN sometimes flips which team is 'home' after the pick is logged)."""
+    f = FINALS.get(key) or (rows_final(B, key) if B is not None else None)
+    if f: return f
+    sp, date, a, h = key.split("|")
+    sw = f"{sp}|{date}|{h}|{a}"
+    f = FINALS.get(sw) or (rows_final(B, sw) if B is not None else None)
+    return [f[1], f[0]] if f else None
+
+GRADE_CHECK_HOUR = 8                                  # ET: daily morning check that yesterday's picks all graded
+def grade_check(P):
+    """Every run: list picks still ungraded 6+ hours after start (shown on the Bets tab).
+    Once a day after 8 AM ET: log them and raise a warning on the GitHub run."""
+    cut = NOW - dt.timedelta(hours=6)
+    miss = [p for p in P["picks"] if p.get("result") is None and p.get("start")
+            and dt.datetime.fromisoformat(p["start"].replace("Z", "+00:00")) <= cut]
+    gc = P.setdefault("grade_check", {})
+    gc["missing"] = [{k: p.get(k) for k in ("key", "strat", "mkt", "side", "start")} for p in miss]
+    gc["at"] = NOW.isoformat(timespec="minutes")
+    today = TODAY_ET.isoformat()
+    if NOW.astimezone(ET).hour >= GRADE_CHECK_HOUR and gc.get("day") != today:
+        gc["day"] = today
+        if miss:
+            log(f"Grade check: {len(miss)} pick(s) not graded 6+ h after start: " + ", ".join(f"{p['key']} {p['mkt']}" for p in miss))
+            print(f"::warning::Grade check: {len(miss)} pick(s) still ungraded: " + ", ".join(p["key"] for p in miss), flush=True)
+        else:
+            log("Grade check: every finished pick is graded")
 
 def rows_final(B, key):
     sp, date, a, h = key.split("|")
