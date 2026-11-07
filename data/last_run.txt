@@ -7,8 +7,8 @@ ESPN nba: saved 7 pregame lines (archive 139)
 ESPN nhl: saved 12 pregame lines (archive 137)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 0 pregame lines (archive 30)
-ESPN cfb: saved 52 pregame lines (archive 175)
-ESPN ncaab: saved 35 pregame lines (archive 289)
+ESPN cfb: saved 51 pregame lines (archive 175)
+ESPN ncaab: saved 34 pregame lines (archive 289)
 NCAAB: 18688 games
 Soccer ESPN fixtures: 0 added
 Soccer: 4004 matches (48 upcoming)
@@ -16,13 +16,13 @@ Golf: World Wide Technology Championship (120 players, form for 108, Polymarket 
 CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 48 games matched
-Polymarket nhl: 33 games matched
-Kalshi nba: 35 games matched
-Polymarket nba: 35 games matched
-Kalshi cfb: 118 games matched
+Kalshi nhl: 46 games matched
+Polymarket nhl: 32 games matched
+Kalshi nba: 33 games matched
+Polymarket nba: 38 games matched
+Kalshi cfb: 117 games matched
 Polymarket cfb: 2 games matched
-Kalshi ncaab: 177 games matched
+Kalshi ncaab: 170 games matched
 Polymarket ncaab: 0 games matched
 History: 534 games tracked
 Test picks: 0 new, 1 graded, 186 total
