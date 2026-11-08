@@ -10,6 +10,7 @@ ESPN nfl: saved 14 pregame lines (archive 44)
 ESPN cfb: saved 0 pregame lines (archive 175)
 ESPN ncaab: saved 16 pregame lines (archive 319)
 NCAAB: 18688 games
+  error HTTPSConnectionPool(host='www.football-data.co.uk', port=443): Read timed out. (read timeout=40) on https://www.football-data.co.uk/mmz4281/2627/F1.csv
 Soccer ESPN fixtures: 0 added
 Soccer: 4004 matches (48 upcoming)
 Golf: World Wide Technology Championship (120 players, form for 108, Polymarket 61, Kalshi 113)
@@ -19,7 +20,7 @@ Polymarket nfl: 0 games matched
 Kalshi nhl: 49 games matched
 Polymarket nhl: 28 games matched
 Kalshi nba: 35 games matched
-Polymarket nba: 37 games matched
+Polymarket nba: 39 games matched
 Kalshi cfb: 65 games matched
 Polymarket cfb: 0 games matched
 Kalshi ncaab: 159 games matched
@@ -31,6 +32,6 @@ Injuries nba: 88 players
 Injuries nhl: 124 players
 Injuries mlb: 146 players
 Weather: 81 outdoor games
-Props: games with lines {'nfl': 1, 'nba': 18, 'nhl': 26}
-Odds API: 30 credits this run; plan used 2958, remaining 17042; budget 18000, reserve 1500
+Props: games with lines {'nfl': 2, 'nba': 18, 'nhl': 26}
+Odds API: 6 credits this run; plan used 2964, remaining 17036; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 43 total
