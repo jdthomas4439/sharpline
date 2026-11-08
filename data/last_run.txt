@@ -8,7 +8,7 @@ ESPN nhl: saved 6 pregame lines (archive 143)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 14 pregame lines (archive 44)
 ESPN cfb: saved 0 pregame lines (archive 175)
-ESPN ncaab: saved 22 pregame lines (archive 325)
+ESPN ncaab: saved 29 pregame lines (archive 332)
 NCAAB: 18688 games
 Soccer ESPN fixtures: 0 added
 Soccer: 4004 matches (48 upcoming)
@@ -32,5 +32,5 @@ Injuries nhl: 125 players
 Injuries mlb: 146 players
 Weather: 81 outdoor games
 Props: games with lines {'nfl': 14, 'nba': 25, 'nhl': 32}
-Odds API: 136 credits this run; plan used 3100, remaining 16900; budget 18000, reserve 1500
-Prop picks: 5 new, 0 graded, 48 total
+Odds API: 0 credits this run; plan used 3100, remaining 16900; budget 18000, reserve 1500
+Prop picks: 0 new, 0 graded, 48 total
