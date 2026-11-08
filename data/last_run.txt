@@ -32,5 +32,5 @@ Injuries nhl: 124 players
 Injuries mlb: 146 players
 Weather: 81 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 18, 'nhl': 26}
-Odds API: 0 credits this run; plan used 2928, remaining 17072; budget 18000, reserve 1500
+Odds API: 30 credits this run; plan used 2958, remaining 17042; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 43 total
