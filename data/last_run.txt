@@ -6,7 +6,7 @@ CFB: 3049 games
 ESPN nba: saved 7 pregame lines (archive 146)
 ESPN nhl: saved 6 pregame lines (archive 143)
 ESPN mlb: saved 0 pregame lines (archive 6)
-ESPN nfl: saved 13 pregame lines (archive 43)
+ESPN nfl: saved 14 pregame lines (archive 44)
 ESPN cfb: saved 0 pregame lines (archive 175)
 ESPN ncaab: saved 16 pregame lines (archive 319)
 NCAAB: 18688 games
@@ -14,23 +14,23 @@ Soccer ESPN fixtures: 0 added
 Soccer: 4004 matches (48 upcoming)
 Golf: World Wide Technology Championship (120 players, form for 108, Polymarket 61, Kalshi 113)
 CFB rankings: Playoff Committee Rankings (25 teams)
-Kalshi nfl: 27 games matched
+Kalshi nfl: 28 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 50 games matched
-Polymarket nhl: 29 games matched
+Kalshi nhl: 48 games matched
+Polymarket nhl: 27 games matched
 Kalshi nba: 36 games matched
-Polymarket nba: 39 games matched
-Kalshi cfb: 71 games matched
+Polymarket nba: 38 games matched
+Kalshi cfb: 70 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 158 games matched
+Kalshi ncaab: 157 games matched
 Polymarket ncaab: 0 games matched
-History: 584 games tracked
-Test picks: 0 new, 0 graded, 199 total
+History: 527 games tracked
+Test picks: 5 new, 0 graded, 204 total
 Injuries nfl: 800 players
 Injuries nba: 88 players
 Injuries nhl: 123 players
 Injuries mlb: 146 players
-Weather: 92 outdoor games
+Weather: 81 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 18, 'nhl': 26}
 Odds API: 0 credits this run; plan used 2868, remaining 17132; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 43 total
