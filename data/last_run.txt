@@ -10,6 +10,7 @@ ESPN nfl: saved 1 pregame lines (archive 44)
 ESPN cfb: saved 3 pregame lines (archive 178)
 ESPN ncaab: saved 37 pregame lines (archive 371)
 NCAAB: 18688 games
+  error HTTPSConnectionPool(host='www.football-data.co.uk', port=443): Read timed out. (read timeout=40) on https://www.football-data.co.uk/mmz4281/2526/SP1.csv
 Soccer ESPN fixtures: 0 added
 Soccer: 4004 matches (48 upcoming)
 Golf: World Wide Technology Championship (120 players, form for 108, Polymarket 0, Kalshi 91)
