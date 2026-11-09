@@ -1,22 +1,7 @@
 NFL: 1631 games
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_schedules/nba_schedule_2026.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_schedules/nba_schedule_2026.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_nba_schedules/nba_schedule_2026.parquet
-NBA: 2436 games
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/nhl_schedules/nhl_schedule_2025.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/nhl_schedules/nhl_schedule_2025.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/nhl_schedules/nhl_schedule_2025.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/nhl_schedules/nhl_schedule_2026.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/nhl_schedules/nhl_schedule_2026.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/nhl_schedules/nhl_schedule_2026.parquet
-NHL: 1344 games
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/mlb_schedules/mlb_schedule_2026.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/mlb_schedules/mlb_schedule_2026.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/mlb_schedules/mlb_schedule_2026.parquet
-MLB: 4956 games
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/cfb_schedules/cfb_schedules_2026.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/cfb_schedules/cfb_schedules_2026.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/cfb_schedules/cfb_schedules_2026.parquet
+NBA: 3671 games
+NHL: 3968 games
+MLB: 7426 games
 CFB: 3049 games
 ESPN nba: saved 9 pregame lines (archive 155)
 ESPN nhl: saved 3 pregame lines (archive 146)
@@ -24,13 +9,7 @@ ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 44)
 ESPN cfb: saved 3 pregame lines (archive 178)
 ESPN ncaab: saved 37 pregame lines (archive 371)
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_mens_college_basketball_schedules/mbb_schedule_2025.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_mens_college_basketball_schedules/mbb_schedule_2025.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_mens_college_basketball_schedules/mbb_schedule_2025.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_mens_college_basketball_schedules/mbb_schedule_2026.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_mens_college_basketball_schedules/mbb_schedule_2026.parquet
-  504 from https://github.com/sportsdataverse/sportsdataverse-data/releases/download/espn_mens_college_basketball_schedules/mbb_schedule_2026.parquet
-NCAAB: 6071 games
+NCAAB: 18688 games
 Soccer ESPN fixtures: 0 added
 Soccer: 4004 matches (48 upcoming)
 Golf: World Wide Technology Championship (120 players, form for 108, Polymarket 0, Kalshi 91)
@@ -41,11 +20,11 @@ Kalshi nhl: 48 games matched
 Polymarket nhl: 29 games matched
 Kalshi nba: 32 games matched
 Polymarket nba: 40 games matched
-Kalshi cfb: 65 games matched
+Kalshi cfb: 68 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 154 games matched
+Kalshi ncaab: 155 games matched
 Polymarket ncaab: 0 games matched
-History: 517 games tracked
+History: 518 games tracked
 Test picks: 0 new, 0 graded, 220 total
 Injuries nfl: 800 players
 Injuries nba: 95 players
