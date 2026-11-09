@@ -12,7 +12,7 @@ ESPN ncaab: saved 22 pregame lines (archive 352)
 NCAAB: 18688 games
 Soccer ESPN fixtures: 0 added
 Soccer: 4004 matches (48 upcoming)
-Golf: World Wide Technology Championship (120 players, form for 108, Polymarket 5, Kalshi 91)
+Golf: World Wide Technology Championship (120 players, form for 108, Polymarket 3, Kalshi 91)
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 16 games matched
 Polymarket nfl: 0 games matched
@@ -22,7 +22,7 @@ Kalshi nba: 35 games matched
 Polymarket nba: 41 games matched
 Kalshi cfb: 65 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 141 games matched
+Kalshi ncaab: 140 games matched
 Polymarket ncaab: 0 games matched
 History: 560 games tracked
 Test picks: 0 new, 0 graded, 214 total
