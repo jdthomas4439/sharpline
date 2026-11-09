@@ -4,13 +4,12 @@ NHL: 3968 games
 MLB: 7426 games
 CFB: 3049 games
 ESPN nba: saved 9 pregame lines (archive 155)
-ESPN nhl: saved 3 pregame lines (archive 146)
+ESPN nhl: saved 10 pregame lines (archive 153)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 44)
 ESPN cfb: saved 3 pregame lines (archive 178)
-ESPN ncaab: saved 37 pregame lines (archive 371)
+ESPN ncaab: saved 36 pregame lines (archive 371)
 NCAAB: 18688 games
-  error HTTPSConnectionPool(host='www.football-data.co.uk', port=443): Read timed out. (read timeout=40) on https://www.football-data.co.uk/mmz4281/2526/SP1.csv
 Soccer ESPN fixtures: 0 added
 Soccer: 4004 matches (48 upcoming)
 Golf: World Wide Technology Championship (120 players, form for 108, Polymarket 0, Kalshi 91)
@@ -28,7 +27,7 @@ Polymarket ncaab: 0 games matched
 History: 518 games tracked
 Test picks: 0 new, 0 graded, 221 total
 Injuries nfl: 800 players
-Injuries nba: 95 players
+Injuries nba: 96 players
 Injuries nhl: 124 players
 Injuries mlb: 145 players
 Weather: 73 outdoor games
