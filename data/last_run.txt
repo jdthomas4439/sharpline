@@ -16,13 +16,13 @@ Golf: World Wide Technology Championship (120 players, form for 108, Polymarket 
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 49 games matched
+Kalshi nhl: 48 games matched
 Polymarket nhl: 31 games matched
-Kalshi nba: 37 games matched
-Polymarket nba: 41 games matched
+Kalshi nba: 35 games matched
+Polymarket nba: 39 games matched
 Kalshi cfb: 68 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 175 games matched
+Kalshi ncaab: 174 games matched
 Polymarket ncaab: 0 games matched
 History: 573 games tracked
 Test picks: 0 new, 0 graded, 223 total
