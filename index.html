@@ -2143,6 +2143,7 @@ function pickText(p){
   return `${p.side === "over" ? "Over" : "Under"} ${p.line}`;
 }
 function tallyOf(list){
+  list = list.filter(p => p.result !== "void");          // voided picks (bad data) don't count either way
   const g = list.filter(p => p.result);
   const w = g.filter(p => p.result === "win").length, l = g.filter(p => p.result === "loss").length, ps = g.filter(p => p.result === "push").length;
   const u = g.reduce((a,p) => a + (p.units || 0), 0);
@@ -2159,8 +2160,8 @@ function pickListHTML(all, open, moreId){
   const why = p => p.strat === "stale" ? `: ${p.outlet === "Kalshi" ? "Kalshi at " + Math.round(p.ask * 100) + "¢ (fee included)" : "Hard Rock"} vs Pinnacle’s fair ${Math.round(p.fair * 100)}% (${pct(p.edge)} edge)`
     : p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ", logged " + (m => m >= 60 ? Math.floor(m/60) + " h " + (m%60 ? Math.round(m%60) + " m " : "") : Math.round(m) + " m ")(pickLead(p)) + "before start)" : p.why ? ": " + p.why : "";
   return `<div class="bets">${showDays.map(d => dayHead(d) + [...days[d]].sort((x, y) => (x.start || "").localeCompare(y.start || "")).map(p => { const c = pickCLV(p), [sp, , a, h] = p.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
-      return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : "Push") : "Open"}</span><span class="stag s-${p.strat}">${STRAT_TAG[p.strat] || p.strat}</span><b>${pickText(p)}</b><span class="o">${p.result ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
-      <small>${nm(a)} at ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${why(p)}${p.result && p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")).join("")}</div>
+      return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : p.result === "void" ? "Void" : "Push") : "Open"}</span><span class="stag s-${p.strat}">${STRAT_TAG[p.strat] || p.strat}</span><b>${pickText(p)}</b><span class="o">${p.result && p.result !== "void" ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : p.result === "void" ? "—" : fmt(p.odds)}</span></div>
+      <small>${nm(a)} at ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${why(p)}${p.result && p.score ? ", final " + p.score : ""}${p.note ? ". " + p.note.charAt(0).toUpperCase() + p.note.slice(1) : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")).join("")}</div>
     ${dayKeys.length > 2 ? `<p><button class="chip" id="${moreId}">${open ? "Show fewer" : "Show all " + all.length + " picks (" + dayKeys.length + " days)"}</button></p>` : ""}`;
 }
 
