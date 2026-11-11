@@ -17,7 +17,7 @@ CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 51 games matched
-Polymarket nhl: 36 games matched
+Polymarket nhl: 37 games matched
 Kalshi nba: 34 games matched
 Polymarket nba: 40 games matched
 Kalshi cfb: 68 games matched
@@ -34,4 +34,4 @@ Weather: 75 outdoor games
 Props: games with lines {'nfl': 13, 'nba': 31, 'nhl': 22}
 Odds API: 0 credits this run; plan used 4303, remaining 15697; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 61 total
-Lab: 0 new stale-price picks, 0 graded, 0 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 0 total
