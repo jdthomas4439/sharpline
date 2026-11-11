@@ -828,6 +828,7 @@ TEST_END = "2026-12-31T23:59+00:00"   # keep tallying picks through year end; mo
 STEAM_2H_OLD = {"cfb|2026-10-23|ARMY|TLSA|spread", "cfb|2026-10-24|BAY|KU|spread", "cfb|2026-10-24|SDSU|CSU|spread",
                 "nba|2026-10-26|MIN|CLE|spread", "mlb|2026-10-28|MIL|TB|total"}
 STEAM_WINDOW_MIN = 120      # late line move: only log picks in the last 2 hours before start
+STEAM_RETIRED = True        # Nov 11: late line move retired (16–23, −8u); its record now shows on the Lab tab
 STEAM_LOOKBACK_MIN = 180    # ...and only count the move made over the last 3 hours (not since the line opened)
 
 def _dec(a): return 1 + a / 100 if a > 0 else 1 + 100 / -a
@@ -885,7 +886,7 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
             # Strategy 2, late line move: a big move over the last 3 hours, logged in the last 2 hours before start,
             # one pick per game (spread or total, the bigger move). Moves made earlier in the day are old news by then.
             H = hist.get(key) or []
-            if mins <= STEAM_WINDOW_MIN and len(H) >= 2 and not any(p["strat"] == "steam" and p["key"] == key for p in P["picks"] + new):
+            if not STEAM_RETIRED and mins <= STEAM_WINDOW_MIN and len(H) >= 2 and not any(p["strat"] == "steam" and p["key"] == key for p in P["picks"] + new):
                 ref_t = NOW.timestamp() / 60 - STEAM_LOOKBACK_MIN
                 base = lambda ok: next((h for h in reversed(H) if ok(h) and h[0] <= ref_t), None) or next((h for h in H if ok(h)), None)
                 cands = []
@@ -1139,9 +1140,115 @@ def dog_pick(P, B, MK, pool=()):
         if _tag_agree([q for q in pool if q["key"] == p["key"]], p): log(f"Underdog of the day agreed with an existing pick on {p['key']} (tagged); next-best underdog used")
     return [best[1]] if best else []
 
+# ---------------------------------------------------------------- Lab: side tests, kept out of the main record (data/lab_picks.json)
+# Sharp money follow (stale price): right after each Odds API lines pull, bet where a price Derek can take (Hard Rock FL or
+# Kalshi) beats Pinnacle's no-vig fair price by 3%+. One pick per game; never both sides; 20 min to 12 h before start.
+LAB_SPORTS = ("nfl", "nhl", "nba", "cfb", "ncaab")
+STALE_MIN_EV, STALE_MAX_EV = 0.03, 0.15
+def _pin_fair(bms, mkey, point=None):
+    """Pinnacle no-vig fair probability per outcome name for one market (spreads/totals: at this point)."""
+    pin = next((b for b in bms if b["key"] == "pinnacle"), None)
+    m = next((m for m in (pin or {}).get("markets") or [] if m["key"] == mkey), None)
+    if not m or len(m["outcomes"]) != 2: return None
+    o = m["outcomes"]
+    if mkey != "h2h" and (point is None or any(abs(abs(x.get("point", 0)) - abs(point)) > 1e-9 for x in o)): return None
+    a, b = _imp(o[0]["price"]), _imp(o[1]["price"])
+    return {o[0]["name"]: a / (a + b), o[1]["name"]: b / (a + b)}
+def _kalshi_odds(ask):
+    """American odds that match buying a Kalshi YES at this ask, after Kalshi's trading fee (about 7% x p x (1-p))."""
+    cost = ask + 0.07 * ask * (1 - ask)
+    d = 1 / cost
+    return round((d - 1) * 100) if d >= 2 else round(-100 / (d - 1))
+
+def lab_run(MK, sched):
+    L = load("lab_picks.json", None) or {"start": NOW.isoformat(timespec="minutes"), "picks": []}
+    picks = L["picks"]
+    meta = load("odds_meta.json", {})
+    fresh = meta.get("last") and (NOW - dt.datetime.fromisoformat(meta["last"])).total_seconds() <= 40 * 60
+    allodds = load("odds.json", {}) or {}
+    new = []
+    if fresh:
+        mk = {f"{sp}|{r['date']}|{r['a']}|{r['h']}": r for sp, recs in MK.items() for r in recs}
+        for sp in LAB_SPORTS:
+            games, names = sched.get(sp, ([], {}))
+            cands = candidates(sp, games, names)
+            for e in allodds.get(sp) or []:
+                st = dt.datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00"))
+                mins = (st - NOW).total_seconds() / 60
+                g = pick_game(cands, st.astimezone(ET).date().isoformat(), [e["away_team"], e["home_team"]])
+                if not g: continue
+                key = f"{sp}|{g['date']}|{g['a']}|{g['h']}"
+                name_of = {"away": e["away_team"] if same_team(e["away_team"], g["ta"]) else e["home_team"],
+                           "home": e["home_team"] if same_team(e["home_team"], g["th"]) else e["away_team"]}
+                bms = e.get("bookmakers") or []
+                # closing value for open picks on this game: Pinnacle's fair price now (the last pull before start is the close)
+                for p in picks:
+                    if p["key"] == key and p.get("result") is None and mins > 0:
+                        f = _pin_fair(bms, {"ml": "h2h", "spread": "spreads", "total": "totals"}[p["mkt"]], p.get("line"))
+                        nm = name_of[p["side"]] if p["mkt"] != "total" else p["side"].capitalize()
+                        if f and nm in f:
+                            p["close_fair"] = round(f[nm], 3); p["clv"] = round(f[nm] * _dec(p["odds"]) - 1, 3)
+                if not (20 <= mins <= 720) or any(p["key"] == key for p in picks + new): continue
+                opts = []
+                fh = _pin_fair(bms, "h2h")
+                # Kalshi moneyline
+                k = (mk.get(key) or {}).get("k") or {}
+                if fh:
+                    for side in ("away", "home"):
+                        q = k.get(side[0]) or {}
+                        ask, bid = q.get("ask"), q.get("bid")
+                        if not ask or not bid or ask - bid > 0.04 or not (0.1 <= ask <= 0.9) or (k.get("vol") or 0) < 1000: continue
+                        fair = fh.get(name_of[side]); odds = _kalshi_odds(ask)
+                        if fair is None: continue
+                        opts.append(dict(outlet="Kalshi", mkt="ml", side=side, line=None, odds=odds, fair=fair, ask=ask))
+                # Hard Rock FL: moneyline, and spreads/totals at the same number Pinnacle has
+                hr = next((b for b in bms if b["key"] == "hardrockbet_fl"), None)
+                for m in (hr or {}).get("markets") or []:
+                    for o in m["outcomes"]:
+                        if m["key"] == "h2h":
+                            f = fh; side = "home" if o["name"] == name_of["home"] else "away"; line = None
+                        else:
+                            f = _pin_fair(bms, m["key"], o.get("point"))
+                            side = (o["name"].lower() if m["key"] == "totals" else ("home" if o["name"] == name_of["home"] else "away"))
+                            line = o.get("point")
+                        if not f or o["name"] not in f: continue
+                        opts.append(dict(outlet="HR", mkt={"h2h": "ml", "spreads": "spread", "totals": "total"}[m["key"]], side=side,
+                                         line=line, odds=o["price"], fair=f[o["name"]]))
+                best = None
+                for x in opts:
+                    if not (-300 <= x["odds"] <= 300): continue
+                    ev = x["fair"] * _dec(x["odds"]) - 1
+                    if STALE_MIN_EV <= ev <= STALE_MAX_EV and (best is None or ev > best[0]): best = (ev, x)
+                if best:
+                    ev, x = best
+                    new.append({"strat": "stale", "key": key, "sport": sp, "mkt": x["mkt"], "side": x["side"], "line": x["line"],
+                                "odds": x["odds"], "outlet": x["outlet"], **({"ask": x["ask"]} if "ask" in x else {}),
+                                "fair": round(x["fair"], 3), "edge": round(ev, 3), "start": e["commence_time"].replace("Z", "+00:00")[:16] + "+00:00",
+                                "at": NOW.isoformat(timespec="minutes")})
+    picks.extend(new)
+    graded = 0
+    for p in picks:
+        if p.get("result") is not None: continue
+        f = final_score(None, p["key"])
+        if not f: continue
+        a, h = f
+        if p["mkt"] == "ml":
+            mg = h - a if p["side"] == "home" else a - h; res = "push" if mg == 0 else "win" if mg > 0 else "loss"
+        elif p["mkt"] == "spread":
+            mg = (h - a if p["side"] == "home" else a - h) + p["line"]; res = "push" if mg == 0 else "win" if mg > 0 else "loss"
+        else:
+            t = a + h; res = "push" if t == p["line"] else "win" if (t > p["line"]) == (p["side"] == "over") else "loss"
+        p["result"], p["score"] = res, f"{a}-{h}"
+        p["units"] = round(_dec(p["odds"]) - 1, 3) if res == "win" else -1.0 if res == "loss" else 0.0
+        graded += 1
+    save("lab_picks.json", L)
+    log(f"Lab: {len(new)} new stale-price picks{'' if fresh else ' (no fresh Pinnacle pull this run)'}, {graded} graded, {len(picks)} total")
+    return L
+
 def final_score(B, key):
     """[away, home] final for a pick key. Falls back to the same game listed with home/away swapped
     (neutral-site games: ESPN sometimes flips which team is 'home' after the pick is logged)."""
+    B = B if B is not None else LAB_B.get("B")
     f = FINALS.get(key) or (rows_final(B, key) if B is not None else None)
     if f: return f
     sp, date, a, h = key.split("|")
@@ -1149,6 +1256,7 @@ def final_score(B, key):
     f = FINALS.get(sw) or (rows_final(B, sw) if B is not None else None)
     return [f[1], f[0]] if f else None
 
+LAB_B = {}                                            # the run's bundle, so Lab grading can read final scores
 GRADE_CHECK_HOUR = 8                                  # ET: daily morning check that yesterday's picks all graded
 def grade_check(P):
     """Every run: list picks still ungraded 6+ hours after start (shown on the Bets tab).
@@ -1609,6 +1717,8 @@ def main():
     B["ODDSX"] = step("odds more", odds_more) or {}
     B["PROPS"] = step("props bundle", props_bundle) or {}
     B["PROPPICKS"] = step("prop picks", prop_picks_run) or load("prop_picks.json", None)
+    LAB_B["B"] = B
+    B["LAB"] = step("lab", lambda: lab_run(MK, sched)) or load("lab_picks.json", None)
     B["UPDATED"] = NOW.astimezone(ET).strftime("%b %-d, %Y %-I:%M %p ET")
     B["UPDATED_ISO"] = NOW.isoformat(timespec="minutes")
     B = {k: v for k, v in B.items() if v is not None}
