@@ -113,7 +113,9 @@ def espn_ab(sport, ab):
     if sport == "nhl": return NHL_ESPN.get(ab, ab)
     if sport == "mlb": return MLB_ESPN.get(ab, ab)
     if sport == "nfl": return NFL_MAP.get(ab, ab)
+    if sport == "cfb": return CFB_ESPN.get(ab, ab)
     return ab
+CFB_ESPN = {"BUFF": "BUF", "AFA": "AF"}                  # ESPN code -> schedule code (their lines were not matching)
 
 def season_year(month_start):
     d = TODAY_ET
@@ -234,31 +236,25 @@ def parse_odds(sport, comp, home_raw, away_raw):
     odds = (comp.get("odds") or [None])[0]
     if not odds: return None
     out = {"prov": (odds.get("provider") or {}).get("name"), "tot": nz(odds.get("overUnder"))}
-    def tprice(side):                                    # over/under price: hockey and baseball totals move by price
-        d = (odds.get("total") or {}).get(side) or {}
+    def _num(v):
+        if v in (None, ""): return None
+        v = str(v).strip().upper()
+        if v in ("EVEN", "EV"): return 100
+        try: return int(float(v.replace("+", "")))
+        except Exception: return None
+    def pair(block, a, b):
+        """Both sides' prices from the same stage (close, else current, else open). Mixing one side's opener with the
+        other side's current price makes a price pair no book ever offered (e.g. -520 / +650) and a fake edge."""
         for stage in ("close", "current", "open"):
-            v = (d.get(stage) or {}).get("odds")
-            if v not in (None, ""):
-                v = str(v).strip().upper()
-                if v in ("EVEN", "EV"): return 100
-                try: return int(float(v.replace("+", "")))
-                except Exception: pass
-        return None
-    out["oo"], out["uo"] = tprice("over"), tprice("under")
+            x = _num(((block.get(a) or {}).get(stage) or {}).get("odds")); y = _num(((block.get(b) or {}).get(stage) or {}).get("odds"))
+            if x is not None and y is not None: return x, y
+        return None, None
+    out["oo"], out["uo"] = pair(odds.get("total") or {}, "over", "under")
     hml = (odds.get("homeTeamOdds") or {}).get("moneyLine"); aml = (odds.get("awayTeamOdds") or {}).get("moneyLine")
     if hml is None or aml is None:                       # newer ESPN format: odds.moneyline.home.close.odds = "-148"
-        ml = odds.get("moneyline") or {}
-        def pick(side):
-            d = ml.get(side) or {}
-            for stage in ("close", "current", "open"):
-                v = (d.get(stage) or {}).get("odds")
-                if v not in (None, ""):
-                    v = str(v).strip().upper()
-                    if v in ("EVEN", "EV"): return 100
-                    try: return int(float(v.replace("+", "")))
-                    except Exception: pass
-            return None
-        hml, aml = hml if hml is not None else pick("home"), aml if aml is not None else pick("away")
+        hml, aml = pair(odds.get("moneyline") or {}, "home", "away")
+    if hml is not None and aml is not None and not (1.0 <= _imp(hml) + _imp(aml) <= 1.15):
+        hml = aml = None                                 # not a real two-sided price (no vig or far too much): don't use it
     out["hml"], out["aml"] = hml, aml
     if not SAMPLES.get(sport): SAMPLES[sport] = odds      # one raw example per sport, saved for checking
     if sport in ("nba", "ncaab", "nfl", "cfb"):
@@ -828,6 +824,7 @@ TEST_END = "2026-12-31T23:59+00:00"   # keep tallying picks through year end; mo
 STEAM_2H_OLD = {"cfb|2026-10-23|ARMY|TLSA|spread", "cfb|2026-10-24|BAY|KU|spread", "cfb|2026-10-24|SDSU|CSU|spread",
                 "nba|2026-10-26|MIN|CLE|spread", "mlb|2026-10-28|MIL|TB|total"}
 STEAM_WINDOW_MIN = 120      # late line move: only log picks in the last 2 hours before start
+BAD_PRICE_VOID = {"gap|ncaab|2026-11-11|FDU|ETAM"}   # FDU +650 paired with -520: books had FDU +390 to +430, so the edge never existed
 STEAM_RETIRED = True        # Nov 11: late line move retired (16–23, −8u); its record now shows on the Lab tab
 STEAM_LOOKBACK_MIN = 180    # ...and only count the move made over the last 3 hours (not since the line opened)
 
@@ -841,6 +838,14 @@ def _conflicts(p, pool):
         if p["mkt"] != "total" and q["mkt"] != "total" and q["side"] != p["side"]: return True
     return False
 def _imp(a): return 1 / _dec(a)
+def _book_line(mkt, side, line):
+    """Consensus lines can sit between book numbers (72.75, -14.25). Use the nearest real number on the half-point grid,
+    rounded against the pick so the record never gets a number no book offered: over 72.75 -> 73, under -> 72.5,
+    -14.25 -> -14.5, +12.25 -> +12."""
+    if line is None or mkt not in ("spread", "total") or abs(line * 2 - round(line * 2)) < 1e-9: return line
+    lo, hi = math.floor(line * 2) / 2, math.ceil(line * 2) / 2
+    if mkt == "total": return hi if side == "over" else lo
+    return lo                                            # spread: the picked side's line, lower is worse for us
 def _tag_agree(taken, p):
     """If p is the same bet as a standing pick on its game, tag the standing pick with p's strategy. True if tagged."""
     for q in taken:
@@ -870,7 +875,8 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
             if mins < 20: continue
             # Strategy 1, market gap: prediction market vs the sportsbook moneyline (12 hours or less to start)
             r = mk.get(key)
-            if mins <= 720 and r and o.get("hml") is not None and o.get("aml") is not None and ("gap", key, "ml") not in have:
+            if (mins <= 720 and r and o.get("hml") is not None and o.get("aml") is not None and ("gap", key, "ml") not in have
+                    and 1.0 <= _imp(o["hml"]) + _imp(o["aml"]) <= 1.15):
                 k_ = r.get("k") or {}
                 kh = k_.get("h") or {}
                 pm = ((kh.get("bid", 0) + kh.get("ask", 0)) / 2) if kh.get("bid") and kh.get("ask") else ((r.get("p") or {}).get("h"))
@@ -938,6 +944,9 @@ def make_and_grade_picks(all_lines, MK, hist, B=None):
     # grade anything finished
     graded = 0
     for p in P["picks"]:
+        if f"{p['strat']}|{p['key']}" in BAD_PRICE_VOID and p.get("result") != "void":
+            p.update(result="void", units=0.0, note="voided: logged at a price pair no sportsbook offered (ESPN data mix-up)")
+        if p.get("result") == "void": continue
         sp, k = p["sport"], p["key"].split("|", 1)[1]
         o = (all_lines.get(sp) or {}).get(k) or {}
         if p.get("result") is None and o:                              # last pregame number we saw = closing line
@@ -1080,7 +1089,7 @@ def angle_picks(P, B, have, exposure=()):
             _tag_agree(others[key], {"strat": "angle", "mkt": c["mkt"], "side": c["side"]}); continue
         if _conflicts({"key": key, "mkt": c["mkt"], "side": c["side"]}, list(exposure) + new): continue
         used.add(key)
-        new.append({"strat": "angle", "key": key, "sport": sp, "mkt": c["mkt"], "side": c["side"], "odds": c["odds"], "line": c["line"],
+        new.append({"strat": "angle", "key": key, "sport": sp, "mkt": c["mkt"], "side": c["side"], "odds": c["odds"], "line": _book_line(c["mkt"], c["side"], c["line"]),
                     "why": c["why"], "rank": round(score, 2), "start": start.astimezone(dt.timezone.utc).isoformat(timespec="minutes"),
                     "at": NOW.isoformat(timespec="minutes")})
         if len(new) >= need: break
@@ -1110,6 +1119,7 @@ def dog_pick(P, B, MK, pool=()):
             d = dml_idx.get((g["date"], g["a"], g["h"]))
             if d is not None: imps.append(_imp(d))
             tot = sum(imps)
+            if not (1.0 <= tot <= 1.15): continue          # not a real two-sided price
             r = mk.get(key) or {}
             cands = angle_candidates(sp, games, g)
             for side, odds in (("home", g["hml"]), ("away", g["aml"])):
