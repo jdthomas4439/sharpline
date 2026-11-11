@@ -276,7 +276,12 @@ table.tt{border-collapse:collapse;width:100%;min-width:420px;font-size:14px}
 .tt.pxbook{min-width:0}.tt.pxbook td,.tt.pxbook th{padding:4px 2px}.pxbook .cell{min-width:0;padding:5px 2px}
 .stag.s-gap{color:var(--s-gap);background:var(--s-gap-bg)}.stag.s-prop{color:var(--ink);background:var(--surface2);border:1px solid var(--line)}.stag.s-dog{color:var(--s-dog);background:var(--s-dog-bg)}
 .sdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:1px}
-.sdot.s-angle{background:var(--s-angle)}.sdot.s-steam{background:var(--s-steam)}.sdot.s-gap{background:var(--s-gap)}.sdot.s-dog{background:var(--s-dog)}
+.sdot.s-angle{background:var(--s-angle)}.sdot.s-steam{background:var(--s-steam)}.sdot.s-gap{background:var(--s-gap)}.sdot.s-dog{background:var(--s-dog)}.sdot.s-stale{background:var(--s-stale)}
+:root{--s-stale:#B4490F;--s-stale-bg:#FCE7DA}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--s-stale:#FB9A5B;--s-stale-bg:#3A2010}}
+:root[data-theme="dark"]{--s-stale:#FB9A5B;--s-stale-bg:#3A2010}
+.stag.s-stale{color:var(--s-stale);background:var(--s-stale-bg)}
+.seg{display:flex;gap:6px;margin:6px 0 4px}.seg .chip.on{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
 .tt td.sub{padding-left:18px;color:var(--muted)}
 .bact{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
 .bact .chip{padding:2px 10px;font-size:14px}
@@ -445,11 +450,11 @@ h2{font-size:14px;font-weight:600;color:var(--muted);margin:24px 0 4px;letter-sp
 <nav class="tabs" aria-label="Sections">
   <div class="tabs-inner">
     <button class="tab on" data-tab="top" aria-current="page"><svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>Top</button>
-    <button class="tab" data-tab="edge"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>Edges<span class="badge" id="moveBadge" hidden>0</span></button>
-    <button class="tab" data-tab="odds"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16M15 4v16"/></svg>Games</button>
+    <button class="tab" data-tab="odds"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16M15 4v16"/></svg>Games<span class="badge" id="moveBadge" hidden>0</span></button>
     <button class="tab" data-tab="props"><svg viewBox="0 0 24 24"><path d="M5 20V10M10 20V4M15 20v-7M20 20V8"/></svg>Props</button>
     <button class="tab" data-tab="markets"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.5c0-1.4 1.3-2 3-2s3 .7 3 2-1.3 1.8-3 2.2-3 .9-3 2.3 1.3 2 3 2 3-.6 3-2"/></svg>Markets</button>
     <button class="tab" data-tab="social"><svg viewBox="0 0 24 24"><path d="M4 19V9M10 19V5M16 19v-6M22 19H2"/></svg>Bets</button>
+    <button class="tab" data-tab="lab"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6L4.5 18.5A1.6 1.6 0 0 0 5.9 21h12.2a1.6 1.6 0 0 0 1.4-2.5L14 9V3"/><path d="M7 15h10"/></svg>Lab</button>
   </div>
 </nav>
 <button class="slippill" id="slipPill" hidden><span class="sp-count" id="slipCount">0</span><span>Bet slip</span><span class="sp-odds num" id="slipOdds"></span></button>
@@ -2117,13 +2122,15 @@ function updateMoveBadge(){
 
 
 /* ---------- System test: paper-traded picks made by the backend, graded after each game ---------- */
-const STRAT_LABEL = { gap:"Market gap", steam:"Late line move", angle:"Situational angle", dog:"Underdog of the day" };
-const STRAT_TAG = { gap:"Gap", steam:"Late move", angle:"Angle", dog:"Underdog" };
+const STRAT_LABEL = { gap:"Market gap", steam:"Late line move", angle:"Situational angle", dog:"Underdog of the day", stale:"Sharp money follow" };
+const STRAT_TAG = { gap:"Gap", steam:"Late move", angle:"Angle", dog:"Underdog", stale:"Sharp $" };
 const STEAM_LATE_MIN = 120;   // late line moves are logged in the last 2 hours before start (picks logged earlier used the old 3-hour rule)
 const pickLead = p => (new Date(p.start.replace(/Z$/, "+00:00")) - new Date(p.at)) / 60000;
 const oldSteam = p => p.strat === "steam" && p.rule !== "2h";   // didn’t pass the 2-hour rule (old 3-hour picks): kept in the data file, not shown
-const shownPicks = P => P.picks.filter(p => !oldSteam(p));
+const shownPicks = P => P.picks.filter(p => p.strat !== "steam");   // main record: late line move retired Nov 11, its record lives on the Lab view
+const retiredSteam = P => P.picks.filter(p => p.strat === "steam" && !oldSteam(p));
 function pickCLV(p){
+  if (p.clv != null) return { pct:p.clv };          // Lab picks: value of our price at Pinnacle's closing fair price
   if (p.close == null) return null;
   if (p.mkt === "ml") return { pct:imp(p.close)/imp(p.odds) - 1 };
   if (p.mkt === "spread") return { pts:+(p.line - p.close).toFixed(1) };
@@ -2142,6 +2149,40 @@ function tallyOf(list){
   const c = list.map(pickCLV).filter(x => x && x.pts != null);
   return { n:list.length, open:list.length - g.length, w, l, ps, u, roi:g.length ? u / g.length : null, clv:c.length ? c.reduce((a,x) => a + x.pts, 0)/c.length : null, beat:c.filter(x => x.pts > 0).length, nc:c.length };
 }
+function pickListHTML(all, open, moreId){
+  const u = x => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(2) + "u", gd = p => p.key.split("|")[1];
+  const days = {}; all.forEach(p => (days[gd(p)] = days[gd(p)] || []).push(p));
+  const dayKeys = Object.keys(days).sort().reverse(), showDays = open ? dayKeys : dayKeys.slice(0, 2);
+  const dayHead = d => { const t = tallyOf(days[d]), g = t.w + t.l + t.ps;
+    const nm = new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+    return `<div class="dayhead">${nm}<span>${g ? `${t.w}–${t.l}${t.ps ? "–" + t.ps : ""} · <span class="${t.u > 0 ? "good" : t.u < 0 ? "bad" : ""}">${u(t.u)}</span>` : ""}${t.open ? `${g ? " · " : ""}${t.open} open` : ""}</span></div>`; };
+  const why = p => p.strat === "stale" ? `: ${p.outlet === "Kalshi" ? "Kalshi at " + Math.round(p.ask * 100) + "¢ (fee included)" : "Hard Rock"} vs Pinnacle’s fair ${Math.round(p.fair * 100)}% (${pct(p.edge)} edge)`
+    : p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ", logged " + (m => m >= 60 ? Math.floor(m/60) + " h " + (m%60 ? Math.round(m%60) + " m " : "") : Math.round(m) + " m ")(pickLead(p)) + "before start)" : p.why ? ": " + p.why : "";
+  return `<div class="bets">${showDays.map(d => dayHead(d) + [...days[d]].sort((x, y) => (x.start || "").localeCompare(y.start || "")).map(p => { const c = pickCLV(p), [sp, , a, h] = p.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
+      return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : "Push") : "Open"}</span><span class="stag s-${p.strat}">${STRAT_TAG[p.strat] || p.strat}</span><b>${pickText(p)}</b><span class="o">${p.result ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
+      <small>${nm(a)} at ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${why(p)}${p.result && p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")).join("")}</div>
+    ${dayKeys.length > 2 ? `<p><button class="chip" id="${moreId}">${open ? "Show fewer" : "Show all " + all.length + " picks (" + dayKeys.length + " days)"}</button></p>` : ""}`;
+}
+
+let labOpen = false;
+function labHTML(){
+  const L = window.SLB && SLB.LAB, P = window.SLB && SLB.PICKS;
+  const lab = (L && L.picks) || [], steam = P ? retiredSteam(P) : [];
+  const u = x => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(2) + "u";
+  const row = (k, list, status) => { const t = tallyOf(list), g = t.w + t.l + t.ps, c = list.map(pickCLV).filter(x => x && x.pct != null);
+    return `<tr><td><span class="sdot s-${k}"></span>${STRAT_LABEL[k]}<br><small class="note" style="margin:0">${status}</small></td><td>${t.w}–${t.l}${t.ps ? "–" + t.ps : ""}</td><td style="color:${t.u >= 0 ? "var(--pos)" : "var(--neg)"}">${g ? u(t.u) : "—"}</td><td>${t.open}</td></tr>`; };
+  const n = P ? P.picks.filter(oldSteam).length : 0;
+  return `${updLine(tRun(), "Lab picks and grades")}
+    <p class="note">New ideas are tested here so they don’t drag on the main record. Same rules: 1 unit per pick, picked before the game, graded after the final. A strategy moves to the main record once it proves itself (about 100 picks and beating the closing price), and a losing one is retired here.</p>
+    <div class="board-wrap" style="margin-bottom:10px"><table class="tt"><thead><tr><th></th><th>W–L</th><th>Units</th><th>Open</th></tr></thead><tbody>
+      ${row("stale", lab.filter(p => p.strat === "stale"), "Testing since Nov 11")}
+      ${row("steam", steam, "Retired Nov 11")}
+    </tbody></table></div>
+    <p class="note"><span class="sdot s-stale"></span><b>Sharp money follow</b>: right after each odds pull (every 3 hours), the system compares the prices you can take, Hard Rock and Kalshi (with its fee), to Pinnacle’s no-vig fair price. If one beats it by 3% or more, that’s a pick: one per game, 20 minutes to 12 hours before start. Pinnacle’s last price before the game is the close, so “vs close” shows whether the price really was ahead. Expect few picks: Hard Rock only posts NFL lines and Kalshi’s fee eats most small gaps.</p>
+    <p class="note"><span class="sdot s-steam"></span><b>Late line move</b> (retired): followed a big DraftKings move in the last 3 hours, logged inside 2 hours of start. It bought the number after it moved and rarely beat the close.${n ? ` ${n} older picks made under the first 3-hour rule aren’t counted.` : ""}</p>
+    ${lab.length + steam.length ? pickListHTML([...lab, ...steam], labOpen, "labMore") : ""}`;
+}
+
 let sysOpen = false;
 function systemTestHTML(){
   const P = window.SLB && SLB.PICKS;
@@ -2151,17 +2192,11 @@ function systemTestHTML(){
   const u = x => (x >= 0 ? "+" : "−") + Math.abs(x).toFixed(2) + "u";
   const end = new Date(P.end), done = Date.now() > end.getTime();
   const row = ([k, t]) => `<tr><td>${k}</td><td>${t.w}–${t.l}${t.ps ? "–" + t.ps : ""}</td><td style="color:${t.u >= 0 ? "var(--pos)" : "var(--neg)"}">${t.w + t.l + t.ps ? u(t.u) : "—"}</td><td>${t.open}</td></tr>`;
-  const all = shownPicks(P), gd = p => p.key.split("|")[1];
-  const days = {}; all.forEach(p => (days[gd(p)] = days[gd(p)] || []).push(p));
-  const dayKeys = Object.keys(days).sort().reverse(), showDays = sysOpen ? dayKeys : dayKeys.slice(0, 2);
-  const dayHead = d => { const t = tallyOf(days[d]), g = t.w + t.l + t.ps;
-    const nm = new Date(d + "T12:00:00").toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
-    return `<div class="dayhead">${nm}<span>${g ? `${t.w}–${t.l}${t.ps ? "–" + t.ps : ""} · <span class="${t.u > 0 ? "good" : t.u < 0 ? "bad" : ""}">${u(t.u)}</span>` : ""}${t.open ? `${g ? " · " : ""}${t.open} open` : ""}</span></div>`; };
   const miss = (P.grade_check && P.grade_check.missing) || [];
   const missLine = miss.length ? `<p class="note" style="color:var(--neg)">Not graded yet: ${miss.map(m => { const [sp, d, a, h] = m.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
     return `${nm(a)} at ${nm(h)} (${new Date(d + "T12:00:00").toLocaleDateString("en-US",{month:"short",day:"numeric"})})`; }).join(", ")}. A daily 8 AM ET check flags any pick still ungraded 6 hours after its game; it stays open until a final score is found.</p>` : "";
   return `<h2>System test</h2>${updLine(tRun(), "Picks and grades")}${missLine}
-    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Four strategies run side by side, each with its own color: <span class="sdot s-angle"></span>situational angles (the 5 strongest each night), <span class="sdot s-steam"></span>late line moves (a big move in the last 3 hours, logged inside 2 hours of start), <span class="sdot s-dog"></span>the underdog of the day and <span class="sdot s-gap"></span>market gaps. The system never takes both sides of a game, and from Nov 5 on it makes one pick per game: once a game has a pick, the other strategies skip it.${(n => n ? ` ${n} late line move picks from Oct 21–28 that don’t pass the 2-hour rule are left out of this record so it isn’t overstated.` : "")(P.picks.filter(oldSteam).length)}</p>
+    <p class="note">${new Date(P.start).toLocaleDateString("en-US",{month:"short",day:"numeric"})} to ${end.toLocaleDateString("en-US",{month:"short",day:"numeric"})}${done ? ", finished" : ", in progress"}. Paper trading: 1 unit per pick, picked before the game, graded after the final. Three strategies run side by side, each with its own color: <span class="sdot s-angle"></span>situational angles (the 5 strongest each night), <span class="sdot s-dog"></span>the underdog of the day and <span class="sdot s-gap"></span>market gaps. The system never takes both sides of a game, and from Nov 5 on it makes one pick per game: once a game has a pick, the other strategies skip it. Late line move was retired on Nov 11; its record is on the Lab tab with the new ideas being tested.</p>
     <div class="me">
       <div><b>${T.w}–${T.l}${T.ps ? "–" + T.ps : ""}</b><small>Record</small></div>
       <div><b style="color:${T.u >= 0 ? "var(--pos)" : "var(--neg)"}">${T.w + T.l + T.ps ? u(T.u) : "—"}</b><small>Units</small></div>
@@ -2172,10 +2207,7 @@ function systemTestHTML(){
       ${by(p => p.strat).map(([k, t]) => row([`<span class="sdot s-${k}"></span>${STRAT_LABEL[k] || k}`, t])).join("")}
       ${by(p => SPORT_LABEL[p.sport] || p.sport.toUpperCase()).map(row).join("")}
     </tbody></table></div>
-    ${T.n ? `<div class="bets">${showDays.map(d => dayHead(d) + [...days[d]].sort((x, y) => (x.start || "").localeCompare(y.start || "")).map(p => { const c = pickCLV(p), [sp, d, a, h] = p.key.split("|"), R = RES[sp], nm = ab => R ? R.name(ab) : ab;
-      return `<div class="bet ${p.result || "open"}"><div class="btop"><span class="bst">${p.result ? (p.result === "win" ? "Won" : p.result === "loss" ? "Lost" : "Push") : "Open"}</span><span class="stag s-${p.strat}">${STRAT_TAG[p.strat] || p.strat}</span><b>${pickText(p)}</b><span class="o">${p.result ? (p.units >= 0 ? "+" : "") + p.units.toFixed(2) + "u" : fmt(p.odds)}</span></div>
-      <small>${nm(a)} at ${nm(h)}, ${SPORT_LABEL[sp] || sp}, ${STRAT_LABEL[p.strat]}${p.edge != null ? " (" + pct(p.edge) + " edge)" : p.move != null ? " (moved " + fmtPt(p.move) + ", logged " + (m => m >= 60 ? Math.floor(m/60) + " h " + (m%60 ? Math.round(m%60) + " m " : "") : Math.round(m) + " m ")(pickLead(p)) + "before start)" : p.why ? ": " + p.why : ""}${p.result && p.score ? ", final " + p.score : ""}${c ? `, <span class="${(c.pts ?? c.pct) > 0 ? "good" : (c.pts ?? c.pct) < 0 ? "bad" : ""}">${c.pts != null ? fmtPt(c.pts) + " pts" : pct(c.pct)} vs close</span>` : ""}</small></div>`; }).join("")).join("")}</div>
-      ${dayKeys.length > 2 ? `<p><button class="chip" id="sysMore">${sysOpen ? "Show fewer" : "Show all " + all.length + " picks (" + dayKeys.length + " days)"}</button></p>` : ""}` : `<p class="note">No picks yet. The system waits for a real edge or a big line move, so quiet days can have none.</p>`}`;
+    ${T.n ? pickListHTML(shownPicks(P), sysOpen, "sysMore") : `<p class="note">No picks yet. The system waits for a real edge or a big line move, so quiet days can have none.</p>`}`;
 }
 
 
@@ -2676,7 +2708,7 @@ function renderEdge(){
   const best = e[0];
   const games = getGames().filter(g => !g.started);
   view.innerHTML = `
-    <h1>Today’s ${SPORT_LABEL[sport]} edges</h1>
+    <h1>${SPORT_LABEL[sport]} edges</h1>
     ${liveBar()}
     <p class="sub">Bets priced better than the fair line, between −300 and +300. ${live ? "Fair prices come from Pinnacle, or the no-vig consensus when Pinnacle has no matching line." : ""} Stakes use quarter-Kelly on a $${BANKROLL} bankroll.</p>
     <div class="summary">
@@ -2697,6 +2729,7 @@ function renderEdge(){
           <span>Fair <strong class="num">${fmt(x.fair)}</strong></span>
           <span>Win chance <strong>${(x.prob*100).toFixed(0)}%</strong></span>
           <span>Bet <strong>$${x.stake}</strong></span>
+          <button class="add" data-gogame="${x.g.id}" style="background:transparent;color:var(--ink);border:1px solid var(--line)">See game</button>
           <button class="add" data-edge="${i}">Add to slip</button>
         </div>
       </div>`).join("") : `<p class="note">No game-line edges right now. Books are close to the fair price on every game.</p>`}
@@ -2728,10 +2761,10 @@ function renderEdge(){
         </div>
       </div>`).join("") : `<p class="note">${live ? "Prop edges for the NFL, NBA and NHL are on the Props tab, under each sport." : (RES[sport] ? "Player prop leans appear once live prop odds are connected." : "No prop leans right now.")}</p>`}
     ${movesHTML()}
-    ${live || RES[sport] ? (() => { const grp = games.map(g => ({ g, hs:trendHighlights(g) })).filter(x => x.hs.length).sort((a,b) => a.g.start - b.g.start); const ang = grp; return `<h2>Situational angles</h2>${ang.length ? ang.map(x => `<div class="ggroup"><div class="ghead"><b>${matchup(x.g)}</b><span>${x.g.time}${/TBD/.test(x.g.time) ? "" : " ET"}</span></div><ul class="trends">${x.hs.slice(0,4).map(h => `<li>${h.t}</li>`).join("")}</ul></div>`).join("") : `<p class="note">${RES[sport] ? "No strong trends in the upcoming games." : "Load team history on a game in the Odds tab to see its strongest trends here."}</p>`}`; })() : ""}
+    ${live || RES[sport] ? (() => { const grp = games.map(g => ({ g, hs:trendHighlights(g) })).filter(x => x.hs.length).sort((a,b) => a.g.start - b.g.start); const ang = grp; return `<h2>Situational angles</h2>${ang.length ? ang.map(x => `<div class="ggroup"><div class="ghead"><b>${matchup(x.g)}</b><span>${x.g.time}${/TBD/.test(x.g.time) ? "" : " ET"}</span></div><ul class="trends">${x.hs.slice(0,4).map(h => `<li>${h.t}</li>`).join("")}</ul></div>`).join("") : `<p class="note">${RES[sport] ? "No strong trends in the upcoming games." : "Load team history on a game in All games to see its strongest trends here."}</p>`}`; })() : ""}
     <p class="note">${live ? "Live " + SPORT_LABEL[sport] + " odds from The Odds API through your Zapier connection." : RES[sport] ? "Free mode: schedule and team records from " + RES[sport].source + ", through " + RES[sport].updated + ". Connect live odds to compare books and find price edges." : "Sample data for layout."}</p>`;
   wireLiveBar();
-  const mm = document.getElementById("movesMore"); if (mm) mm.onclick = () => { movesAll = !movesAll; renderEdge(); };
+  const mm = document.getElementById("movesMore"); if (mm) mm.onclick = () => { movesAll = !movesAll; render(); };
   view.querySelectorAll("[data-edge]").forEach(btn => btn.onclick = () => {
     const x = e[+btn.dataset.edge]; addLeg(x.g.id, x.m.type, x.s.name, x.book, x.odds, x.prob);
   });
@@ -2745,15 +2778,16 @@ function renderEdge(){
 function renderOdds(){
   if (sport === "golf") return renderGolf();
   const live = isLive();
+  const edgeOf = {}; try { allEdges(sport).forEach(x => { if (!(edgeOf[x.g.id] >= x.ev)) edgeOf[x.g.id] = x.ev; }); } catch (e) {}
   view.innerHTML = `
     <h1>${SPORT_LABEL[sport]}</h1>
     ${liveBar()}
     <p class="sub">Best prices are highlighted. Tap one to add it to your slip.</p>${updLine(getGames().some(g => g.markets && g.markets.length) ? tOdds() : tRun(), "Odds")}
     ${cfbFilterBar()}
     ${oddsGames().map(g => `
-      <section class="game">
+      <section class="game" id="g-${g.id}">
         <div class="game-head">
-          <div><div class="teams">${matchup(g)}</div><div class="time">${g.nv && g.nv.lg && SOCCER_LEAGUE[g.nv.lg] ? SOCCER_LEAGUE[g.nv.lg] + ", " : ""}${g.started ? '<span class="inplay">In progress</span>' : g.time + (/TBD/.test(g.time) ? "" : " ET")}${g.nv && g.nv.neutral ? ", neutral site" : ""}</div></div>
+          <div><div class="teams">${matchup(g)}${edgeOf[g.id] ? ` <span class="stag s-gap" style="vertical-align:2px">Edge ${pct(edgeOf[g.id])}</span>` : ""}</div><div class="time">${g.nv && g.nv.lg && SOCCER_LEAGUE[g.nv.lg] ? SOCCER_LEAGUE[g.nv.lg] + ", " : ""}${g.started ? '<span class="inplay">In progress</span>' : g.time + (/TBD/.test(g.time) ? "" : " ET")}${g.nv && g.nv.neutral ? ", neutral site" : ""}</div></div>
           <div class="spark">${g.move && g.move.length > 1 ? sparkSVG(g.move) + `<span>${fmtPt(g.move[0])} → ${fmtPt(g.move[g.move.length-1])}</span>` : live ? "<span>Tracking line move</span>" : ""}</div>
         </div>
         ${g.free && RES[g.sport].lines ? nflvConsensus(g) : ""}
@@ -2783,7 +2817,7 @@ function renderOdds(){
   view.querySelectorAll(".cell").forEach(c => c.onclick = () =>
     addLeg(c.dataset.g, c.dataset.t, c.dataset.s, c.dataset.b, +c.dataset.o, +c.dataset.p));
   view.querySelectorAll("[data-tt]").forEach(b => b.onclick = () => { const g = gameById(b.dataset.tt); openTrends.add(g.id); loadTrends(g); render(); });
-  view.querySelectorAll("[data-cf]").forEach(b => b.onclick = () => { cfbFilt = b.dataset.cf; renderOdds(); });
+  view.querySelectorAll("[data-cf]").forEach(b => b.onclick = () => { cfbFilt = b.dataset.cf; render(); });
   view.querySelectorAll("[data-inj]").forEach(b => b.onclick = () => { const id = b.dataset.inj; injOpen.has(id) ? injOpen.delete(id) : injOpen.add(id); render(); });
   view.querySelectorAll("[data-rs]").forEach(b => b.onclick = () => { const id = b.dataset.rs; resOpen.has(id) ? resOpen.delete(id) : resOpen.add(id); render(); });
   view.querySelectorAll("[data-tl-go]").forEach(b => b.onclick = () => {
@@ -2835,7 +2869,7 @@ let gameFilter = "all", teamFilter = "both", sortBy = "edge", openKey = null;
 function renderProps(){
   if (isLive()) return renderLiveProps();
   if (!RES[sport] && !CFG[sport] && !DATA[sport]){ view.innerHTML = `<h1>${SPORT_LABEL[sport]} props</h1><div class="slip"><div class="empty">${sport === "golf" ? "Golf props such as top 10s and matchups need the paid odds feed. The field, form and winner prices are on the Games and Markets tabs." : "Player props need live odds, which aren’t connected for this sport yet."}</div></div>`; return; }
-  if (RES[sport]){ view.innerHTML = `<h1>${SPORT_LABEL[sport]} player props</h1>${liveBar()}<div class="slip"><div class="empty">Player props need live odds${CFG[sport] ? ". Connect your Odds API key above once your Zapier tasks reset, or after the backend is set up." : ", which aren’t connected for the " + SPORT_LABEL[sport] + " yet."} Team records are on the Odds tab.</div></div>`; wireLiveBar(); return; }
+  if (RES[sport]){ view.innerHTML = `<h1>${SPORT_LABEL[sport]} player props</h1>${liveBar()}<div class="slip"><div class="empty">Player props need live odds${CFG[sport] ? ". Connect your Odds API key above once your Zapier tasks reset, or after the backend is set up." : ", which aren’t connected for the " + SPORT_LABEL[sport] + " yet."} Team records are on the Games tab.</div></div>`; wireLiveBar(); return; }
   const games = DATA[sport].games;
   if (!DATA[sport].stats.includes(statFilter)) statFilter = DATA[sport].stats[sport === "nhl" ? 3 : 0];
   const g = gameFilter === "all" ? null : gameById(gameFilter);
@@ -2885,8 +2919,8 @@ function renderProps(){
 
 function renderParlay(){
   if (!slip.length){
-    view.innerHTML = `<h1>Your slip</h1><div class="slip"><div class="empty">No bets yet. Add prices from Edges, Odds or Props to build a single or a parlay. You can mix NBA and NHL.<br><button class="primary" id="goEdges">See today’s edges</button></div></div>`;
-    document.getElementById("goEdges").onclick = () => go("edge");
+    view.innerHTML = `<h1>Your slip</h1><div class="slip"><div class="empty">No bets yet. Add prices from Games or Props to build a single or a parlay. You can mix NBA and NHL.<br><button class="primary" id="goEdges">See today’s edges</button></div></div>`;
+    document.getElementById("goEdges").onclick = () => { gamesView = "edges"; store.set("sl_gamesView", "edges"); go("odds"); };
     return;
   }
   const payDec = slip.reduce((a,l) => a*dec(l.odds), 1);
@@ -2942,6 +2976,7 @@ function renderSocial(){
     <p class="rg">Bet with limits you set ahead of time. Need a break? Call 1-800-GAMBLER.</p>`;
   wireTracker();
   const sm = document.getElementById("sysMore"); if (sm) sm.onclick = () => { sysOpen = !sysOpen; renderSocial(); };
+
   view.querySelectorAll("[data-tail]").forEach(b => b.onclick = () => {
     const p = POSTS[+b.dataset.tail];
     addLeg(p.game, p.type, p.side, p.book, p.odds, sideProb(p.game, p.side) ?? imp(p.odds));
@@ -2950,12 +2985,27 @@ function renderSocial(){
   view.querySelectorAll("[data-c]").forEach(b => b.onclick = () => toast("Comments open in the live version"));
 }
 
-const RENDER = { top:renderTop, edge:renderEdge, odds:renderOdds, props:renderPropsDesk, markets:renderMarkets, parlay:renderParlay, social:renderSocial };
-const NO_SPORT_BAR = new Set(["top", "props", "social"]);   // tabs that don't use the sport switcher
+function renderLab(){
+  view.innerHTML = `<h1>Lab</h1><p class="sub">Side tests and retired strategies, kept apart from the main record on the Bets tab.</p>${labHTML()}`;
+  const lm = document.getElementById("labMore"); if (lm) lm.onclick = () => { labOpen = !labOpen; renderLab(); };
+}
+let gamesView = (v => v === "edges" ? "edges" : "all")(store.get("sl_gamesView"));
+function renderGames(){
+  if (gamesView === "edges") renderEdge(); else renderOdds();
+  const n = newMoves();
+  view.insertAdjacentHTML("afterbegin", `<div class="seg" role="tablist"><button class="chip ${gamesView === "all" ? "on" : ""}" data-gv="all">All games</button><button class="chip ${gamesView === "edges" ? "on" : ""}" data-gv="edges">Edges${n ? ` <span class="badge" style="position:static;margin-left:4px">${n}</span>` : ""}</button></div>`);
+  view.querySelectorAll("[data-gv]").forEach(b => b.onclick = () => { gamesView = b.dataset.gv; store.set("sl_gamesView", gamesView); render(); window.scrollTo(0, 0); });
+  view.querySelectorAll("[data-gogame]").forEach(b => b.onclick = () => {
+    gamesView = "all"; store.set("sl_gamesView", "all"); render();
+    const el = document.getElementById("g-" + b.dataset.gogame); if (el) { el.scrollIntoView({ block:"start" }); window.scrollBy(0, -104); }
+  });
+}
+const RENDER = { top:renderTop, odds:renderGames, props:renderPropsDesk, markets:renderMarkets, parlay:renderParlay, social:renderSocial, lab:renderLab };
+const NO_SPORT_BAR = new Set(["top", "props", "social", "lab"]);   // tabs that don't use the sport switcher
 function render(){
   const bar = document.querySelector(".sport-bar"); if (bar) bar.hidden = NO_SPORT_BAR.has(current);
   RENDER[current]();
-  if (current === "edge" && window.SLB && SLB.HISTORY){ const M = lineMoves(); if (M.length) store.set("sl_moves_seen", Math.max(movesSeen(), M[0].ts)); }
+  if (current === "odds" && gamesView === "edges" && window.SLB && SLB.HISTORY){ const M = lineMoves(); if (M.length) store.set("sl_moves_seen", Math.max(movesSeen(), M[0].ts)); }
   updateMoveBadge(); updateBadge();
 }
 function go(t){
