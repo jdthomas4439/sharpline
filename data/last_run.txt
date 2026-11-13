@@ -12,14 +12,14 @@ ESPN ncaab: saved 54 pregame lines (archive 551)
 NCAAB: 18688 games
 Soccer ESPN fixtures: 3 added
 Soccer: 4007 matches (51 upcoming)
-Golf: Austin Championship pres. by Compliance Solutions (120 players, form for 108, Polymarket 90, Kalshi 117)
+Golf: Austin Championship pres. by Compliance Solutions (120 players, form for 108, Polymarket 89, Kalshi 117)
 CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 14 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 49 games matched
 Polymarket nhl: 27 games matched
 Kalshi nba: 32 games matched
-Polymarket nba: 35 games matched
+Polymarket nba: 36 games matched
 Kalshi cfb: 119 games matched
 Polymarket cfb: 2 games matched
 Kalshi ncaab: 168 games matched
