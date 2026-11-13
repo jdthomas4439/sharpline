@@ -25,13 +25,13 @@ Polymarket cfb: 2 games matched
 Kalshi ncaab: 170 games matched
 Polymarket ncaab: 0 games matched
 History: 525 games tracked
-Test picks: 1 new, 0 graded, 254 total
+Test picks: 0 new, 0 graded, 254 total
 Injuries nfl: 800 players
 Injuries nba: 102 players
 Injuries nhl: 112 players
 Injuries mlb: 148 players
 Weather: 76 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 29, 'nhl': 26}
-Odds API: 30 credits this run; plan used 5067, remaining 14933; budget 18000, reserve 1500
+Odds API: 0 credits this run; plan used 5067, remaining 14933; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 61 total
 Lab: 0 new stale-price picks, 0 graded, 3 total
