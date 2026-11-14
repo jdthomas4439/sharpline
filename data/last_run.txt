@@ -3,7 +3,7 @@ NBA: 3671 games
 NHL: 3968 games
 MLB: 7426 games
 CFB: 3049 games
-ESPN nba: saved 4 pregame lines (archive 187)
+ESPN nba: saved 5 pregame lines (archive 188)
 ESPN nhl: saved 14 pregame lines (archive 186)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 12 pregame lines (archive 57)
@@ -17,21 +17,33 @@ CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 25 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 47 games matched
-Polymarket nhl: 31 games matched
+Polymarket nhl: 30 games matched
 Kalshi nba: 32 games matched
-Polymarket nba: 37 games matched
+Polymarket nba: 36 games matched
 Kalshi cfb: 117 games matched
 Polymarket cfb: 4 games matched
 Kalshi ncaab: 171 games matched
 Polymarket ncaab: 0 games matched
 History: 530 games tracked
-Test picks: 0 new, 1 graded, 259 total
+Test picks: 0 new, 0 graded, 259 total
 Injuries nfl: 800 players
 Injuries nba: 100 players
 Injuries nhl: 110 players
 Injuries mlb: 148 players
-Weather: 126 outdoor games
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+Weather: batch 1 failed
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+Weather: batch 2 failed
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+Weather: batch 3 failed
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+Weather: batch 4 failed
+Weather: 0 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 23, 'nhl': 19}
-Odds API: 30 credits this run; plan used 5272, remaining 14728; budget 18000, reserve 1500
+Odds API: 0 credits this run; plan used 5272, remaining 14728; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 61 total
 Lab: 0 new stale-price picks, 0 graded, 4 total
