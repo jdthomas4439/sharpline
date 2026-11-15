@@ -6,31 +6,37 @@ CFB: 3049 games
 ESPN nba: saved 9 pregame lines (archive 197)
 ESPN nhl: saved 5 pregame lines (archive 191)
 ESPN mlb: saved 0 pregame lines (archive 6)
-ESPN nfl: saved 12 pregame lines (archive 57)
+ESPN nfl: saved 13 pregame lines (archive 58)
 ESPN cfb: saved 1 pregame lines (archive 244)
 ESPN ncaab: saved 32 pregame lines (archive 647)
 NCAAB: 18689 games
-Soccer ESPN fixtures: 28 added
-Soccer: 4032 matches (28 upcoming)
+Soccer ESPN fixtures: 43 added
+Soccer: 4047 matches (43 upcoming)
 Golf: Austin Championship pres. by Compliance Solutions (120 players, form for 108, Polymarket 50, Kalshi 118)
 CFB rankings: Playoff Committee Rankings (25 teams)
-Kalshi nfl: 25 games matched
+Kalshi nfl: 26 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 48 games matched
 Polymarket nhl: 22 games matched
 Kalshi nba: 34 games matched
 Polymarket nba: 39 games matched
-Kalshi cfb: 71 games matched
+Kalshi cfb: 70 games matched
 Polymarket cfb: 0 games matched
 Kalshi ncaab: 169 games matched
 Polymarket ncaab: 0 games matched
-History: 605 games tracked
-Test picks: 0 new, 1 graded, 264 total
+History: 562 games tracked
+Test picks: 5 new, 0 graded, 269 total
 Injuries nfl: 800 players
 Injuries nba: 110 players
-Injuries nhl: 110 players
+Injuries nhl: 109 players
 Injuries mlb: 148 players
-Weather: 95 outdoor games
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+Weather: batch 1 failed
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+Weather: batch 2 failed
+Weather: 0 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 18, 'nhl': 27}
 Odds API: 0 credits this run; plan used 5658, remaining 14342; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 61 total
