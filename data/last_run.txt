@@ -12,7 +12,7 @@ ESPN ncaab: saved 29 pregame lines (archive 681)
 NCAAB: 18691 games
 Soccer ESPN fixtures: 46 added
 Soccer: 4050 matches (46 upcoming)
-Golf: Austin Championship pres. by Compliance Solutions (120 players, form for 108, Polymarket 10, Kalshi 100)
+Golf: Austin Championship pres. by Compliance Solutions (120 players, form for 108, Polymarket 8, Kalshi 100)
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 14 games matched
 Polymarket nfl: 0 games matched
@@ -34,4 +34,4 @@ Weather: 74 outdoor games
 Props: games with lines {'nfl': 13, 'nba': 31, 'nhl': 23}
 Odds API: 0 credits this run; plan used 6405, remaining 13595; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 62 total
-Lab: 0 new stale-price picks, 0 graded, 6 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 6 total
