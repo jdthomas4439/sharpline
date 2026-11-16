@@ -14,15 +14,15 @@ Soccer ESPN fixtures: 43 added
 Soccer: 4047 matches (43 upcoming)
 Golf: Austin Championship pres. by Compliance Solutions (120 players, form for 108, Polymarket 50, Kalshi 118)
 CFB rankings: AFCA Coaches Poll (25 teams)
-Kalshi nfl: 18 games matched
+Kalshi nfl: 16 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 49 games matched
 Polymarket nhl: 27 games matched
-Kalshi nba: 33 games matched
+Kalshi nba: 31 games matched
 Polymarket nba: 45 games matched
 Kalshi cfb: 62 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 148 games matched
+Kalshi ncaab: 147 games matched
 Polymarket ncaab: 0 games matched
 History: 579 games tracked
 Test picks: 0 new, 0 graded, 272 total
@@ -32,6 +32,6 @@ Injuries nhl: 115 players
 Injuries mlb: 148 players
 Weather: 75 outdoor games
 Props: games with lines {'nfl': 13, 'nba': 27, 'nhl': 31}
-Odds API: 21 credits this run; plan used 6096, remaining 13904; budget 18000, reserve 1500
-Prop picks: 0 new, 0 graded, 62 total
-Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 6 total
+Odds API: 30 credits this run; plan used 6126, remaining 13874; budget 18000, reserve 1500
+Prop picks: 0 new, 1 graded, 62 total
+Lab: 0 new stale-price picks, 0 graded, 6 total
