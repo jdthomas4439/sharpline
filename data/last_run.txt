@@ -40,4 +40,4 @@ Weather: 0 outdoor games
 Props: games with lines {'nfl': 13, 'nba': 22, 'nhl': 21}
 Odds API: 0 credits this run; plan used 6551, remaining 13449; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 62 total
-Lab: 0 new stale-price picks, 0 graded, 6 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 6 total
