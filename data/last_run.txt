@@ -3,7 +3,7 @@ NBA: 3671 games
 NHL: 3968 games
 MLB: 7426 games
 CFB: 3049 games
-ESPN nba: saved 11 pregame lines (archive 221)
+ESPN nba: saved 12 pregame lines (archive 222)
 ESPN nhl: saved 3 pregame lines (archive 207)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 59)
@@ -30,14 +30,8 @@ Injuries nfl: 800 players
 Injuries nba: 108 players
 Injuries nhl: 112 players
 Injuries mlb: 148 players
-  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
-  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
-Weather: batch 1 failed
-  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
-  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
-Weather: batch 2 failed
-Weather: 0 outdoor games
+Weather: 72 outdoor games
 Props: games with lines {'nfl': 13, 'nba': 22, 'nhl': 18}
 Odds API: 0 credits this run; plan used 6940, remaining 13060; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 62 total
-Lab: 0 new stale-price picks, 0 graded, 7 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 7 total
