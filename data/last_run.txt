@@ -7,7 +7,7 @@ ESPN nba: saved 12 pregame lines (archive 222)
 ESPN nhl: saved 3 pregame lines (archive 207)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 59)
-ESPN cfb: saved 3 pregame lines (archive 252)
+ESPN cfb: saved 2 pregame lines (archive 252)
 ESPN ncaab: saved 61 pregame lines (archive 789)
 NCAAB: 18691 games
 Soccer ESPN fixtures: 46 added
@@ -17,7 +17,7 @@ CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 17 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 42 games matched
-Polymarket nhl: 20 games matched
+Polymarket nhl: 21 games matched
 Kalshi nba: 33 games matched
 Polymarket nba: 35 games matched
 Kalshi cfb: 63 games matched
@@ -25,16 +25,13 @@ Polymarket cfb: 0 games matched
 Kalshi ncaab: 179 games matched
 Polymarket ncaab: 0 games matched
 History: 443 games tracked
-Test picks: gap agreed with angle on ncaab|2026-11-18|UVM|YALE (tagged, not logged twice)
-Test picks: 1 dropped for betting against an existing pick on the same game
-Test picks: 1 dropped, game already picked by another strategy
 Test picks: 0 new, 0 graded, 292 total
 Injuries nfl: 800 players
 Injuries nba: 108 players
 Injuries nhl: 113 players
 Injuries mlb: 148 players
 Weather: 72 outdoor games
-Props: games with lines {'nfl': 13, 'nba': 22, 'nhl': 18}
-Odds API: 0 credits this run; plan used 7000, remaining 13000; budget 18000, reserve 1500
-Prop picks: 0 new, 0 graded, 62 total
+Props: games with lines {'nfl': 13, 'nba': 34, 'nhl': 21}
+Odds API: 72 credits this run; plan used 7072, remaining 12928; budget 18000, reserve 1500
+Prop picks: 1 new, 0 graded, 63 total
 Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 7 total
