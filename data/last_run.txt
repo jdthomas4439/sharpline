@@ -16,8 +16,8 @@ Golf: The RSM Classic (147 players, form for 132, Polymarket 2, Kalshi 152)
 CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 18 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 54 games matched
-Polymarket nhl: 22 games matched
+Kalshi nhl: 53 games matched
+Polymarket nhl: 23 games matched
 Kalshi nba: 33 games matched
 Polymarket nba: 38 games matched
 Kalshi cfb: 74 games matched
@@ -32,6 +32,6 @@ Injuries nhl: 111 players
 Injuries mlb: 148 players
 Weather: 72 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 25, 'nhl': 16}
-Odds API: 30 credits this run; plan used 7327, remaining 12673; budget 18000, reserve 1500
+Odds API: 0 credits this run; plan used 7327, remaining 12673; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 63 total
 Lab: 0 new stale-price picks, 0 graded, 8 total
