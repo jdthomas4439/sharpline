@@ -30,13 +30,7 @@ Injuries nfl: 800 players
 Injuries nba: 105 players
 Injuries nhl: 113 players
 Injuries mlb: 148 players
-  429 from https://api.open-meteo.com/v1/forecast
-  429 from https://api.open-meteo.com/v1/forecast
-Weather: batch 1 failed
-  429 from https://api.open-meteo.com/v1/forecast
-  429 from https://api.open-meteo.com/v1/forecast
-Weather: batch 2 failed
-Weather: 0 outdoor games
+Weather: 72 outdoor games
 Props: games with lines {'nfl': 2, 'nba': 29, 'nhl': 28}
 Odds API: 0 credits this run; plan used 7550, remaining 12450; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 63 total
