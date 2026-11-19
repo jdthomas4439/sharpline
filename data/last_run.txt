@@ -8,7 +8,7 @@ ESPN nhl: saved 12 pregame lines (archive 219)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 59)
 ESPN cfb: saved 7 pregame lines (archive 258)
-ESPN ncaab: saved 29 pregame lines (archive 818)
+ESPN ncaab: saved 28 pregame lines (archive 818)
 NCAAB: 18693 games
 Soccer ESPN fixtures: 46 added
 Soccer: 4050 matches (46 upcoming)
