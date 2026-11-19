@@ -22,7 +22,7 @@ Kalshi nba: 33 games matched
 Polymarket nba: 37 games matched
 Kalshi cfb: 74 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 159 games matched
+Kalshi ncaab: 160 games matched
 Polymarket ncaab: 0 games matched
 History: 497 games tracked
 Test picks: 0 new, 0 graded, 301 total
