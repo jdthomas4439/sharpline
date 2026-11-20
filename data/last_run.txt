@@ -10,8 +10,8 @@ ESPN nfl: saved 0 pregame lines (archive 59)
 ESPN cfb: saved 64 pregame lines (archive 316)
 ESPN ncaab: saved 49 pregame lines (archive 868)
 NCAAB: 18693 games
-Soccer ESPN fixtures: 51 added
-Soccer: 4055 matches (51 upcoming)
+Soccer ESPN fixtures: 5 added
+Soccer: 4057 matches (53 upcoming)
 Golf: The RSM Classic (147 players, form for 132, Polymarket 2, Kalshi 152)
 CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 17 games matched
