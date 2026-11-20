@@ -17,7 +17,7 @@ CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 17 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 41 games matched
-Polymarket nhl: 28 games matched
+Polymarket nhl: 29 games matched
 Kalshi nba: 32 games matched
 Polymarket nba: 40 games matched
 Kalshi cfb: 114 games matched
@@ -28,10 +28,10 @@ History: 514 games tracked
 Test picks: 0 new, 0 graded, 308 total
 Injuries nfl: 800 players
 Injuries nba: 108 players
-Injuries nhl: 113 players
+Injuries nhl: 114 players
 Injuries mlb: 149 players
 Weather: 84 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 30, 'nhl': 26}
 Odds API: 0 credits this run; plan used 7855, remaining 12145; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 63 total
-Lab: 0 new stale-price picks, 0 graded, 9 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 9 total
