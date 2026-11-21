@@ -4,11 +4,11 @@ NHL: 3968 games
 MLB: 7426 games
 CFB: 3049 games
 ESPN nba: saved 6 pregame lines (archive 242)
-ESPN nhl: saved 17 pregame lines (archive 238)
+ESPN nhl: saved 15 pregame lines (archive 238)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 11 pregame lines (archive 70)
-ESPN cfb: saved 18 pregame lines (archive 316)
-ESPN ncaab: saved 26 pregame lines (archive 932)
+ESPN cfb: saved 17 pregame lines (archive 316)
+ESPN ncaab: saved 23 pregame lines (archive 932)
 NCAAB: 18693 games
 Soccer ESPN fixtures: 25 added
 Soccer: 4077 matches (73 upcoming)
@@ -16,22 +16,22 @@ Golf: The RSM Classic (147 players, form for 132, Polymarket 2, Kalshi 152)
 CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 27 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 55 games matched
+Kalshi nhl: 57 games matched
 Polymarket nhl: 31 games matched
 Kalshi nba: 29 games matched
 Polymarket nba: 37 games matched
-Kalshi cfb: 90 games matched
+Kalshi cfb: 89 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 204 games matched
+Kalshi ncaab: 205 games matched
 Polymarket ncaab: 0 games matched
-History: 583 games tracked
+History: 586 games tracked
 Test picks: 0 new, 0 graded, 316 total
 Injuries nfl: 800 players
 Injuries nba: 110 players
-Injuries nhl: 114 players
+Injuries nhl: 113 players
 Injuries mlb: 145 players
 Weather: 125 outdoor games
 Props: games with lines {'nfl': 1, 'nba': 31, 'nhl': 29}
-Odds API: 5 credits this run; plan used 8348, remaining 11652; budget 18000, reserve 1500
+Odds API: 15 credits this run; plan used 8363, remaining 11637; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 63 total
 Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 9 total
