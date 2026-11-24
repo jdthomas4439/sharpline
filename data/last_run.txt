@@ -17,12 +17,12 @@ CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 16 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 51 games matched
-Polymarket nhl: 27 games matched
+Polymarket nhl: 28 games matched
 Kalshi nba: 30 games matched
 Polymarket nba: 29 games matched
 Kalshi cfb: 66 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 180 games matched
+Kalshi ncaab: 179 games matched
 Polymarket ncaab: 0 games matched
 History: 470 games tracked
 Test picks: 0 new, 0 graded, 335 total
@@ -34,4 +34,4 @@ Weather: 74 outdoor games
 Props: games with lines {'nfl': 12, 'nba': 23, 'nhl': 26}
 Odds API: 0 credits this run; plan used 9377, remaining 10623; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 68 total
-Lab: 0 new stale-price picks, 0 graded, 10 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 10 total
