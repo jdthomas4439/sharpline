@@ -11,7 +11,7 @@ ESPN cfb: saved 2 pregame lines (archive 318)
 ESPN ncaab: saved 77 pregame lines (archive 1080)
 NCAAB: 18693 games
 Soccer ESPN fixtures: 47 added
-Soccer: 4099 matches (95 upcoming)
+Soccer: 4099 matches (47 upcoming)
 Golf: The RSM Classic (147 players, form for 132, Polymarket 2, Kalshi 9)
 CFB rankings: AP Top 25 (25 teams)
 Kalshi nfl: 16 games matched
@@ -34,4 +34,4 @@ Weather: 74 outdoor games
 Props: games with lines {'nfl': 12, 'nba': 23, 'nhl': 26}
 Odds API: 0 credits this run; plan used 9407, remaining 10593; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 68 total
-Lab: 0 new stale-price picks, 0 graded, 10 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 10 total
