@@ -8,7 +8,7 @@ ESPN nhl: saved 1 pregame lines (archive 246)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 1 pregame lines (archive 72)
 ESPN cfb: saved 2 pregame lines (archive 318)
-ESPN ncaab: saved 78 pregame lines (archive 1080)
+ESPN ncaab: saved 77 pregame lines (archive 1080)
 NCAAB: 18693 games
 Soccer ESPN fixtures: 47 added
 Soccer: 4099 matches (47 upcoming)
@@ -25,19 +25,14 @@ Polymarket cfb: 0 games matched
 Kalshi ncaab: 182 games matched
 Polymarket ncaab: 0 games matched
 History: 472 games tracked
+Grade check: every finished pick is graded
 Test picks: 0 new, 0 graded, 335 total
 Injuries nfl: 800 players
 Injuries nba: 92 players
-Injuries nhl: 116 players
+Injuries nhl: 117 players
 Injuries mlb: 144 players
-  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
-  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
-Weather: batch 1 failed
-  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
-  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
-Weather: batch 2 failed
-Weather: 0 outdoor games
+Weather: 74 outdoor games
 Props: games with lines {'nfl': 12, 'nba': 23, 'nhl': 26}
 Odds API: 0 credits this run; plan used 9437, remaining 10563; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 68 total
-Lab: 0 new stale-price picks, 0 graded, 10 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 10 total
