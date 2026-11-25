@@ -30,8 +30,14 @@ Injuries nfl: 800 players
 Injuries nba: 93 players
 Injuries nhl: 122 players
 Injuries mlb: 143 players
-Weather: 72 outdoor games
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+Weather: batch 1 failed
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+  error HTTPSConnectionPool(host='api.open-meteo.com', port=443): Read timed out. (read timeout=20) on https://api.open-meteo.com/v1/forecast
+Weather: batch 2 failed
+Weather: 0 outdoor games
 Props: games with lines {'nfl': 12, 'nba': 20, 'nhl': 13}
 Odds API: 0 credits this run; plan used 9686, remaining 10314; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 72 total
-Lab: 0 new stale-price picks, 0 graded, 10 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 10 total
