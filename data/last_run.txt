@@ -14,15 +14,15 @@ Soccer ESPN fixtures: 57 added
 Soccer: 4109 matches (57 upcoming)
 Golf: Hero World Challenge (0 players, form for 0, Polymarket 0, Kalshi 0)
 CFB rankings: Playoff Committee Rankings (25 teams)
-Kalshi nfl: 15 games matched
+Kalshi nfl: 14 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 48 games matched
 Polymarket nhl: 34 games matched
-Kalshi nba: 34 games matched
-Polymarket nba: 35 games matched
+Kalshi nba: 35 games matched
+Polymarket nba: 36 games matched
 Kalshi cfb: 65 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 163 games matched
+Kalshi ncaab: 162 games matched
 Polymarket ncaab: 0 games matched
 History: 545 games tracked
 Test picks: 0 new, 0 graded, 353 total
@@ -31,7 +31,7 @@ Injuries nba: 98 players
 Injuries nhl: 118 players
 Injuries mlb: 144 players
 Weather: 72 outdoor games
-Props: games with lines {'nfl': 4, 'nba': 15, 'nhl': 17}
+Props: games with lines {'nfl': 4, 'nba': 14, 'nhl': 17}
 Odds API: 0 credits this run; plan used 10340, remaining 9660; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 77 total
 Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 11 total
