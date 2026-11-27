@@ -10,8 +10,8 @@ ESPN nfl: saved 1 pregame lines (archive 76)
 ESPN cfb: saved 66 pregame lines (archive 385)
 ESPN ncaab: saved 47 pregame lines (archive 1231)
 NCAAB: 18693 games
-Soccer ESPN fixtures: 61 added
-Soccer: 4113 matches (61 upcoming)
+Soccer ESPN fixtures: 15 added
+Soccer: 4115 matches (63 upcoming)
 Golf: Hero World Challenge (0 players, form for 0, Polymarket 0, Kalshi 0)
 CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 13 games matched
