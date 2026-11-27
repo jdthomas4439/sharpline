@@ -6,9 +6,9 @@ CFB: 3056 games
 ESPN nba: saved 11 pregame lines (archive 281)
 ESPN nhl: saved 15 pregame lines (archive 275)
 ESPN mlb: saved 0 pregame lines (archive 6)
-ESPN nfl: saved 2 pregame lines (archive 76)
-ESPN cfb: saved 14 pregame lines (archive 332)
-ESPN ncaab: saved 31 pregame lines (archive 1208)
+ESPN nfl: saved 1 pregame lines (archive 76)
+ESPN cfb: saved 13 pregame lines (archive 332)
+ESPN ncaab: saved 30 pregame lines (archive 1208)
 NCAAB: 18693 games
 Soccer ESPN fixtures: 57 added
 Soccer: 4109 matches (57 upcoming)
@@ -18,20 +18,20 @@ Kalshi nfl: 15 games matched
 Polymarket nfl: 0 games matched
 Kalshi nhl: 48 games matched
 Polymarket nhl: 34 games matched
-Kalshi nba: 31 games matched
+Kalshi nba: 34 games matched
 Polymarket nba: 35 games matched
 Kalshi cfb: 65 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 157 games matched
+Kalshi ncaab: 163 games matched
 Polymarket ncaab: 0 games matched
-History: 538 games tracked
+History: 545 games tracked
 Test picks: 0 new, 0 graded, 353 total
 Injuries nfl: 800 players
 Injuries nba: 98 players
 Injuries nhl: 118 players
 Injuries mlb: 144 players
 Weather: 72 outdoor games
-Props: games with lines {'nfl': 5, 'nba': 17, 'nhl': 17}
+Props: games with lines {'nfl': 4, 'nba': 15, 'nhl': 17}
 Odds API: 0 credits this run; plan used 10340, remaining 9660; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 77 total
 Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 11 total
