@@ -7,23 +7,22 @@ ESPN nba: saved 11 pregame lines (archive 281)
 ESPN nhl: saved 17 pregame lines (archive 288)
 ESPN mlb: saved 0 pregame lines (archive 6)
 ESPN nfl: saved 0 pregame lines (archive 76)
-ESPN cfb: saved 57 pregame lines (archive 385)
-ESPN ncaab: saved 56 pregame lines (archive 1267)
+ESPN cfb: saved 56 pregame lines (archive 385)
+ESPN ncaab: saved 58 pregame lines (archive 1270)
 NCAAB: 18693 games
-  error HTTPSConnectionPool(host='www.football-data.co.uk', port=443): Read timed out. (read timeout=40) on https://www.football-data.co.uk/mmz4281/2425/F1.csv
 Soccer ESPN fixtures: 15 added
 Soccer: 4115 matches (63 upcoming)
 Golf: Hero World Challenge (0 players, form for 0, Polymarket 0, Kalshi 0)
 CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 13 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 57 games matched
-Polymarket nhl: 40 games matched
+Kalshi nhl: 56 games matched
+Polymarket nhl: 39 games matched
 Kalshi nba: 37 games matched
 Polymarket nba: 38 games matched
 Kalshi cfb: 61 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 159 games matched
+Kalshi ncaab: 156 games matched
 Polymarket ncaab: 0 games matched
 History: 490 games tracked
 Test picks: 0 new, 0 graded, 364 total
@@ -35,4 +34,4 @@ Weather: 72 outdoor games
 Props: games with lines {'nfl': 5, 'nba': 23, 'nhl': 30}
 Odds API: 0 credits this run; plan used 10735, remaining 9265; budget 18000, reserve 1500
 Prop picks: 0 new, 0 graded, 80 total
-Lab: 0 new stale-price picks, 0 graded, 12 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 12 total
