@@ -16,13 +16,13 @@ Golf: Hero World Challenge (0 players, form for 0, Polymarket 0, Kalshi 0)
 CFB rankings: Playoff Committee Rankings (25 teams)
 Kalshi nfl: 12 games matched
 Polymarket nfl: 0 games matched
-Kalshi nhl: 50 games matched
+Kalshi nhl: 48 games matched
 Polymarket nhl: 30 games matched
-Kalshi nba: 37 games matched
-Polymarket nba: 37 games matched
-Kalshi cfb: 56 games matched
+Kalshi nba: 36 games matched
+Polymarket nba: 36 games matched
+Kalshi cfb: 55 games matched
 Polymarket cfb: 0 games matched
-Kalshi ncaab: 175 games matched
+Kalshi ncaab: 173 games matched
 Polymarket ncaab: 0 games matched
 History: 548 games tracked
 Test picks: 0 new, 0 graded, 364 total
@@ -33,5 +33,5 @@ Injuries mlb: 144 players
 Weather: 71 outdoor games
 Props: games with lines {'nfl': 5, 'nba': 20, 'nhl': 29}
 Odds API: 0 credits this run; plan used 10865, remaining 9135; budget 18000, reserve 1500
-Prop picks: 0 new, 0 graded, 80 total
-Lab: 0 new stale-price picks, 0 graded, 12 total
+Prop picks: 0 new, 1 graded, 80 total
+Lab: 0 new stale-price picks (no fresh Pinnacle pull this run), 0 graded, 12 total
